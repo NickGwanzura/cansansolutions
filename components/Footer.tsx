@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandLogo } from './BrandLogo';
 
 const WA_NUMBER = '263773754747';
 const WA_DISPLAY = '+263 77 375 4747';
@@ -34,16 +35,12 @@ export function Footer() {
 
           {/* Brand column */}
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 group w-fit">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-900/40">
-                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-                </svg>
-              </div>
-              <div className="leading-none">
-                <span className="block font-heading text-base font-bold text-white">Cansan</span>
-                <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-red-400">Solutions</span>
-              </div>
+            <Link
+              href="/"
+              className="inline-flex w-fit rounded-2xl bg-white px-4 py-3 shadow-lg shadow-black/15 ring-1 ring-white/10"
+              aria-label="Cansan Electronics"
+            >
+              <BrandLogo className="w-[165px] sm:w-[200px]" />
             </Link>
 
             <p className="mt-5 text-sm leading-relaxed text-zinc-500">

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/cart-store';
+import { BrandLogo } from './BrandLogo';
 import { CartDrawer } from './CartDrawer';
 
 const navLinks = [
@@ -39,16 +40,8 @@ export function Header() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white shadow-sm transition group-hover:bg-red-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-              </svg>
-            </div>
-            <div className="leading-none">
-              <span className="block font-heading text-[15px] font-bold tracking-tight text-zinc-900">Cansan</span>
-              <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-red-500">Solutions</span>
-            </div>
+          <Link href="/" className="group shrink-0" aria-label="Cansan Electronics">
+            <BrandLogo priority />
           </Link>
 
           {/* Desktop Nav */}
