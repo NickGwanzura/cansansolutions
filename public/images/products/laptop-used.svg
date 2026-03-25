@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200" fill="none">
+  <rect width="280" height="200" fill="#fafaf8"/>
+  <!-- Screen back – slightly warmer/aged silver -->
+  <rect x="40" y="28" width="200" height="130" rx="8" fill="#d4d0c8" stroke="#b5b0a0" stroke-width="1.5"/>
+  <!-- Screen bezel -->
+  <rect x="44" y="32" width="192" height="122" rx="5" fill="#2a2a28"/>
+  <!-- Screen display -->
+  <rect x="50" y="38" width="180" height="110" rx="3" fill="#2d4a2a"/>
+  <!-- Screen UI chrome -->
+  <rect x="50" y="38" width="180" height="14" rx="3" fill="#1e331c"/>
+  <!-- Traffic lights (muted) -->
+  <circle cx="63" cy="45" r="4" fill="#c44a42"/>
+  <circle cx="76" cy="45" r="4" fill="#c49a25"/>
+  <circle cx="89" cy="45" r="4" fill="#1f9a32"/>
+  <!-- Content lines -->
+  <rect x="58" y="62" width="90" height="5" rx="2" fill="white" opacity="0.2"/>
+  <rect x="58" y="72" width="130" height="4" rx="2" fill="white" opacity="0.13"/>
+  <rect x="58" y="81" width="110" height="4" rx="2" fill="white" opacity="0.13"/>
+  <rect x="58" y="90" width="80" height="4" rx="2" fill="white" opacity="0.1"/>
+  <!-- Subtle wear marks on lid -->
+  <line x1="120" y1="50" x2="125" y2="55" stroke="#b5b0a0" stroke-width="0.8" opacity="0.6"/>
+  <line x1="160" y1="80" x2="162" y2="86" stroke="#b5b0a0" stroke-width="0.6" opacity="0.5"/>
+  <!-- Hinge (slightly worn) -->
+  <rect x="40" y="157" width="200" height="5" rx="2.5" fill="#a8a090"/>
+  <!-- Base/keyboard (warmer tone) -->
+  <rect x="30" y="161" width="220" height="28" rx="6" fill="#d4d0c8" stroke="#b5b0a0" stroke-width="1.5"/>
+  <!-- Keys -->
+  <rect x="52" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="63" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="74" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="85" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="96" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="107" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="118" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="129" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="140" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="151" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="162" y="167" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="173" y="167" width="16" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="48" y="175" width="16" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="67" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="78" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="89" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="100" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="111" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="122" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="133" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="144" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="155" y="175" width="8" height="5" rx="1.5" fill="#b5b0a0"/>
+  <rect x="166" y="175" width="22" height="5" rx="1.5" fill="#b5b0a0"/>
+  <!-- Trackpad -->
+  <rect x="110" y="177" width="60" height="9" rx="4" fill="#c8c4bc"/>
+  <!-- Pre-owned badge -->
+  <rect x="188" y="10" width="74" height="18" rx="9" fill="#d97706"/>
+  <text x="225" y="23" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="white" text-anchor="middle">PRE-OWNED</text>
+</svg>

@@ -1,8 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Cansan Solutions
 
-## Getting Started
+This is a Next.js 16 application for the Cansan Solutions site and admin panel.
 
-First, run the development server:
+## Local development
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +16,43 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the local URL shown in the terminal and the app will reload as you edit files.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This app runs as a standard Next.js server because it includes:
 
-## Learn More
+- API routes under `app/api`
+- admin authentication via cookies
+- runtime writes to `data/products.json`
+- runtime image uploads to `public/images/products`
 
-To learn more about Next.js, take a look at the following resources:
+Use the included `Dockerfile` for production deployments.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying on Coolify
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Recommended setup:
 
-## Deploy on Vercel
+1. Create a new application in Coolify from this Git repository.
+2. Choose the `Dockerfile` build pack.
+3. Keep the base directory as `/`.
+4. Expose port `3000`.
+5. Set a strong `ADMIN_PASSWORD` environment variable.
+6. Add persistent storage for these paths:
+   - `/app/data`
+   - `/app/public/images/products`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Why the storage mounts matter:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- product edits are saved to `data/products.json`
+- uploaded product images are saved to `public/images/products`
+
+If those paths are not persistent, changes made in the admin panel can be lost on redeploys or restarts.
+
+## Useful commands
+
+```bash
+npm run dev
+npm run build
+npm run start
+```

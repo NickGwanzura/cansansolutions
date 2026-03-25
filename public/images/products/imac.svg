@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200" fill="none">
+  <rect width="280" height="200" fill="#f5f5f7"/>
+  <!-- iMac thin body (colorful back) -->
+  <rect x="30" y="18" width="220" height="148" rx="12" fill="#4fc3f7" stroke="#29b6f6" stroke-width="1.5"/>
+  <!-- Screen bezel (very thin) -->
+  <rect x="36" y="24" width="208" height="136" rx="8" fill="#1c1c1e"/>
+  <!-- Screen -->
+  <rect x="40" y="28" width="200" height="128" rx="5" fill="#0d1b3e"/>
+  <!-- macOS desktop gradient -->
+  <defs>
+    <linearGradient id="sky" x1="40" y1="28" x2="240" y2="156" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a56db"/>
+      <stop offset="1" stop-color="#7e22ce"/>
+    </linearGradient>
+  </defs>
+  <rect x="40" y="28" width="200" height="128" rx="5" fill="url(#sky)"/>
+  <!-- Menu bar -->
+  <rect x="40" y="28" width="200" height="16" rx="5" fill="white" opacity="0.12"/>
+  <!-- Apple logo in menu -->
+  <circle cx="52" cy="36" r="4" fill="white" opacity="0.5"/>
+  <!-- Desktop icons -->
+  <rect x="54" y="56" width="28" height="28" rx="6" fill="white" opacity="0.15"/>
+  <rect x="54" y="90" width="28" height="28" rx="6" fill="white" opacity="0.12"/>
+  <rect x="54" y="124" width="28" height="28" rx="6" fill="white" opacity="0.12"/>
+  <!-- Main window -->
+  <rect x="98" y="52" width="128" height="90" rx="6" fill="#0a1628" opacity="0.7"/>
+  <rect x="98" y="52" width="128" height="14" rx="6" fill="#1a2a50"/>
+  <circle cx="111" cy="59" r="3.5" fill="#ff5f56"/>
+  <circle cx="122" cy="59" r="3.5" fill="#ffbd2e"/>
+  <circle cx="133" cy="59" r="3.5" fill="#27c93f"/>
+  <!-- Dock -->
+  <rect x="118" y="148" width="124" height="4" rx="2" fill="white" opacity="0.08"/>
+  <!-- Dock icons -->
+  <rect x="122" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="138" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="154" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="170" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="186" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="202" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <rect x="218" y="138" width="12" height="12" rx="3" fill="white" opacity="0.2"/>
+  <!-- Stand chin -->
+  <rect x="120" y="164" width="40" height="20" rx="4" fill="#29b6f6"/>
+  <!-- Stand base -->
+  <rect x="100" y="182" width="80" height="10" rx="5" fill="#29b6f6"/>
+</svg>
