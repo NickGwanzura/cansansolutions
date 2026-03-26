@@ -49,7 +49,7 @@ export function ProductCard({
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-      className="group relative flex flex-col rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden hover:shadow-xl hover:border-zinc-200 transition-all duration-300"
+      className="group relative flex flex-col rounded-xl sm:rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden hover:shadow-xl hover:border-zinc-200 transition-all duration-300"
     >
       {/* Image area */}
       <Link
@@ -115,7 +115,7 @@ export function ProductCard({
       </Link>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
         <Link
           href={`/products/${product.slug}`}
           className="font-heading text-sm font-semibold leading-snug text-zinc-900 line-clamp-2 hover:text-red-600 transition-colors"
@@ -141,8 +141,8 @@ export function ProductCard({
         )}
 
         {/* Price + CTA */}
-        <div className="mt-auto flex items-center justify-between pt-3 border-t border-zinc-50">
-          <span className="font-heading text-base font-bold text-zinc-900">
+        <div className="mt-auto flex flex-col gap-2 pt-3 border-t border-zinc-50 sm:flex-row sm:items-center sm:justify-between">
+          <span className="font-heading text-sm font-bold text-zinc-900 sm:text-base">
             {formatCurrency(product.price, product.currency)}
           </span>
 
@@ -150,7 +150,7 @@ export function ProductCard({
             disabled={!product.inStock}
             onClick={handleAdd}
             whileTap={product.inStock ? { scale: 0.92 } : {}}
-            className={`relative min-w-[88px] rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-sm transition-all duration-200 overflow-hidden
+            className={`relative w-full rounded-full px-3.5 py-2 text-xs font-semibold shadow-sm transition-all duration-200 overflow-hidden sm:w-auto sm:py-1.5
               ${added ? 'bg-green-500 text-white' : 'bg-red-600 text-white hover:bg-red-700'}
               disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none`}
           >
