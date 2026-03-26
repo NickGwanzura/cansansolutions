@@ -1,0 +1,13 @@
+{
+  "providers": ["node"],
+  "node": {
+    "version": "22",
+    "install": "npm ci",
+    "build": "npx prisma generate && next build",
+    "start": "npx prisma db push && next start -p 3000 -H 0.0.0.0"
+  },
+  "variables": {
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
