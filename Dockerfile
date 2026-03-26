@@ -2,13 +2,13 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npx prisma generate && next build
 
 # 2. Run stage
 FROM node:22-alpine

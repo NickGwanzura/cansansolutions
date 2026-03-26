@@ -67,6 +67,7 @@ export const useCartStore = create<CartState>()(
     {
       name: 'cansan-cart',
       storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     }
   )
 );
