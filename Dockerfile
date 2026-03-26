@@ -1,31 +1,66 @@
-# 1. Build stage
-FROM node:22-alpine AS builder
+# Production Dockerfile for Dokploy
+# Multi-stage build for minimal final image
+
+# 1. Dependencies stage
+FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Set production environment for build (must be set before npm install)
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Copy package files
 COPY package.json package-lock.json ./
 RUN npm ci --production=false
 
+# 2. Builder stage
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+
+# Copy source code
 COPY . .
 
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Build with explicit env
+# Generate Prisma client and build
 RUN npx prisma generate && next build
 
-# 2. Run stage
-FROM node:22-alpine
+# 3. Production stage
+FROM node:22-alpine AS runner
 WORKDIR /app
 
-COPY --from=builder /app ./
-
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+
+# Install dumb-init and curl for healthchecks
+RUN apk add --no-cache dumb-init curl
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy only necessary files from builder
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+USER nextjs
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Start command: migrate DB then start app
+# Using dumb-init to handle signals properly
+CMD ["dumb-init", "sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
