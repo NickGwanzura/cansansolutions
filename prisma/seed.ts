@@ -3,9 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import products from '../data/products.json';
 import categories from '../data/categories.json';
 
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-});
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding categories...');
