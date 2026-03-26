@@ -12,6 +12,7 @@ const navLinks = [
   { href: '/products', label: 'Products' },
   { href: '/services', label: 'Services' },
   { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export function Header() {
@@ -69,25 +70,6 @@ export function Header() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/contact"
-              className="hidden rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 sm:inline-flex"
-            >
-              Contact Us
-            </Link>
-
-            {/* Admin */}
-            <a
-              href="/admin"
-              className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-zinc-100"
-              aria-label="Admin panel"
-              title="Admin"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
-              </svg>
-            </a>
-
             {/* Cart */}
             <button
               onClick={() => setCartOpen(true)}
@@ -141,23 +123,6 @@ export function Header() {
                   {label}
                 </Link>
               ))}
-              <Link
-                href="/contact"
-                onClick={() => setMenuOpen(false)}
-                className="mt-1 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
-              >
-                Contact Us
-              </Link>
-              <a
-                href="/admin"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-50 flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
-                </svg>
-                Admin
-              </a>
             </nav>
           </div>
         )}
