@@ -69,6 +69,8 @@ export default function HomePage() {
 
       {/* ── Hero ──────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-zinc-950 px-6 py-24 text-white sm:py-32">
+        {/* Circuit board background */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat opacity-100" />
         {/* Background blobs */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-red-600/20 blur-[120px]" />
