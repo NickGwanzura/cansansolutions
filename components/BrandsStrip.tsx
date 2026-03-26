@@ -10,114 +10,114 @@ function AppleLogo() {
 
 function SamsungLogo() {
   return (
-    <svg role="img" viewBox="0 0 380 60" height="18" fill="currentColor" aria-label="Samsung">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="60" fontWeight="700" letterSpacing="2">SAMSUNG</text>
+    <svg role="img" viewBox="0 0 400 70" height="20" fill="currentColor" aria-label="Samsung">
+      <text x="0" y="54" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="62" fontWeight="500" letterSpacing="3">SAMSUNG</text>
     </svg>
   );
 }
 
 function HPLogo() {
   return (
-    <svg role="img" viewBox="0 0 100 100" height="36" fill="currentColor" aria-label="HP">
-      <ellipse cx="50" cy="50" rx="48" ry="48" fill="#0096D6"/>
-      <text x="50" y="66" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="42" fontWeight="700" fill="white">hp</text>
+    <svg role="img" viewBox="0 0 44 44" height="36" aria-label="HP">
+      <circle cx="22" cy="22" r="22" fill="#0096D6"/>
+      <text x="22" y="31" textAnchor="middle" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="18" fontWeight="700" fill="white" letterSpacing="0.5">hp</text>
     </svg>
   );
 }
 
 function DellLogo() {
   return (
-    <svg role="img" viewBox="0 0 220 60" height="22" fill="currentColor" aria-label="Dell">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="58" fontWeight="800" letterSpacing="-1">DELL</text>
+    <svg role="img" viewBox="0 0 200 56" height="24" fill="currentColor" aria-label="Dell">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="52" fontWeight="800" letterSpacing="-1">DELL</text>
     </svg>
   );
 }
 
 function SonyLogo() {
   return (
-    <svg role="img" viewBox="0 0 220 60" height="20" fill="currentColor" aria-label="Sony">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="58" fontWeight="700" letterSpacing="3">SONY</text>
+    <svg role="img" viewBox="0 0 210 56" height="22" fill="currentColor" aria-label="Sony">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="52" fontWeight="600" letterSpacing="4">SONY</text>
     </svg>
   );
 }
 
 function LenovoLogo() {
   return (
-    <svg role="img" viewBox="0 0 280 60" height="20" fill="currentColor" aria-label="Lenovo">
-      <text x="0" y="48" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="700" letterSpacing="1">Lenovo</text>
+    <svg role="img" viewBox="0 0 250 56" height="22" fill="currentColor" aria-label="Lenovo">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="46" fontWeight="600" letterSpacing="1">Lenovo</text>
     </svg>
   );
 }
 
 function JBLLogo() {
   return (
-    <svg role="img" viewBox="0 0 140 60" height="32" fill="currentColor" aria-label="JBL">
-      <rect x="0" y="0" width="140" height="60" rx="6" fill="#F5A623"/>
-      <text x="70" y="45" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="36" fontWeight="900" fill="black" letterSpacing="2">JBL</text>
+    <svg role="img" viewBox="0 0 120 52" height="34" aria-label="JBL">
+      <rect x="0" y="0" width="120" height="52" rx="5" fill="#F5A623"/>
+      <text x="60" y="38" textAnchor="middle" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="30" fontWeight="900" fill="#1a1a1a" letterSpacing="3">JBL</text>
     </svg>
   );
 }
 
 function BoseLogo() {
   return (
-    <svg role="img" viewBox="0 0 200 60" height="22" fill="currentColor" aria-label="Bose">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="56" fontWeight="800" letterSpacing="2">Bose</text>
+    <svg role="img" viewBox="0 0 180 56" height="22" fill="currentColor" aria-label="Bose">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="52" fontWeight="800" letterSpacing="1">Bose</text>
     </svg>
   );
 }
 
 function TPLinkLogo() {
   return (
-    <svg role="img" viewBox="0 0 220 60" height="20" fill="currentColor" aria-label="TP-Link">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="700" letterSpacing="1">TP-Link</text>
+    <svg role="img" viewBox="0 0 200 56" height="22" fill="currentColor" aria-label="TP-Link">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="44" fontWeight="700" letterSpacing="0">TP-Link</text>
     </svg>
   );
 }
 
 function DJILogo() {
   return (
-    <svg role="img" viewBox="0 0 140 60" height="26" fill="currentColor" aria-label="DJI">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="58" fontWeight="900" letterSpacing="2">DJI</text>
+    <svg role="img" viewBox="0 0 120 56" height="26" fill="currentColor" aria-label="DJI">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="52" fontWeight="900" letterSpacing="3">DJI</text>
     </svg>
   );
 }
 
 function XiaomiLogo() {
   return (
-    <svg role="img" viewBox="0 0 230 60" height="20" fill="currentColor" aria-label="Xiaomi">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="600" letterSpacing="1">Xiaomi</text>
+    <svg role="img" viewBox="0 0 24 24" height="30" fill="currentColor" aria-label="Xiaomi">
+      <path d="M12 0C8.935 0 6.445 2.486 6.445 5.555V24h3.388V8.333h4.334V24h3.388V5.555C17.555 2.486 15.065 0 12 0zm0 2.666c1.6 0 2.89 1.294 2.89 2.889v.39H9.11v-.39c0-1.595 1.29-2.889 2.89-2.889z"/>
     </svg>
   );
 }
 
 function AnkerLogo() {
   return (
-    <svg role="img" viewBox="0 0 200 60" height="20" fill="currentColor" aria-label="Anker">
-      <text x="0" y="48" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="700" letterSpacing="1">Anker</text>
+    <svg role="img" viewBox="0 0 190 56" height="22" fill="currentColor" aria-label="Anker">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="50" fontWeight="700" letterSpacing="1">Anker</text>
     </svg>
   );
 }
 
 function GoProLogo() {
   return (
-    <svg role="img" viewBox="0 0 220 60" height="20" fill="currentColor" aria-label="GoPro">
-      <text x="0" y="48" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="800" letterSpacing="0">GoPro</text>
+    <svg role="img" viewBox="0 0 200 56" height="22" fill="currentColor" aria-label="GoPro">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="50" fontWeight="800" letterSpacing="0">GoPro</text>
     </svg>
   );
 }
 
 function FitbitLogo() {
   return (
-    <svg role="img" viewBox="0 0 220 60" height="20" fill="currentColor" aria-label="Fitbit">
-      <text x="0" y="48" fontFamily="Arial, sans-serif" fontSize="50" fontWeight="700" letterSpacing="0">fitbit</text>
+    <svg role="img" viewBox="0 0 24 24" height="30" fill="#00B0B9" aria-label="Fitbit">
+      <path d="M12 13.9a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8zm-5.3-2.6a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8zm10.6 0a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8zM12 8.6a2.4 2.4 0 110 4.8 2.4 2.4 0 010-4.8zM6.7 8.6a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8zm10.6 0a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8zM12 3.1a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8z"/>
     </svg>
   );
 }
 
 function APCLogo() {
   return (
-    <svg role="img" viewBox="0 0 160 60" height="22" fill="currentColor" aria-label="APC">
-      <text x="0" y="50" fontFamily="Arial, sans-serif" fontSize="58" fontWeight="900" letterSpacing="4">APC</text>
+    <svg role="img" viewBox="0 0 140 56" height="24" fill="currentColor" aria-label="APC">
+      <text x="0" y="46" fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif" fontSize="52" fontWeight="900" letterSpacing="5">APC</text>
     </svg>
   );
 }
@@ -155,17 +155,17 @@ export function BrandsStrip() {
       {/* Marquee track */}
       <div className="relative">
         {/* Fade edges */}
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent" />
 
         <div
-          className="flex w-max"
-          style={{ animation: 'marquee 38s linear infinite' }}
+          className="flex w-max items-center"
+          style={{ animation: 'marquee 42s linear infinite' }}
         >
           {allBrands.map(({ key, Logo }, i) => (
             <div
               key={`${key}-${i}`}
-              className="mx-8 flex items-center justify-center opacity-40 grayscale transition duration-300 hover:opacity-100 hover:grayscale-0"
+              className="mx-10 flex items-center justify-center opacity-35 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
               style={{ minWidth: '80px' }}
             >
               <Logo />
