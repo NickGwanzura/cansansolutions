@@ -56,9 +56,9 @@ const contactItems = [
   },
   {
     label: 'Location',
-    value: 'Harare, Zimbabwe',
-    detail: 'Walk-ins welcome — call ahead to confirm availability.',
-    href: 'https://maps.google.com/?q=Harare,Zimbabwe',
+    value: 'Shop 7, ZB House',
+    detail: 'Corner Speke & 1st Street, Harare — walk-ins welcome, call ahead to confirm availability.',
+    href: 'https://maps.google.com/?q=Shop+7+ZB+House+Corner+Speke+and+1st+Street+Harare+Zimbabwe',
     external: true,
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>

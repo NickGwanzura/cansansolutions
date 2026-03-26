@@ -74,13 +74,18 @@ export function Footer() {
                 </svg>
                 info@cansansolutions.co.zw
               </a>
-              <div className="flex items-center gap-2.5 text-zinc-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <a
+                href="https://maps.google.com/?q=Shop+7+ZB+House+Corner+Speke+and+1st+Street+Harare+Zimbabwe"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-start gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="mt-0.5 shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                 </svg>
-                Harare, Zimbabwe
-              </div>
+                <span>Shop 7, ZB House<br />Corner Speke & 1st Street<br />Harare, Zimbabwe</span>
+              </a>
             </div>
           </div>
 
