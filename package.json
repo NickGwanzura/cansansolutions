@@ -4,16 +4,21 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npx prisma generate && npx prisma db push && next build",
     "start": "next start -p 3000 -H 0.0.0.0",
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/client": "^7.5.0",
+    "dotenv": "^17.3.1",
     "framer-motion": "^12.37.0",
     "next": "16.1.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zustand": "^5.0.12"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -22,7 +27,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.7",
+    "prisma": "^7.5.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
