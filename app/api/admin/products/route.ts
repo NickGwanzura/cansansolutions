@@ -61,12 +61,12 @@ export async function POST(req: Request) {
     
     console.log('[API POST] Data received:', JSON.stringify(data, null, 2));
     
-    if (!data.name) return NextResponse.json({ error: 'name required' }, { status: 400 });
-    if (!data.slug) return NextResponse.json({ error: 'slug required' }, { status: 400 });
-    if (!data.category) return NextResponse.json({ error: 'category required' }, { status: 400 });
-    if (data.price == null) return NextResponse.json({ error: 'price required' }, { status: 400 });
-    if (!data.description) return NextResponse.json({ error: 'description required' }, { status: 400 });
-    if (!data.image) return NextResponse.json({ error: 'image required' }, { status: 400 });
+    if (!data.name?.trim()) return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
+    if (!data.slug?.trim()) return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+    if (!data.category) return NextResponse.json({ error: 'Category is required' }, { status: 400 });
+    if (data.price == null || isNaN(parseFloat(data.price))) return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+    if (!data.description?.trim()) return NextResponse.json({ error: 'Description is required' }, { status: 400 });
+    if (!data.image || data.image === '/images/products/placeholder.svg') return NextResponse.json({ error: 'Image is required' }, { status: 400 });
     
     console.log('[API POST] Calling createProduct...');
     const product = await createProduct(data);

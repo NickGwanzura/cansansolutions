@@ -124,7 +124,7 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide">Product Image</label>
+      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide">Product Image *</label>
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -185,6 +185,7 @@ function ProductForm({
 }) {
   const [form, setForm] = useState<FormData>(initial);
   const [slugManual, setSlugManual] = useState(!!initial.slug);
+  const [error, setError] = useState('');
 
   const set = (k: keyof FormData, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -200,6 +201,15 @@ function ProductForm({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    // Validation
+    if (!form.name.trim()) return setError('Product name is required');
+    if (!form.slug.trim()) return setError('Slug is required');
+    if (!form.price || isNaN(parseFloat(String(form.price)))) return setError('Valid price is required');
+    if (!form.description.trim()) return setError('Description is required');
+    if (!form.image || form.image === '/images/products/placeholder.svg') return setError('Image is required');
+    
     onSave(form);
   };
 
@@ -221,6 +231,12 @@ function ProductForm({
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+          
           {/* Image */}
           <ImageUpload value={form.image} onChange={(url) => set('image', url)} />
 
@@ -287,8 +303,9 @@ function ProductForm({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-500 mb-1">Description</label>
+            <label className="block text-xs font-semibold text-zinc-500 mb-1">Description *</label>
             <textarea
+              required
               rows={3}
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
@@ -430,6 +447,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setFormOpen(false);
       fetchProducts();
       showToast(editTarget ? 'Product updated' : 'Product added');
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed' }));
+      showToast(err.error || err.message || 'Failed to save');
     }
   };
 
