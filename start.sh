@@ -10,24 +10,31 @@ echo "Has DATABASE_URL: $(if [ -n "$DATABASE_URL" ]; then echo 'YES'; else echo 
 echo ""
 
 # Ensure upload directories exist
-UPLOAD_DIR="/app/public/images/products"
-echo "[Setup] Creating upload directories..."
-mkdir -p "$UPLOAD_DIR"
-ls -la "$UPLOAD_DIR" 2>/dev/null || echo "[Setup] Upload dir ready"
+mkdir -p /app/public/images/products
 echo ""
 
-# Run DB migrations (Drizzle)
+# Init database if URL is set
 if [ -n "$DATABASE_URL" ]; then
-    echo "[DB] Running Drizzle migrations..."
-    npx drizzle-kit push --force || {
-        echo "[DB] Migration may have issues, continuing..."
-    }
+    echo "[DB] Initializing database..."
+    node -e "
+    const { initDb, seedCategories } = require('./lib/db.js');
+    initDb().then(() => {
+      console.log('[DB] Tables created');
+      return seedCategories();
+    }).then(() => {
+      console.log('[DB] Categories seeded');
+      process.exit(0);
+    }).catch(err => {
+      console.error('[DB] Error:', err.message);
+      process.exit(0);
+    });
+    " || echo "[DB] Init may have run already"
 else
     echo "[DB] Warning: DATABASE_URL not set"
 fi
 
 echo ""
-echo "[Server] Starting Next.js server on port ${PORT:-3000}..."
+echo "[Server] Starting on port ${PORT:-3000}..."
 echo "========================================"
 
 exec node server.js

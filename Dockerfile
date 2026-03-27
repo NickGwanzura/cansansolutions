@@ -1,33 +1,13 @@
 # Production Dockerfile for Dokploy
-# Multi-stage build for minimal final image
-
-# 1. Dependencies stage
-FROM node:22-alpine AS deps
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Install build dependencies for native modules
-RUN apk add --no-cache libc6-compat python3 make g++
-
-# Copy package files
-COPY package.json package-lock.json ./
-RUN npm ci --production=false
-
-# 2. Builder stage
 FROM node:22-alpine AS builder
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install build dependencies
-RUN apk add --no-cache libc6-compat
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy package files
 COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -35,49 +15,40 @@ COPY . .
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Build Next.js (Drizzle doesn't need generate step like Prisma)
-RUN ./node_modules/.bin/next build
+# Build Next.js
+RUN npm run build
 
-# 3. Production stage
+# Production stage
 FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
-ENV UPLOAD_DIR=/app/uploads
 
-# Install dumb-init and curl for healthchecks
-RUN apk add --no-cache dumb-init curl libc6-compat
+# Install dumb-init and curl
+RUN apk add --no-cache dumb-init curl
 
-# Create non-root user for security
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Create required directories with proper permissions BEFORE copying
-RUN mkdir -p /app/data /app/uploads/products /app/public/images/products && \
+# Create directories
+RUN mkdir -p /app/data /app/public/images/products && \
     chown -R nextjs:nodejs /app
 
-# Copy only necessary files from builder
+# Copy built files
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-
-# Copy public folder (static assets only - not uploads)
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Copy data files and startup script
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 RUN chmod +x start.sh
-
-# Ensure upload directories are writable by nextjs
-RUN chown -R nextjs:nodejs /app/uploads /app/public/images /app/data
 
 USER nextjs
 
 EXPOSE 3000
 
-# Start command
 CMD ["dumb-init", "./start.sh"]
