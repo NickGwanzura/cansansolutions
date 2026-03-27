@@ -5,12 +5,23 @@ import type { Product } from './types';
 const DATA_PATH = path.join(process.cwd(), 'data', 'products.json');
 
 export async function readProducts(): Promise<Product[]> {
-  const raw = await fs.readFile(DATA_PATH, 'utf-8');
-  return JSON.parse(raw);
+  try {
+    const raw = await fs.readFile(DATA_PATH, 'utf-8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Failed to read products:', error);
+    return [];
+  }
 }
 
 export async function writeProducts(products: Product[]): Promise<void> {
-  await fs.writeFile(DATA_PATH, JSON.stringify(products, null, 2));
+  try {
+    await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
+    await fs.writeFile(DATA_PATH, JSON.stringify(products, null, 2));
+  } catch (error) {
+    console.error('Failed to write products:', error);
+    throw error;
+  }
 }
 
 export function nextId(products: Product[]): string {

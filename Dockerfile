@@ -29,7 +29,7 @@ COPY . .
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Generate Prisma client and build (use npx for next)
+# Generate Prisma client and build
 RUN npx prisma generate && ./node_modules/.bin/next build
 
 # 3. Production stage
@@ -47,6 +47,10 @@ RUN apk add --no-cache dumb-init curl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
+# Create required directories with proper permissions
+RUN mkdir -p data public/images/products && \
+    chown -R nextjs:nodejs /app
+
 # Copy only necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -57,10 +61,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_module
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Copy data files and startup script
+COPY --from=builder --chown=nextjs:nodejs /app/data ./data
+COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
+RUN chmod +x start.sh
+
 USER nextjs
 
 EXPOSE 3000
 
-# Start command: migrate DB then start app
-# Using dumb-init to handle signals properly
-CMD ["dumb-init", "sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
+# Start command
+CMD ["dumb-init", "./start.sh"]
