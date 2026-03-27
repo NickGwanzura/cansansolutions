@@ -19,9 +19,9 @@ echo ""
 # Run DB push and seed
 if [ -n "$DATABASE_URL" ]; then
     echo "[DB] Running database push..."
-    npx prisma db push --accept-data-loss --skip-generate || {
+    npx prisma db push --accept-data-loss || {
         echo "[DB] Push failed, attempting reset..."
-        npx prisma db push --force-reset --accept-data-loss --skip-generate || true
+        npx prisma db push --force-reset --accept-data-loss || true
     }
     
     echo "[DB] Seeding database..."
