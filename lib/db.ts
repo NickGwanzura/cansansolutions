@@ -1,23 +1,28 @@
 import { Redis } from 'ioredis';
+import fs from 'fs/promises';
+import path from 'path';
 
-const REDIS_URL = process.env.REDIS_URL || process.env.DATABASE_URL?.replace('postgresql://', 'redis://');
+const REDIS_URL = process.env.REDIS_URL;
+const DATA_FILE = '/app/data/products.json';
 
-if (!REDIS_URL) {
-  console.error('[DB] CRITICAL: REDIS_URL is not set!');
+// Try Redis, but fallback to file if not available
+let redis: Redis | null = null;
+
+if (REDIS_URL) {
+  try {
+    redis = new Redis(REDIS_URL, {
+      maxRetriesPerRequest: 2,
+      connectTimeout: 5000,
+      retryStrategy: () => null, // Don't retry
+    });
+    
+    redis.on('error', () => {
+      redis = null;
+    });
+  } catch {
+    redis = null;
+  }
 }
-
-const redis = REDIS_URL ? new Redis(REDIS_URL, {
-  maxRetriesPerRequest: 3,
-  connectTimeout: 10000,
-}) : null;
-
-redis?.on('error', (err) => {
-  console.error('[Redis] Error:', err.message);
-});
-
-redis?.on('connect', () => {
-  console.log('[Redis] Connected');
-});
 
 // Key prefixes
 const KEYS = {
@@ -26,57 +31,116 @@ const KEYS = {
   CATEGORIES: 'categories:',
 };
 
+// File-based storage (fallback)
+async function readDataFile(): Promise<any[]> {
+  try {
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+async function writeDataFile(products: any[]): Promise<void> {
+  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.writeFile(DATA_FILE, JSON.stringify(products, null, 2));
+}
+
 export async function getProducts(): Promise<any[]> {
-  if (!redis) throw new Error('Redis not connected');
+  if (redis) {
+    try {
+      const ids = await redis.smembers(KEYS.PRODUCT_LIST);
+      if (!ids.length) return [];
+      
+      const pipeline = redis.pipeline();
+      ids.forEach(id => pipeline.get(KEYS.PRODUCTS + id));
+      const results = await pipeline.exec();
+      
+      return results
+        ?.map(([err, data]) => {
+          if (err || !data) return null;
+          try { return JSON.parse(data as string); } catch { return null; }
+        })
+        .filter(Boolean)
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)) || [];
+    } catch {
+      // Fall through to file
+    }
+  }
   
-  const ids = await redis.smembers(KEYS.PRODUCT_LIST);
-  if (!ids.length) return [];
-  
-  const pipeline = redis.pipeline();
-  ids.forEach(id => pipeline.get(KEYS.PRODUCTS + id));
-  const results = await pipeline.exec();
-  
-  return results
-    ?.map(([err, data]) => {
-      if (err || !data) return null;
-      try { return JSON.parse(data as string); } catch { return null; }
-    })
-    .filter(Boolean)
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)) || [];
+  // File fallback
+  return readDataFile();
 }
 
 export async function getProduct(id: string): Promise<any | null> {
-  if (!redis) throw new Error('Redis not connected');
-  const data = await redis.get(KEYS.PRODUCTS + id);
-  return data ? JSON.parse(data) : null;
+  if (redis) {
+    try {
+      const data = await redis.get(KEYS.PRODUCTS + id);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      // Fall through
+    }
+  }
+  
+  const products = await readDataFile();
+  return products.find((p: any) => p.id === id) || null;
 }
 
 export async function saveProduct(product: any): Promise<void> {
-  if (!redis) throw new Error('Redis not connected');
-  
   const id = product.id || String(Date.now());
   const productWithId = { ...product, id, createdAt: product.createdAt || Date.now() };
   
-  await redis.set(KEYS.PRODUCTS + id, JSON.stringify(productWithId));
-  await redis.sadd(KEYS.PRODUCT_LIST, id);
+  if (redis) {
+    try {
+      await redis.set(KEYS.PRODUCTS + id, JSON.stringify(productWithId));
+      await redis.sadd(KEYS.PRODUCT_LIST, id);
+      return;
+    } catch {
+      // Fall through to file
+    }
+  }
+  
+  // File fallback
+  const products = await readDataFile();
+  const existingIndex = products.findIndex((p: any) => p.id === id);
+  
+  if (existingIndex >= 0) {
+    products[existingIndex] = productWithId;
+  } else {
+    products.push(productWithId);
+  }
+  
+  await writeDataFile(products);
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  if (!redis) throw new Error('Redis not connected');
+  if (redis) {
+    try {
+      await redis.del(KEYS.PRODUCTS + id);
+      await redis.srem(KEYS.PRODUCT_LIST, id);
+      return;
+    } catch {
+      // Fall through
+    }
+  }
   
-  await redis.del(KEYS.PRODUCTS + id);
-  await redis.srem(KEYS.PRODUCT_LIST, id);
+  // File fallback
+  const products = await readDataFile();
+  const filtered = products.filter((p: any) => p.id !== id);
+  await writeDataFile(filtered);
 }
 
 export async function getCategories(): Promise<any[]> {
-  if (!redis) return defaultCategories();
+  if (redis) {
+    try {
+      const data = await redis.get(KEYS.CATEGORIES + 'all');
+      if (data) return JSON.parse(data);
+    } catch {
+      // Fall through
+    }
+  }
   
-  const data = await redis.get(KEYS.CATEGORIES + 'all');
-  if (data) return JSON.parse(data);
-  
-  const cats = defaultCategories();
-  await redis.set(KEYS.CATEGORIES + 'all', JSON.stringify(cats));
-  return cats;
+  return defaultCategories();
 }
 
 function defaultCategories() {
