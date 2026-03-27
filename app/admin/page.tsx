@@ -627,7 +627,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         <input
                           type="checkbox"
                           checked={allSelected}
-                          ref={el => el && (el.indeterminate = someSelected)}
+                          ref={el => { if (el) el.indeterminate = someSelected; }}
                           onChange={toggleSelectAll}
                           className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
                         />

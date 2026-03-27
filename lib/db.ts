@@ -47,60 +47,75 @@ async function writeDataFile(products: any[]): Promise<void> {
 }
 
 export async function getProducts(): Promise<any[]> {
+  // ALWAYS read from file (source of truth)
+  const fileProducts = await readDataFile();
+  
+  // If Redis available, try to sync any Redis-only products back to file
+  // This handles edge case where products were saved to Redis before this fix
   if (redis) {
     try {
       const ids = await redis.smembers(KEYS.PRODUCT_LIST);
-      if (!ids.length) return [];
-      
-      const pipeline = redis.pipeline();
-      ids.forEach(id => pipeline.get(KEYS.PRODUCTS + id));
-      const results = await pipeline.exec();
-      
-      return results
-        ?.map(([err, data]) => {
-          if (err || !data) return null;
-          try { return JSON.parse(data as string); } catch { return null; }
-        })
-        .filter(Boolean)
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)) || [];
-    } catch {
-      // Fall through to file
+      if (ids.length > 0) {
+        const pipeline = redis.pipeline();
+        ids.forEach(id => pipeline.get(KEYS.PRODUCTS + id));
+        const results = await pipeline.exec();
+        
+        const redisProducts = results
+          ?.map(([err, data]) => {
+            if (err || !data) return null;
+            try { return JSON.parse(data as string); } catch { return null; }
+          })
+          .filter(Boolean) || [];
+        
+        // Merge: File products take precedence, add any Redis-only products
+        const fileIds = new Set(fileProducts.map((p: any) => p.id));
+        const missingFromFile = redisProducts.filter((p: any) => p && !fileIds.has(p.id));
+        
+        if (missingFromFile.length > 0) {
+          console.log(`[getProducts] Found ${missingFromFile.length} products in Redis not in file, syncing...`);
+          fileProducts.push(...missingFromFile);
+          // Save merged list back to file
+          await writeDataFile(fileProducts);
+        }
+      }
+    } catch (err) {
+      console.error('[getProducts] Redis sync error:', err);
+      // Continue with file data
     }
   }
   
-  // File fallback
-  return readDataFile();
+  return fileProducts.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
 }
 
 export async function getProduct(id: string): Promise<any | null> {
-  if (redis) {
+  // ALWAYS read from file (source of truth)
+  const products = await readDataFile();
+  const product = products.find((p: any) => p.id === id);
+  
+  // If not in file but in Redis, sync it back
+  if (!product && redis) {
     try {
       const data = await redis.get(KEYS.PRODUCTS + id);
-      return data ? JSON.parse(data) : null;
-    } catch {
-      // Fall through
+      if (data) {
+        const redisProduct = JSON.parse(data);
+        console.log(`[getProduct] Found product ${id} in Redis but not file, syncing...`);
+        products.push(redisProduct);
+        await writeDataFile(products);
+        return redisProduct;
+      }
+    } catch (err) {
+      console.error('[getProduct] Redis read error:', err);
     }
   }
   
-  const products = await readDataFile();
-  return products.find((p: any) => p.id === id) || null;
+  return product || null;
 }
 
 export async function saveProduct(product: any): Promise<void> {
   const id = product.id || String(Date.now());
   const productWithId = { ...product, id, createdAt: product.createdAt || Date.now() };
   
-  if (redis) {
-    try {
-      await redis.set(KEYS.PRODUCTS + id, JSON.stringify(productWithId));
-      await redis.sadd(KEYS.PRODUCT_LIST, id);
-      return;
-    } catch {
-      // Fall through to file
-    }
-  }
-  
-  // File fallback
+  // ALWAYS write to file (source of truth)
   const products = await readDataFile();
   const existingIndex = products.findIndex((p: any) => p.id === id);
   
@@ -111,23 +126,35 @@ export async function saveProduct(product: any): Promise<void> {
   }
   
   await writeDataFile(products);
+  
+  // Also write to Redis if available (for performance)
+  if (redis) {
+    try {
+      await redis.set(KEYS.PRODUCTS + id, JSON.stringify(productWithId));
+      await redis.sadd(KEYS.PRODUCT_LIST, id);
+    } catch (err) {
+      console.error('[saveProduct] Redis write failed, but file saved:', err);
+      // Don't throw - file is source of truth
+    }
+  }
 }
 
 export async function deleteProduct(id: string): Promise<void> {
+  // ALWAYS delete from file (source of truth)
+  const products = await readDataFile();
+  const filtered = products.filter((p: any) => p.id !== id);
+  await writeDataFile(filtered);
+  
+  // Also delete from Redis if available
   if (redis) {
     try {
       await redis.del(KEYS.PRODUCTS + id);
       await redis.srem(KEYS.PRODUCT_LIST, id);
-      return;
-    } catch {
-      // Fall through
+    } catch (err) {
+      console.error('[deleteProduct] Redis delete failed, but file updated:', err);
+      // Don't throw - file is source of truth
     }
   }
-  
-  // File fallback
-  const products = await readDataFile();
-  const filtered = products.filter((p: any) => p.id !== id);
-  await writeDataFile(filtered);
 }
 
 export async function getCategories(): Promise<any[]> {
