@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { updateProduct, deleteProduct } from '@/lib/admin-data';
+import { updateProduct, deleteProductById } from '@/lib/admin-data';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -32,7 +32,7 @@ export async function DELETE(
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   
-  const success = await deleteProduct(id);
+  const success = await deleteProductById(id);
   if (!success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   
   return NextResponse.json({ ok: true });

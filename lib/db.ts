@@ -1,102 +1,95 @@
-import { Pool } from 'pg';
+import { Redis } from 'ioredis';
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const REDIS_URL = process.env.REDIS_URL || process.env.DATABASE_URL?.replace('postgresql://', 'redis://');
 
-if (!DATABASE_URL) {
-  console.error('[DB] CRITICAL: DATABASE_URL is not set!');
+if (!REDIS_URL) {
+  console.error('[DB] CRITICAL: REDIS_URL is not set!');
 }
 
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
+const redis = REDIS_URL ? new Redis(REDIS_URL, {
+  maxRetriesPerRequest: 3,
+  connectTimeout: 10000,
+}) : null;
+
+redis?.on('error', (err) => {
+  console.error('[Redis] Error:', err.message);
 });
 
-pool.on('error', (err) => {
-  console.error('[DB] Pool error:', err);
+redis?.on('connect', () => {
+  console.log('[Redis] Connected');
 });
 
-let initialized = false;
-let initPromise: Promise<void> | null = null;
+// Key prefixes
+const KEYS = {
+  PRODUCTS: 'products:',
+  PRODUCT_LIST: 'products:list',
+  CATEGORIES: 'categories:',
+};
 
-export async function initDb(): Promise<void> {
-  if (initialized) return;
-  if (initPromise) return initPromise;
+export async function getProducts(): Promise<any[]> {
+  if (!redis) throw new Error('Redis not connected');
   
-  initPromise = doInit();
-  return initPromise;
+  const ids = await redis.smembers(KEYS.PRODUCT_LIST);
+  if (!ids.length) return [];
+  
+  const pipeline = redis.pipeline();
+  ids.forEach(id => pipeline.get(KEYS.PRODUCTS + id));
+  const results = await pipeline.exec();
+  
+  return results
+    ?.map(([err, data]) => {
+      if (err || !data) return null;
+      try { return JSON.parse(data as string); } catch { return null; }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)) || [];
 }
 
-async function doInit(): Promise<void> {
-  if (!DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
-  }
-  
-  try {
-    console.log('[DB] Initializing tables...');
-    
-    // Use pool directly to avoid circular dependency with query()
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS products (
-          id VARCHAR PRIMARY KEY,
-          slug VARCHAR UNIQUE NOT NULL,
-          name VARCHAR NOT NULL,
-          category VARCHAR NOT NULL,
-          condition VARCHAR,
-          price DECIMAL NOT NULL,
-          currency VARCHAR DEFAULT 'USD',
-          description TEXT NOT NULL,
-          image VARCHAR NOT NULL,
-          in_stock BOOLEAN DEFAULT true,
-          featured BOOLEAN DEFAULT false,
-          tags TEXT[] DEFAULT ARRAY[]::TEXT[],
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS categories (
-          id VARCHAR PRIMARY KEY,
-          label VARCHAR NOT NULL,
-          icon VARCHAR NOT NULL,
-          slug VARCHAR UNIQUE NOT NULL
-        )
-      `);
-      
-      initialized = true;
-      console.log('[DB] Tables initialized successfully');
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error('[DB] Init failed:', error);
-    throw error;
-  }
+export async function getProduct(id: string): Promise<any | null> {
+  if (!redis) throw new Error('Redis not connected');
+  const data = await redis.get(KEYS.PRODUCTS + id);
+  return data ? JSON.parse(data) : null;
 }
 
-export async function query(text: string, params?: any[]) {
-  // Auto-init on first query
-  if (!initialized) {
-    await initDb();
-  }
+export async function saveProduct(product: any): Promise<void> {
+  if (!redis) throw new Error('Redis not connected');
   
-  if (!DATABASE_URL) {
-    throw new Error('DATABASE_URL not configured');
-  }
+  const id = product.id || String(Date.now());
+  const productWithId = { ...product, id, createdAt: product.createdAt || Date.now() };
   
-  const client = await pool.connect();
-  try {
-    console.log('[DB] Executing query:', text.slice(0, 100));
-    const result = await client.query(text, params);
-    console.log('[DB] Query success, rows:', result.rowCount);
-    return result.rows;
-  } catch (error) {
-    console.error('[DB] Query failed:', error);
-    throw error;
-  } finally {
-    client.release();
-  }
+  await redis.set(KEYS.PRODUCTS + id, JSON.stringify(productWithId));
+  await redis.sadd(KEYS.PRODUCT_LIST, id);
 }
+
+export async function deleteProduct(id: string): Promise<void> {
+  if (!redis) throw new Error('Redis not connected');
+  
+  await redis.del(KEYS.PRODUCTS + id);
+  await redis.srem(KEYS.PRODUCT_LIST, id);
+}
+
+export async function getCategories(): Promise<any[]> {
+  if (!redis) return defaultCategories();
+  
+  const data = await redis.get(KEYS.CATEGORIES + 'all');
+  if (data) return JSON.parse(data);
+  
+  const cats = defaultCategories();
+  await redis.set(KEYS.CATEGORIES + 'all', JSON.stringify(cats));
+  return cats;
+}
+
+function defaultCategories() {
+  return [
+    { id: 'mobile', label: 'Mobile & Accessories', icon: 'smartphone', slug: 'mobile' },
+    { id: 'laptops', label: 'Laptops & Computing', icon: 'laptop', slug: 'laptops' },
+    { id: 'networking', label: 'Networking & Wi-Fi', icon: 'network', slug: 'networking' },
+    { id: 'power', label: 'Power & Backup', icon: 'battery', slug: 'power' },
+    { id: 'audio', label: 'Audio & Headphones', icon: 'headphones', slug: 'audio' },
+    { id: 'gadgets', label: 'Gadgets & Devices', icon: 'gadget', slug: 'gadgets' },
+    { id: 'accessories', label: 'Accessories & Cables', icon: 'plug', slug: 'accessories' },
+    { id: 'printing', label: 'Printing & Office', icon: 'printer', slug: 'printing' },
+  ];
+}
+
+export { redis, KEYS };

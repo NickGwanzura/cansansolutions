@@ -1,29 +1,29 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { redis } from '@/lib/db';
 
 export async function GET() {
-  const checks: Record<string, any> = {
+  const checks: any = {
     timestamp: new Date().toISOString(),
-    env: {
-      NODE_ENV: process.env.NODE_ENV,
-      HAS_DATABASE_URL: !!process.env.DATABASE_URL,
-    },
+    redis: { status: 'unknown' },
   };
 
-  // Test database
   try {
-    const result = await query('SELECT NOW() as now');
-    checks.db = { status: 'ok', now: result[0]?.now };
+    if (redis) {
+      await redis.ping();
+      checks.redis = { status: 'ok' };
+    } else {
+      checks.redis = { status: 'error', message: 'Redis not initialized' };
+    }
   } catch (error) {
-    checks.db = { 
+    checks.redis = { 
       status: 'error', 
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 
-  const allOk = checks.db.status === 'ok';
+  const allOk = checks.redis.status === 'ok';
   
   return NextResponse.json(checks, { 
     status: allOk ? 200 : 500 
