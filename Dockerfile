@@ -8,6 +8,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Install build dependencies for native modules
+RUN apk add --no-cache libc6-compat python3 make g++
+
 # Copy package files
 COPY package.json package-lock.json ./
 RUN npm ci --production=false
@@ -18,6 +21,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install build dependencies
+RUN apk add --no-cache libc6-compat
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -42,7 +48,7 @@ ENV PORT=3000
 ENV UPLOAD_DIR=/app/uploads
 
 # Install dumb-init and curl for healthchecks
-RUN apk add --no-cache dumb-init curl
+RUN apk add --no-cache dumb-init curl libc6-compat
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
