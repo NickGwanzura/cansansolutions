@@ -68,10 +68,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/products')
+    fetch('/api/products', { cache: 'no-store' })
       .then(res => res.json())
       .then((data: Product[]) => {
-        setFeatured(data.filter((p) => p.featured));
+        console.log('[Home] Loaded products:', data.length);
+        setFeatured(Array.isArray(data) ? data.filter((p) => p.featured) : []);
         setLoading(false);
       })
       .catch(err => {

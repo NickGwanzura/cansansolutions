@@ -26,10 +26,11 @@ function ProductsContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetch('/api/products')
+    fetch('/api/products', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
-        setProducts(data);
+        console.log('[Frontend] Loaded products:', data.length);
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
