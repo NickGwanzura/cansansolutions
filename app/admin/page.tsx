@@ -155,7 +155,6 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
         )}
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
       </div>
-      {/* Direct URL input */}
       <input
         type="text"
         value={value}
@@ -168,7 +167,7 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
 }
 
 // ─────────────────────────────────────────────
-// Product form panel (Add / Edit)
+// Product form panel
 // ─────────────────────────────────────────────
 type FormData = typeof EMPTY_FORM;
 
@@ -203,7 +202,6 @@ function ProductForm({
     e.preventDefault();
     setError('');
     
-    // Validation
     if (!form.name.trim()) return setError('Product name is required');
     if (!form.slug.trim()) return setError('Slug is required');
     if (!form.price || isNaN(parseFloat(String(form.price)))) return setError('Valid price is required');
@@ -215,9 +213,7 @@ function ProductForm({
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* backdrop */}
       <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      {/* panel */}
       <div className="w-full max-w-md bg-white flex flex-col shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
           <h2 className="font-heading text-sm font-bold text-zinc-900">
@@ -237,10 +233,8 @@ function ProductForm({
             </div>
           )}
           
-          {/* Image */}
           <ImageUpload value={form.image} onChange={(url) => set('image', url)} />
 
-          {/* Name */}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-zinc-500 mb-1">Product Name *</label>
@@ -301,7 +295,6 @@ function ProductForm({
             </div>
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-xs font-semibold text-zinc-500 mb-1">Description *</label>
             <textarea
@@ -314,7 +307,6 @@ function ProductForm({
             />
           </div>
 
-          {/* Tags */}
           <div>
             <label className="block text-xs font-semibold text-zinc-500 mb-1">
               Tags <span className="font-normal text-zinc-400">(comma separated)</span>
@@ -327,7 +319,6 @@ function ProductForm({
             />
           </div>
 
-          {/* Toggles */}
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <button
@@ -393,6 +384,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  
+  // Batch delete states
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   const [toast, setToast] = useState('');
 
@@ -416,6 +412,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     const matchStock = filterStock === 'all' || (filterStock === 'in' ? p.inStock : !p.inStock);
     return matchSearch && matchCat && matchStock;
   });
+
+  // Batch selection helpers
+  const allSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+  
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(p => p.id)));
+    }
+  };
+  
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
 
   const openAdd = () => { setEditTarget(null); setFormOpen(true); };
   const openEdit = (p: Product) => { setEditTarget(p); setFormOpen(true); };
@@ -459,6 +474,28 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setDeleteId(null);
       fetchProducts();
       showToast('Product deleted');
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setBatchDeleting(true);
+    const res = await fetch('/api/admin/products/batch', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(selectedIds) }),
+    });
+    setBatchDeleting(false);
+    
+    if (res.ok) {
+      const result = await res.json();
+      setSelectedIds(new Set());
+      setBatchDeleteOpen(false);
+      fetchProducts();
+      showToast(`${result.deleted} products deleted`);
+    } else {
+      showToast('Batch delete failed');
     }
   };
 
@@ -545,6 +582,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <option value="in">In stock</option>
             <option value="out">Out of stock</option>
           </select>
+          
+          {/* Batch delete button */}
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setBatchDeleteOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+              Delete {selectedIds.size} selected
+            </button>
+          )}
+          
           <button
             onClick={openAdd}
             className="ml-auto flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 shadow-sm"
@@ -572,6 +623,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                      <th className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          ref={el => el && (el.indeterminate = someSelected)}
+                          onChange={toggleSelectAll}
+                          className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
+                        />
+                      </th>
                       <th className="px-4 py-3">Product</th>
                       <th className="px-4 py-3 hidden sm:table-cell">Category</th>
                       <th className="px-4 py-3">Price</th>
@@ -581,7 +641,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </thead>
                   <tbody>
                     {filtered.map((p) => (
-                      <tr key={p.id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors">
+                      <tr key={p.id} className={`border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors ${selectedIds.has(p.id) ? 'bg-red-50/30' : ''}`}>
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(p.id)}
+                            onChange={() => toggleSelect(p.id)}
+                            className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 shrink-0 rounded-lg border border-zinc-100 bg-zinc-50 overflow-hidden">
@@ -652,7 +720,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         />
       )}
 
-      {/* Delete confirmation modal */}
+      {/* Single delete confirmation modal */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
@@ -671,6 +739,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               </button>
               <button onClick={() => handleDelete(deleteId)} className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition">
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch delete confirmation modal */}
+      {batchDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-red-600">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </div>
+            <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">Delete {selectedIds.size} products?</h3>
+            <p className="text-sm text-zinc-500 mb-5">
+              This will permanently remove {selectedIds.size} selected products from the catalog. This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setBatchDeleteOpen(false)} 
+                className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleBatchDelete} 
+                disabled={batchDeleting}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-60"
+              >
+                {batchDeleting ? 'Deleting…' : `Delete ${selectedIds.size} Products`}
               </button>
             </div>
           </div>
