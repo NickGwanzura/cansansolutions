@@ -1,7 +1,6 @@
 import { query } from './db';
 import type { Product } from './types';
 
-// Transform database row to Product type
 function mapRow(row: any): Product {
   return {
     id: row.id,
@@ -20,14 +19,14 @@ function mapRow(row: any): Product {
 }
 
 export async function readProducts(): Promise<Product[]> {
+  console.log('[readProducts] Entry');
   try {
-    console.log('[readProducts] Starting...');
     const rows = await query('SELECT * FROM products ORDER BY created_at DESC');
-    console.log('[readProducts] Got', rows.length, 'products');
+    console.log('[readProducts] Got', rows.length, 'rows');
     return rows.map(mapRow);
   } catch (error) {
-    console.error('[readProducts] Failed:', error);
-    throw error; // Re-throw to let API handle it
+    console.error('[readProducts] FAILED:', error);
+    throw error;
   }
 }
 
@@ -36,66 +35,40 @@ export async function getProductById(id: string): Promise<Product | null> {
     const rows = await query('SELECT * FROM products WHERE id = $1', [id]);
     return rows.length > 0 ? mapRow(rows[0]) : null;
   } catch (error) {
-    console.error('[getProductById] Failed:', error);
-    throw error;
-  }
-}
-
-export async function getProductBySlug(slug: string): Promise<Product | null> {
-  try {
-    const rows = await query('SELECT * FROM products WHERE slug = $1', [slug]);
-    return rows.length > 0 ? mapRow(rows[0]) : null;
-  } catch (error) {
-    console.error('[getProductBySlug] Failed:', error);
+    console.error('[getProductById] FAILED:', error);
     throw error;
   }
 }
 
 export async function createProduct(data: Omit<Product, 'id'>): Promise<Product> {
+  console.log('[createProduct] Entry');
   try {
-    console.log('[createProduct] Starting with data:', JSON.stringify(data, null, 2));
-    
     const products = await readProducts();
     const id = nextId(products);
     
-    console.log('[createProduct] Generated ID:', id);
-    
-    // Validate required fields
-    if (!data.slug) throw new Error('slug is required');
-    if (!data.name) throw new Error('name is required');
-    if (!data.category) throw new Error('category is required');
-    if (data.price === undefined || data.price === null) throw new Error('price is required');
-    if (!data.description) throw new Error('description is required');
-    if (!data.image) throw new Error('image is required');
+    // Validate
+    if (!data.slug) throw new Error('slug required');
+    if (!data.name) throw new Error('name required');
+    if (!data.category) throw new Error('category required');
+    if (data.price == null) throw new Error('price required');
+    if (!data.description) throw new Error('description required');
+    if (!data.image) throw new Error('image required');
     
     await query(
       `INSERT INTO products (id, slug, name, category, condition, price, currency, description, image, in_stock, featured, tags)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
-        id,
-        data.slug,
-        data.name,
-        data.category,
-        data.condition || null,
-        data.price,
-        data.currency || 'USD',
-        data.description,
-        data.image,
-        data.inStock ?? true,
-        data.featured ?? false,
-        data.tags || [],
+        id, data.slug, data.name, data.category, data.condition || null,
+        data.price, data.currency || 'USD', data.description, data.image,
+        data.inStock ?? true, data.featured ?? false, data.tags || [],
       ]
     );
     
-    console.log('[createProduct] Insert successful');
-    
     const product = await getProductById(id);
     if (!product) throw new Error('Failed to retrieve created product');
-    
-    console.log('[createProduct] Product created:', product);
     return product;
   } catch (error) {
-    console.error('[createProduct] Error:', error);
+    console.error('[createProduct] FAILED:', error);
     throw error;
   }
 }
@@ -104,34 +77,34 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
   try {
     const fields: string[] = [];
     const values: any[] = [];
-    let paramIndex = 1;
+    let i = 1;
     
-    if (data.slug) { fields.push(`slug = $${paramIndex++}`); values.push(data.slug); }
-    if (data.name) { fields.push(`name = $${paramIndex++}`); values.push(data.name); }
-    if (data.category) { fields.push(`category = $${paramIndex++}`); values.push(data.category); }
-    if (data.condition !== undefined) { fields.push(`condition = $${paramIndex++}`); values.push(data.condition); }
-    if (data.price !== undefined) { fields.push(`price = $${paramIndex++}`); values.push(data.price); }
-    if (data.currency) { fields.push(`currency = $${paramIndex++}`); values.push(data.currency); }
-    if (data.description) { fields.push(`description = $${paramIndex++}`); values.push(data.description); }
-    if (data.image) { fields.push(`image = $${paramIndex++}`); values.push(data.image); }
-    if (data.inStock !== undefined) { fields.push(`in_stock = $${paramIndex++}`); values.push(data.inStock); }
-    if (data.featured !== undefined) { fields.push(`featured = $${paramIndex++}`); values.push(data.featured); }
-    if (data.tags) { fields.push(`tags = $${paramIndex++}`); values.push(data.tags); }
+    if (data.slug) { fields.push(`slug = $${i++}`); values.push(data.slug); }
+    if (data.name) { fields.push(`name = $${i++}`); values.push(data.name); }
+    if (data.category) { fields.push(`category = $${i++}`); values.push(data.category); }
+    if (data.condition !== undefined) { fields.push(`condition = $${i++}`); values.push(data.condition); }
+    if (data.price !== undefined) { fields.push(`price = $${i++}`); values.push(data.price); }
+    if (data.currency) { fields.push(`currency = $${i++}`); values.push(data.currency); }
+    if (data.description) { fields.push(`description = $${i++}`); values.push(data.description); }
+    if (data.image) { fields.push(`image = $${i++}`); values.push(data.image); }
+    if (data.inStock !== undefined) { fields.push(`in_stock = $${i++}`); values.push(data.inStock); }
+    if (data.featured !== undefined) { fields.push(`featured = $${i++}`); values.push(data.featured); }
+    if (data.tags) { fields.push(`tags = $${i++}`); values.push(data.tags); }
     
     if (fields.length === 0) return getProductById(id);
     
-    fields.push(`updated_at = $${paramIndex++}`);
+    fields.push(`updated_at = $${i++}`);
     values.push(new Date());
     values.push(id);
     
     await query(
-      `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`,
+      `UPDATE products SET ${fields.join(', ')} WHERE id = $${i}`,
       values
     );
     
     return getProductById(id);
   } catch (error) {
-    console.error('[updateProduct] Failed:', error);
+    console.error('[updateProduct] FAILED:', error);
     throw error;
   }
 }
@@ -141,7 +114,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
     await query('DELETE FROM products WHERE id = $1', [id]);
     return true;
   } catch (error) {
-    console.error('[deleteProduct] Failed:', error);
+    console.error('[deleteProduct] FAILED:', error);
     throw error;
   }
 }
