@@ -18,6 +18,7 @@ const EMPTY_FORM = {
   name: '',
   slug: '',
   category: 'mobile',
+  condition: '',
   price: '',
   currency: 'USD',
   description: '',
@@ -258,6 +259,18 @@ function ProductForm({
               </select>
             </div>
             <div>
+              <label className="block text-xs font-semibold text-zinc-500 mb-1">Condition</label>
+              <select
+                value={form.condition}
+                onChange={(e) => set('condition', e.target.value)}
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+              >
+                <option value="">Select condition</option>
+                <option value="new">Brand New</option>
+                <option value="pre-owned">Pre-owned</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-semibold text-zinc-500 mb-1">Price (USD) *</label>
               <input
                 required
@@ -395,6 +408,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     const body = {
       ...form,
       price: parseFloat(String(form.price)),
+      condition: form.condition || undefined,
       tags: String(form.tags).split(',').map((t) => t.trim()).filter(Boolean),
     };
     let res: Response;
@@ -609,7 +623,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <ProductForm
           initial={
             editTarget
-              ? { ...editTarget, price: String(editTarget.price), tags: editTarget.tags.join(', ') }
+              ? { ...editTarget, price: String(editTarget.price), tags: editTarget.tags.join(', '), condition: editTarget.condition || '' }
               : EMPTY_FORM
           }
           onSave={handleSave}

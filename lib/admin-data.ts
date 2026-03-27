@@ -48,14 +48,12 @@ export async function readProducts(): Promise<Product[]> {
     });
     return products.map(mapPrismaToProduct);
   } catch (error) {
-    console.error('Failed to read products from DB:', error);
-    return [];
+    console.error('[readProducts] Failed to read products from DB:', error);
+    throw error;
   }
 }
 
 export async function writeProducts(products: Product[]): Promise<void> {
-  // This function is kept for compatibility but not used
-  // Individual create/update/delete should be used instead
   console.warn('writeProducts is deprecated, use createProduct/updateProduct/deleteProduct');
 }
 
@@ -66,8 +64,8 @@ export async function getProductById(id: string): Promise<Product | null> {
     });
     return product ? mapPrismaToProduct(product) : null;
   } catch (error) {
-    console.error('Failed to get product:', error);
-    return null;
+    console.error('[getProductById] Failed:', error);
+    throw error;
   }
 }
 
@@ -78,33 +76,41 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     });
     return product ? mapPrismaToProduct(product) : null;
   } catch (error) {
-    console.error('Failed to get product by slug:', error);
-    return null;
+    console.error('[getProductBySlug] Failed:', error);
+    throw error;
   }
 }
 
 export async function createProduct(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-  const products = await readProducts();
-  const id = nextId(products);
-  
-  const product = await prisma.product.create({
-    data: {
-      id,
-      slug: data.slug,
-      name: data.name,
-      category: data.category,
-      condition: mapConditionToPrisma(data.condition),
-      price: data.price,
-      currency: data.currency,
-      description: data.description,
-      image: data.image,
-      inStock: data.inStock,
-      featured: data.featured,
-      tags: data.tags,
-    }
-  });
-  
-  return mapPrismaToProduct(product);
+  try {
+    const products = await readProducts();
+    const id = nextId(products);
+    
+    console.log('[createProduct] Creating with data:', { ...data, id });
+    
+    const product = await prisma.product.create({
+      data: {
+        id,
+        slug: data.slug,
+        name: data.name,
+        category: data.category,
+        condition: mapConditionToPrisma(data.condition),
+        price: data.price,
+        currency: data.currency,
+        description: data.description,
+        image: data.image,
+        inStock: data.inStock,
+        featured: data.featured,
+        tags: data.tags,
+      }
+    });
+    
+    console.log('[createProduct] Created:', product);
+    return mapPrismaToProduct(product);
+  } catch (error) {
+    console.error('[createProduct] Failed:', error);
+    throw error;
+  }
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
@@ -122,8 +128,8 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
     
     return mapPrismaToProduct(product);
   } catch (error) {
-    console.error('Failed to update product:', error);
-    return null;
+    console.error('[updateProduct] Failed:', error);
+    throw error;
   }
 }
 
@@ -134,8 +140,8 @@ export async function deleteProduct(id: string): Promise<boolean> {
     });
     return true;
   } catch (error) {
-    console.error('Failed to delete product:', error);
-    return false;
+    console.error('[deleteProduct] Failed:', error);
+    throw error;
   }
 }
 

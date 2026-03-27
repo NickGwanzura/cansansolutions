@@ -10,19 +10,40 @@ async function checkAuth() {
 }
 
 export async function GET() {
-  if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json(await readProducts());
+  try {
+    if (!(await checkAuth())) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const products = await readProducts();
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('[API GET /admin/products] Error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to fetch products',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
-  if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const data = await req.json();
-  
   try {
+    if (!(await checkAuth())) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const data = await req.json();
+    console.log('[API POST /admin/products] Creating product:', data);
+    
     const product = await createProduct(data);
+    console.log('[API POST /admin/products] Product created:', product);
+    
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error('Failed to create product:', error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    console.error('[API POST /admin/products] Error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to create product',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
