@@ -6,21 +6,26 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Condition {
+  new
+  pre_owned
+}
+
 model Product {
-  id          String   @id
-  slug        String   @unique
+  id          String    @id
+  slug        String    @unique
   name        String
   category    String
-  condition   String?
+  condition   Condition?
   price       Float
-  currency    String   @default("USD")
+  currency    String    @default("USD")
   description String
   image       String
-  inStock     Boolean  @default(true)
-  featured    Boolean  @default(false)
+  inStock     Boolean   @default(true)
+  featured    Boolean   @default(false)
   tags        String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Category {

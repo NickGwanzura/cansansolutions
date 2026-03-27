@@ -1,5 +1,43 @@
 import { prisma } from './prisma';
-import type { Product } from './types';
+import type { Product, Condition } from './types';
+
+// Transform Prisma product to app Product type
+function mapPrismaToProduct(p: {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  condition: 'new' | 'pre_owned' | null;
+  price: number;
+  currency: string;
+  description: string;
+  image: string;
+  inStock: boolean;
+  featured: boolean;
+  tags: string[];
+}): Product {
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    category: p.category,
+    condition: p.condition === 'pre_owned' ? 'pre-owned' : p.condition ?? undefined,
+    price: p.price,
+    currency: p.currency,
+    description: p.description,
+    image: p.image,
+    inStock: p.inStock,
+    featured: p.featured,
+    tags: p.tags,
+  };
+}
+
+// Transform app Product condition to Prisma enum
+function mapConditionToPrisma(condition?: Condition): 'new' | 'pre_owned' | null {
+  if (condition === 'new') return 'new';
+  if (condition === 'pre-owned') return 'pre_owned';
+  return null;
+}
 
 // All operations now use PostgreSQL via Prisma
 
@@ -8,7 +46,7 @@ export async function readProducts(): Promise<Product[]> {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' }
     });
-    return products;
+    return products.map(mapPrismaToProduct);
   } catch (error) {
     console.error('Failed to read products from DB:', error);
     return [];
@@ -26,7 +64,7 @@ export async function getProductById(id: string): Promise<Product | null> {
     const product = await prisma.product.findUnique({
       where: { id }
     });
-    return product;
+    return product ? mapPrismaToProduct(product) : null;
   } catch (error) {
     console.error('Failed to get product:', error);
     return null;
@@ -38,7 +76,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const product = await prisma.product.findUnique({
       where: { slug }
     });
-    return product;
+    return product ? mapPrismaToProduct(product) : null;
   } catch (error) {
     console.error('Failed to get product by slug:', error);
     return null;
@@ -52,23 +90,37 @@ export async function createProduct(data: Omit<Product, 'id' | 'createdAt' | 'up
   const product = await prisma.product.create({
     data: {
       id,
-      ...data,
+      slug: data.slug,
+      name: data.name,
+      category: data.category,
+      condition: mapConditionToPrisma(data.condition),
+      price: data.price,
+      currency: data.currency,
+      description: data.description,
+      image: data.image,
+      inStock: data.inStock,
+      featured: data.featured,
+      tags: data.tags,
     }
   });
   
-  return product;
+  return mapPrismaToProduct(product);
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
   try {
+    const updateData: Record<string, unknown> = { ...data };
+    
+    if ('condition' in data) {
+      updateData.condition = mapConditionToPrisma(data.condition);
+    }
+    
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date(),
-      }
+      data: updateData
     });
-    return product;
+    
+    return mapPrismaToProduct(product);
   } catch (error) {
     console.error('Failed to update product:', error);
     return null;

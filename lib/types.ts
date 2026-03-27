@@ -1,9 +1,11 @@
+export type Condition = 'new' | 'pre-owned';
+
 export type Product = {
   id: string;
   slug: string;
   name: string;
   category: string;
-  condition?: 'new' | 'pre-owned';
+  condition?: Condition;
   price: number;
   currency: string;
   description: string;
