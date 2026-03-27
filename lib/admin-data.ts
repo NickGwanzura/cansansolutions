@@ -50,33 +50,38 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function createProduct(data: Omit<Product, 'id'>): Promise<Product> {
-  const products = await readProducts();
-  const id = nextId(products);
-  
-  console.log('[createProduct] Creating:', { ...data, id });
-  
-  await query(
-    `INSERT INTO products (id, slug, name, category, condition, price, currency, description, image, in_stock, featured, tags)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [
-      id,
-      data.slug,
-      data.name,
-      data.category,
-      data.condition || null,
-      data.price,
-      data.currency || 'USD',
-      data.description,
-      data.image,
-      data.inStock ?? true,
-      data.featured ?? false,
-      data.tags || [],
-    ]
-  );
-  
-  const product = await getProductById(id);
-  if (!product) throw new Error('Failed to create product');
-  return product;
+  try {
+    const products = await readProducts();
+    const id = nextId(products);
+    
+    console.log('[createProduct] Creating:', { ...data, id });
+    
+    await query(
+      `INSERT INTO products (id, slug, name, category, condition, price, currency, description, image, in_stock, featured, tags)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        id,
+        data.slug,
+        data.name,
+        data.category,
+        data.condition || null,
+        data.price,
+        data.currency || 'USD',
+        data.description,
+        data.image,
+        data.inStock ?? true,
+        data.featured ?? false,
+        data.tags || [],
+      ]
+    );
+    
+    const product = await getProductById(id);
+    if (!product) throw new Error('Failed to create product');
+    return product;
+  } catch (error) {
+    console.error('[createProduct] Error:', error);
+    throw error;
+  }
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
