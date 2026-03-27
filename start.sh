@@ -14,9 +14,20 @@ echo ""
 UPLOAD_DIR="${UPLOAD_DIR:-/app/public/images/products}"
 echo "[Setup] Creating upload directories..."
 mkdir -p "$UPLOAD_DIR"
-mkdir -p "/app/data"
 mkdir -p "/app/public/images/products"
-ls -la "$UPLOAD_DIR" || echo "[Setup] Upload dir not accessible yet"
+ls -la "$UPLOAD_DIR" 2>/dev/null || echo "[Setup] Upload dir check complete"
+echo ""
+
+# Initialize data directory if empty (volume mount overwrites copied data)
+if [ ! -f "/app/data/products.json" ]; then
+    echo "[Data] Initializing products.json..."
+    mkdir -p /app/data
+    echo '[]' > /app/data/products.json
+    chown nextjs:nodejs /app/data/products.json
+    echo "[Data] Created empty products.json"
+else
+    echo "[Data] products.json exists"
+fi
 echo ""
 
 # Try to run DB push, but don't fail if it errors
