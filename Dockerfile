@@ -33,18 +33,16 @@ RUN apk add --no-cache dumb-init curl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Create directories (uploads for runtime image storage)
+# Create directories
 RUN mkdir -p /app/data /app/uploads/products && \
     chown -R nextjs:nodejs /app
 
 # Copy built files
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
-COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 RUN chmod +x start.sh
 
 USER nextjs
