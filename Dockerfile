@@ -29,8 +29,8 @@ COPY . .
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Generate Prisma client and build
-RUN npx prisma generate && next build
+# Generate Prisma client and build (use npx for next)
+RUN npx prisma generate && ./node_modules/.bin/next build
 
 # 3. Production stage
 FROM node:22-alpine AS runner
