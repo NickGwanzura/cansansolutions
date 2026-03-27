@@ -11,6 +11,11 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_TELEMETRY_DISABLED=1
+      - UPLOAD_DIR=/app/uploads/products
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
+    volumes:
+      - uploads_data:/app/uploads
+      - data_volume:/app/data
     depends_on:
       - db
     restart: unless-stopped
@@ -38,3 +43,5 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
+  data_volume:

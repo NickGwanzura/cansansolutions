@@ -39,6 +39,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ENV UPLOAD_DIR=/app/uploads
 
 # Install dumb-init and curl for healthchecks
 RUN apk add --no-cache dumb-init curl
@@ -47,8 +48,8 @@ RUN apk add --no-cache dumb-init curl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Create required directories with proper permissions
-RUN mkdir -p data public/images/products && \
+# Create required directories with proper permissions BEFORE copying
+RUN mkdir -p /app/data /app/uploads/products /app/public/images/products && \
     chown -R nextjs:nodejs /app
 
 # Copy only necessary files from builder
@@ -59,12 +60,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_m
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+# Copy public folder (static assets only - not uploads)
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copy data files and startup script
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
 RUN chmod +x start.sh
+
+# Ensure upload directories are writable by nextjs
+RUN chown -R nextjs:nodejs /app/uploads /app/public/images /app/data
 
 USER nextjs
 
