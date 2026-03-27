@@ -18,6 +18,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Prevent Prisma from requiring DB at build time
+ENV PRISMA_CLIENT_ENGINE_TYPE=library
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -29,8 +31,11 @@ COPY . .
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Generate Prisma client and build
-RUN npx prisma generate && ./node_modules/.bin/next build
+# Generate Prisma client only (NO db push - no DB needed at build)
+RUN npx prisma generate
+
+# Build Next.js
+RUN ./node_modules/.bin/next build
 
 # 3. Production stage
 FROM node:22-alpine AS runner

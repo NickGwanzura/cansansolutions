@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import products from '../data/products.json';
 import categories from '../data/categories.json';

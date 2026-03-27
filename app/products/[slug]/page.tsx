@@ -1,37 +1,65 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import categoriesData from '@/data/categories.json';
-import type { Category } from '@/lib/types';
+import type { Product, Category } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { AddToCartButton } from './AddToCartButton';
 import Link from 'next/link';
-import { getProductBySlug, readProducts } from '@/lib/admin-data';
 
 const categories = categoriesData as Category[];
 
-// Disable static generation since we're using database
-export const dynamic = 'force-dynamic';
-
-export async function generateStaticParams() {
-  // Return empty array since we're using dynamic rendering
-  return [];
-}
-
 type Props = { params: Promise<{ slug: string }> };
 
-export default async function ProductPage({ params }: Props) {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  
-  if (!product) notFound();
+export default function ProductPage({ params }: Props) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [slug, setSlug] = useState<string>('');
+
+  useEffect(() => {
+    params.then(({ slug }) => setSlug(slug));
+  }, [params]);
+
+  useEffect(() => {
+    if (!slug) return;
+    
+    fetch('/api/products')
+      .then(res => res.json())
+      .then((products: Product[]) => {
+        const found = products.find(p => p.slug === slug);
+        if (!found) {
+          notFound();
+          return;
+        }
+        setProduct(found);
+        
+        const relatedProducts = products
+          .filter(p => p.category === found.category && p.id !== found.id)
+          .slice(0, 4);
+        setRelated(relatedProducts);
+        
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        notFound();
+      });
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></div>
+      </div>
+    );
+  }
+
+  if (!product) return null;
 
   const category = categories.find((c) => c.id === product.category);
   
-  // Get related products from database
-  const allProducts = await readProducts();
-  const related = allProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
-
   const waText = encodeURIComponent(
     `Hi Cansan Solutions, I'd like to enquire about: ${product.name} ($${product.price})`
   );
