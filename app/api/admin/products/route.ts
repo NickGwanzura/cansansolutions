@@ -19,10 +19,6 @@ async function checkAuth() {
 export async function GET() {
   try {
     console.log('[API GET] Starting request...');
-    console.log('[API GET] ENV check:', { 
-      hasDbUrl: !!process.env.DATABASE_URL,
-      nodeEnv: process.env.NODE_ENV 
-    });
     
     const authed = await checkAuth();
     console.log('[API GET] Auth result:', authed);
@@ -42,25 +38,39 @@ export async function GET() {
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      env: {
-        hasDbUrl: !!process.env.DATABASE_URL,
-        nodeEnv: process.env.NODE_ENV,
-      }
     }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    console.log('[API POST] Starting...');
+    
     if (!(await checkAuth())) {
+      console.log('[API POST] Auth failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const data = await req.json();
-    console.log('[API POST] Creating:', data);
+    let data;
+    try {
+      data = await req.json();
+    } catch (e) {
+      console.error('[API POST] JSON parse failed:', e);
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
     
+    console.log('[API POST] Data received:', JSON.stringify(data, null, 2));
+    
+    if (!data.name) return NextResponse.json({ error: 'name required' }, { status: 400 });
+    if (!data.slug) return NextResponse.json({ error: 'slug required' }, { status: 400 });
+    if (!data.category) return NextResponse.json({ error: 'category required' }, { status: 400 });
+    if (data.price == null) return NextResponse.json({ error: 'price required' }, { status: 400 });
+    if (!data.description) return NextResponse.json({ error: 'description required' }, { status: 400 });
+    if (!data.image) return NextResponse.json({ error: 'image required' }, { status: 400 });
+    
+    console.log('[API POST] Calling createProduct...');
     const product = await createProduct(data);
-    console.log('[API POST] Created:', product.id);
+    console.log('[API POST] Created:', product);
     
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
