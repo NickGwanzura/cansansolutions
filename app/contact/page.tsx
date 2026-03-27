@@ -12,7 +12,7 @@ const contactItems = [
   {
     label: 'WhatsApp',
     value: WA_DISPLAY,
-    detail: 'Fastest way to reach us — chat, order, or enquire.',
+    detail: 'Fastest way to reach us. Chat, order, or enquire.',
     href: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi Cansan Solutions, I'd like to get in touch.")}`,
     external: true,
     icon: (
@@ -27,7 +27,7 @@ const contactItems = [
   {
     label: 'Phone',
     value: WA_DISPLAY,
-    detail: 'Call us during business hours — Mon to Sat, 8am–6pm.',
+    detail: 'Call us during business hours. Mon to Sat, 8am to 6pm.',
     href: `tel:+${WA_NUMBER}`,
     external: false,
     icon: (
@@ -57,7 +57,7 @@ const contactItems = [
   {
     label: 'Location',
     value: 'Shop 7, ZB House',
-    detail: 'Corner Speke & 1st Street, Harare — walk-ins welcome, call ahead to confirm availability.',
+    detail: 'Corner Speke & 1st Street, Harare. Walk-ins welcome, call ahead to confirm availability.',
     href: 'https://maps.google.com/?q=Shop+7+ZB+House+Corner+Speke+and+1st+Street+Harare+Zimbabwe',
     external: true,
     icon: (
@@ -73,8 +73,8 @@ const contactItems = [
 ];
 
 const hours = [
-  { day: 'Monday – Friday', time: '8:00 AM – 6:00 PM' },
-  { day: 'Saturday', time: '9:00 AM – 4:00 PM' },
+  { day: 'Mon to Fri', time: '8:00 AM to 6:00 PM' },
+  { day: 'Saturday', time: '9:00 AM to 4:00 PM' },
   { day: 'Sunday', time: 'Closed' },
 ];
 
@@ -85,7 +85,7 @@ const faqs = [
   },
   {
     q: 'Do you offer delivery?',
-    a: 'Yes — we deliver across Harare and can arrange nationwide courier. Delivery fees vary by location; confirm with us on WhatsApp.',
+    a: 'Yes. We deliver across Harare and can arrange nationwide courier. Delivery fees vary by location; confirm with us on WhatsApp.'
   },
   {
     q: 'Are prices negotiable?',
@@ -110,7 +110,7 @@ export default function ContactPage() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Get in touch</p>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">We&apos;d love to hear from you</h1>
           <p className="mt-5 text-base text-zinc-400 max-w-lg mx-auto leading-relaxed">
-            Questions, quotes, bulk orders, or just need advice — our team is ready. WhatsApp is the fastest way to reach us.
+            Questions, quotes, bulk orders, or just need advice. Our team is ready. WhatsApp is the fastest way to reach us.
           </p>
         </div>
       </section>
@@ -160,7 +160,7 @@ export default function ContactPage() {
               ))}
             </div>
             <p className="mt-4 text-xs text-zinc-400">
-              Outside hours? Send us a WhatsApp — we monitor messages and will reply as soon as possible.
+              Outside hours? Send us a WhatsApp. We monitor messages and will reply as soon as possible.
             </p>
           </div>
 
@@ -182,7 +182,7 @@ export default function ContactPage() {
       {/* Final WhatsApp CTA */}
       <section className="bg-green-600 px-6 py-12 text-center text-white">
         <h2 className="text-xl font-bold">Still have questions?</h2>
-        <p className="mt-1 text-green-100 text-sm">Send us a message — we usually respond within minutes.</p>
+        <p className="mt-1 text-green-100 text-sm">Send us a message. We usually respond within minutes.</p>
         <a
           href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi Cansan Solutions, I have a question.")}`}
           target="_blank"
