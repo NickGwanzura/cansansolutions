@@ -29,10 +29,7 @@ COPY . .
 # Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
 
-# Generate Prisma client only (NO db push - no DB needed at build)
-RUN npx prisma generate
-
-# Build Next.js
+# Build Next.js (Drizzle doesn't need generate step like Prisma)
 RUN ./node_modules/.bin/next build
 
 # 3. Production stage
@@ -58,10 +55,6 @@ RUN mkdir -p /app/data /app/uploads/products /app/public/images/products && \
 # Copy only necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 # Copy public folder (static assets only - not uploads)
@@ -70,6 +63,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Copy data files and startup script
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 RUN chmod +x start.sh
 
 # Ensure upload directories are writable by nextjs

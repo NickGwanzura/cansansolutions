@@ -13,6 +13,8 @@ export type Product = {
   inStock: boolean;
   featured: boolean;
   tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type Category = {

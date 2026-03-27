@@ -1,152 +1,128 @@
-import { prisma } from './prisma';
-import type { Product, Condition } from './types';
+import { db } from '@/drizzle/db';
+import { products, type Product, type NewProduct } from '@/drizzle/schema';
+import { eq, desc } from 'drizzle-orm';
 
-// Transform Prisma product to app Product type
-function mapPrismaToProduct(p: {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  condition: 'new' | 'pre_owned' | null;
-  price: number;
-  currency: string;
-  description: string;
-  image: string;
-  inStock: boolean;
-  featured: boolean;
-  tags: string[];
-}): Product {
+// Transform database product to app Product type (condition mapping)
+function mapProduct(p: Product): Product {
   return {
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    category: p.category,
-    condition: p.condition === 'pre_owned' ? 'pre-owned' : p.condition ?? undefined,
-    price: p.price,
-    currency: p.currency,
-    description: p.description,
-    image: p.image,
-    inStock: p.inStock,
-    featured: p.featured,
-    tags: p.tags,
+    ...p,
+    condition: p.condition as 'new' | 'pre-owned' | null,
   };
 }
 
-// Transform app Product condition to Prisma enum
-function mapConditionToPrisma(condition?: Condition): 'new' | 'pre_owned' | null {
-  if (condition === 'new') return 'new';
-  if (condition === 'pre-owned') return 'pre_owned';
-  return null;
-}
-
-// All operations now use PostgreSQL via Prisma
+// All operations now use Drizzle ORM
 
 export async function readProducts(): Promise<Product[]> {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' }
+    const result = await db.query.products.findMany({
+      orderBy: desc(products.createdAt),
     });
-    return products.map(mapPrismaToProduct);
+    return result.map(mapProduct);
   } catch (error) {
     console.error('[readProducts] Failed to read products from DB:', error);
-    throw error;
+    return [];
   }
 }
 
-export async function writeProducts(products: Product[]): Promise<void> {
+export async function writeProducts(productsData: Product[]): Promise<void> {
   console.warn('writeProducts is deprecated, use createProduct/updateProduct/deleteProduct');
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id }
+    const result = await db.query.products.findFirst({
+      where: eq(products.id, id),
     });
-    return product ? mapPrismaToProduct(product) : null;
+    return result ? mapProduct(result) : null;
   } catch (error) {
     console.error('[getProductById] Failed:', error);
-    throw error;
+    return null;
   }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug }
+    const result = await db.query.products.findFirst({
+      where: eq(products.slug, slug),
     });
-    return product ? mapPrismaToProduct(product) : null;
+    return result ? mapProduct(result) : null;
   } catch (error) {
     console.error('[getProductBySlug] Failed:', error);
-    throw error;
+    return null;
   }
 }
 
-export async function createProduct(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
+export async function createProduct(data: Omit<NewProduct, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
   try {
-    const products = await readProducts();
-    const id = nextId(products);
+    const allProducts = await readProducts();
+    const id = nextId(allProducts);
     
     console.log('[createProduct] Creating with data:', { ...data, id });
     
-    const product = await prisma.product.create({
-      data: {
-        id,
-        slug: data.slug,
-        name: data.name,
-        category: data.category,
-        condition: mapConditionToPrisma(data.condition),
-        price: data.price,
-        currency: data.currency,
-        description: data.description,
-        image: data.image,
-        inStock: data.inStock,
-        featured: data.featured,
-        tags: data.tags,
-      }
-    });
+    const newProduct: NewProduct = {
+      id,
+      slug: data.slug!,
+      name: data.name!,
+      category: data.category!,
+      condition: data.condition as 'new' | 'pre-owned' | null,
+      price: data.price!,
+      currency: data.currency || 'USD',
+      description: data.description!,
+      image: data.image!,
+      inStock: data.inStock ?? true,
+      featured: data.featured ?? false,
+      tags: data.tags || [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     
-    console.log('[createProduct] Created:', product);
-    return mapPrismaToProduct(product);
+    const result = await db.insert(products).values(newProduct).returning();
+    
+    console.log('[createProduct] Created:', result[0]);
+    return mapProduct(result[0]);
   } catch (error) {
     console.error('[createProduct] Failed:', error);
     throw error;
   }
 }
 
-export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
+export async function updateProduct(id: string, data: Partial<NewProduct>): Promise<Product | null> {
   try {
-    const updateData: Record<string, unknown> = { ...data };
+    const updateData: Partial<NewProduct> = {
+      ...data,
+      updatedAt: new Date(),
+    };
     
-    if ('condition' in data) {
-      updateData.condition = mapConditionToPrisma(data.condition);
+    if (data.condition) {
+      updateData.condition = data.condition as 'new' | 'pre-owned' | null;
     }
     
-    const product = await prisma.product.update({
-      where: { id },
-      data: updateData
-    });
+    const result = await db.update(products)
+      .set(updateData)
+      .where(eq(products.id, id))
+      .returning();
     
-    return mapPrismaToProduct(product);
+    return result.length > 0 ? mapProduct(result[0]) : null;
   } catch (error) {
     console.error('[updateProduct] Failed:', error);
-    throw error;
+    return null;
   }
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
-    await prisma.product.delete({
-      where: { id }
-    });
-    return true;
+    const result = await db.delete(products)
+      .where(eq(products.id, id))
+      .returning();
+    return result.length > 0;
   } catch (error) {
     console.error('[deleteProduct] Failed:', error);
-    throw error;
+    return false;
   }
 }
 
-export function nextId(products: Product[]): string {
-  const max = products.reduce((m, p) => {
+export function nextId(productsList: Product[]): string {
+  const max = productsList.reduce((m, p) => {
     const n = parseInt(p.id, 10);
     return isNaN(n) ? m : Math.max(m, n);
   }, 0);

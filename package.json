@@ -4,32 +4,33 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && next build",
+    "build": "next build",
     "start": "next start -p ${PORT:-3000} -H 0.0.0.0",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
     "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.30.10",
     "framer-motion": "^12.37.0",
     "next": "16.1.7",
+    "pg": "^8.11.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zustand": "^5.0.12"
   },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
-  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.11.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.21.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.7",
-    "prisma": "^5.22.0",
     "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

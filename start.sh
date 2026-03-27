@@ -16,16 +16,12 @@ mkdir -p "$UPLOAD_DIR"
 ls -la "$UPLOAD_DIR" 2>/dev/null || echo "[Setup] Upload dir ready"
 echo ""
 
-# Run DB push and seed
+# Run DB migrations (Drizzle)
 if [ -n "$DATABASE_URL" ]; then
-    echo "[DB] Running database push..."
-    npx prisma db push --accept-data-loss || {
-        echo "[DB] Push failed, attempting reset..."
-        npx prisma db push --force-reset --accept-data-loss || true
+    echo "[DB] Running Drizzle migrations..."
+    npx drizzle-kit push --force || {
+        echo "[DB] Migration may have issues, continuing..."
     }
-    
-    echo "[DB] Seeding database..."
-    npx prisma db seed || echo "[DB] Seed completed or skipped"
 else
     echo "[DB] Warning: DATABASE_URL not set"
 fi
