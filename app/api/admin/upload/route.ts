@@ -34,8 +34,8 @@ export async function POST(req: Request) {
 
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     
-    // ALWAYS save to public/images/products so Next.js can serve it
-    const uploadDir = path.join(process.cwd(), 'public', 'images', 'products');
+    // Save to uploads directory (served via /api/images/)
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
     
     console.log(`[Upload] Uploading to: ${uploadDir}`);
     console.log(`[Upload] Filename: ${filename}`);
@@ -50,9 +50,9 @@ export async function POST(req: Request) {
     
     console.log(`[Upload] File saved successfully: ${filePath}`);
 
-    // Return URL (served from /images/products/)
+    // Return URL (served from /api/images/products/)
     return NextResponse.json({ 
-      url: `/images/products/${filename}`,
+      url: `/api/images/products/${filename}`,
       success: true 
     });
   } catch (error) {

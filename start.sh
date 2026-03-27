@@ -9,31 +9,11 @@ echo "PORT: ${PORT:-3000}"
 echo "Has DATABASE_URL: $(if [ -n "$DATABASE_URL" ]; then echo 'YES'; else echo 'NO'; fi)"
 echo ""
 
-# Ensure upload directories exist
-mkdir -p /app/public/images/products
+# Ensure upload directories exist (for runtime uploads)
+mkdir -p /app/uploads/products
+echo "[Setup] Uploads directory ready"
 echo ""
 
-# Init database if URL is set
-if [ -n "$DATABASE_URL" ]; then
-    echo "[DB] Initializing database..."
-    node -e "
-    const { initDb, seedCategories } = require('./lib/db.js');
-    initDb().then(() => {
-      console.log('[DB] Tables created');
-      return seedCategories();
-    }).then(() => {
-      console.log('[DB] Categories seeded');
-      process.exit(0);
-    }).catch(err => {
-      console.error('[DB] Error:', err.message);
-      process.exit(0);
-    });
-    " || echo "[DB] Init may have run already"
-else
-    echo "[DB] Warning: DATABASE_URL not set"
-fi
-
-echo ""
 echo "[Server] Starting on port ${PORT:-3000}..."
 echo "========================================"
 

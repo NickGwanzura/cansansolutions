@@ -33,8 +33,8 @@ RUN apk add --no-cache dumb-init curl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Create directories
-RUN mkdir -p /app/data /app/public/images/products && \
+# Create directories (uploads for runtime image storage)
+RUN mkdir -p /app/data /app/uploads/products && \
     chown -R nextjs:nodejs /app
 
 # Copy built files
