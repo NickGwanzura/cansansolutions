@@ -26,7 +26,8 @@ export async function readProducts(): Promise<Product[]> {
     return rows.map(mapRow);
   } catch (error) {
     console.error('[readProducts] FAILED:', error);
-    throw error;
+    // Return empty array instead of throwing - prevents 500 errors
+    return [];
   }
 }
 
