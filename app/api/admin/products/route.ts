@@ -17,13 +17,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    console.log('[API GET] Fetching products...');
     const products = await readProducts();
+    console.log('[API GET] Products fetched:', products.length);
     return NextResponse.json(products);
   } catch (error) {
-    console.error('[API GET /admin/products] Error:', error);
+    console.error('[API GET] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
     return NextResponse.json({ 
       error: 'Failed to fetch products',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMessage,
+      stack: errorStack,
     }, { status: 500 });
   }
 }
@@ -35,17 +40,20 @@ export async function POST(req: Request) {
     }
     
     const data = await req.json();
-    console.log('[API POST /admin/products] Creating product:', data);
+    console.log('[API POST] Creating product:', data);
     
     const product = await createProduct(data);
-    console.log('[API POST /admin/products] Product created:', product);
+    console.log('[API POST] Product created:', product);
     
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error('[API POST /admin/products] Error:', error);
+    console.error('[API POST] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
     return NextResponse.json({ 
       error: 'Failed to create product',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMessage,
+      stack: errorStack,
     }, { status: 500 });
   }
 }
