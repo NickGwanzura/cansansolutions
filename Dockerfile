@@ -18,8 +18,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-# Prevent Prisma from requiring DB at build time
-ENV PRISMA_CLIENT_ENGINE_TYPE=library
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
