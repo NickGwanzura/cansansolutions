@@ -21,11 +21,13 @@ function mapRow(row: any): Product {
 
 export async function readProducts(): Promise<Product[]> {
   try {
+    console.log('[readProducts] Starting...');
     const rows = await query('SELECT * FROM products ORDER BY created_at DESC');
+    console.log('[readProducts] Got', rows.length, 'products');
     return rows.map(mapRow);
   } catch (error) {
     console.error('[readProducts] Failed:', error);
-    return [];
+    throw error; // Re-throw to let API handle it
   }
 }
 
@@ -35,7 +37,7 @@ export async function getProductById(id: string): Promise<Product | null> {
     return rows.length > 0 ? mapRow(rows[0]) : null;
   } catch (error) {
     console.error('[getProductById] Failed:', error);
-    return null;
+    throw error;
   }
 }
 
@@ -45,16 +47,26 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     return rows.length > 0 ? mapRow(rows[0]) : null;
   } catch (error) {
     console.error('[getProductBySlug] Failed:', error);
-    return null;
+    throw error;
   }
 }
 
 export async function createProduct(data: Omit<Product, 'id'>): Promise<Product> {
   try {
+    console.log('[createProduct] Starting with data:', JSON.stringify(data, null, 2));
+    
     const products = await readProducts();
     const id = nextId(products);
     
-    console.log('[createProduct] Creating:', { ...data, id });
+    console.log('[createProduct] Generated ID:', id);
+    
+    // Validate required fields
+    if (!data.slug) throw new Error('slug is required');
+    if (!data.name) throw new Error('name is required');
+    if (!data.category) throw new Error('category is required');
+    if (data.price === undefined || data.price === null) throw new Error('price is required');
+    if (!data.description) throw new Error('description is required');
+    if (!data.image) throw new Error('image is required');
     
     await query(
       `INSERT INTO products (id, slug, name, category, condition, price, currency, description, image, in_stock, featured, tags)
@@ -75,8 +87,12 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
       ]
     );
     
+    console.log('[createProduct] Insert successful');
+    
     const product = await getProductById(id);
-    if (!product) throw new Error('Failed to create product');
+    if (!product) throw new Error('Failed to retrieve created product');
+    
+    console.log('[createProduct] Product created:', product);
     return product;
   } catch (error) {
     console.error('[createProduct] Error:', error);
@@ -85,33 +101,39 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
-  const fields: string[] = [];
-  const values: any[] = [];
-  let paramIndex = 1;
-  
-  if (data.slug) { fields.push(`slug = $${paramIndex++}`); values.push(data.slug); }
-  if (data.name) { fields.push(`name = $${paramIndex++}`); values.push(data.name); }
-  if (data.category) { fields.push(`category = $${paramIndex++}`); values.push(data.category); }
-  if (data.condition !== undefined) { fields.push(`condition = $${paramIndex++}`); values.push(data.condition); }
-  if (data.price !== undefined) { fields.push(`price = $${paramIndex++}`); values.push(data.price); }
-  if (data.currency) { fields.push(`currency = $${paramIndex++}`); values.push(data.currency); }
-  if (data.description) { fields.push(`description = $${paramIndex++}`); values.push(data.description); }
-  if (data.image) { fields.push(`image = $${paramIndex++}`); values.push(data.image); }
-  if (data.inStock !== undefined) { fields.push(`in_stock = $${paramIndex++}`); values.push(data.inStock); }
-  if (data.featured !== undefined) { fields.push(`featured = $${paramIndex++}`); values.push(data.featured); }
-  if (data.tags) { fields.push(`tags = $${paramIndex++}`); values.push(data.tags); }
-  
-  fields.push(`updated_at = $${paramIndex++}`);
-  values.push(new Date());
-  
-  values.push(id);
-  
-  await query(
-    `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`,
-    values
-  );
-  
-  return getProductById(id);
+  try {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+    
+    if (data.slug) { fields.push(`slug = $${paramIndex++}`); values.push(data.slug); }
+    if (data.name) { fields.push(`name = $${paramIndex++}`); values.push(data.name); }
+    if (data.category) { fields.push(`category = $${paramIndex++}`); values.push(data.category); }
+    if (data.condition !== undefined) { fields.push(`condition = $${paramIndex++}`); values.push(data.condition); }
+    if (data.price !== undefined) { fields.push(`price = $${paramIndex++}`); values.push(data.price); }
+    if (data.currency) { fields.push(`currency = $${paramIndex++}`); values.push(data.currency); }
+    if (data.description) { fields.push(`description = $${paramIndex++}`); values.push(data.description); }
+    if (data.image) { fields.push(`image = $${paramIndex++}`); values.push(data.image); }
+    if (data.inStock !== undefined) { fields.push(`in_stock = $${paramIndex++}`); values.push(data.inStock); }
+    if (data.featured !== undefined) { fields.push(`featured = $${paramIndex++}`); values.push(data.featured); }
+    if (data.tags) { fields.push(`tags = $${paramIndex++}`); values.push(data.tags); }
+    
+    if (fields.length === 0) return getProductById(id);
+    
+    fields.push(`updated_at = $${paramIndex++}`);
+    values.push(new Date());
+    values.push(id);
+    
+    await query(
+      `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`,
+      values
+    );
+    
+    return getProductById(id);
+  } catch (error) {
+    console.error('[updateProduct] Failed:', error);
+    throw error;
+  }
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
@@ -120,7 +142,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('[deleteProduct] Failed:', error);
-    return false;
+    throw error;
   }
 }
 
