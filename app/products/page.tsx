@@ -3,13 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import productsData from '@/data/products.json';
 import categoriesData from '@/data/categories.json';
 import { ProductCard } from '@/components/ProductCard';
 import { QuickPreview } from '@/components/QuickPreview';
 import type { Product, Category } from '@/lib/types';
 
-const products = productsData as Product[];
 const categories = categoriesData as Category[];
 
 function ProductsContent() {
@@ -17,6 +15,8 @@ function ProductsContent() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeCondition, setActiveCondition] = useState<'all' | 'new' | 'pre-owned'>('all');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const cat = searchParams.get('category');
@@ -24,6 +24,19 @@ function ProductsContent() {
     const cond = searchParams.get('condition') as typeof activeCondition | null;
     if (cond && ['new', 'pre-owned'].includes(cond)) setActiveCondition(cond);
   }, [searchParams]);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load products:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
@@ -36,6 +49,15 @@ function ProductsContent() {
     'pre-owned': products.filter((p) => p.condition === 'pre-owned' && (activeCategory === 'all' || p.category === activeCategory)).length,
   };
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></div>
+        <p className="mt-2 text-sm text-zinc-500">Loading products...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -44,7 +66,7 @@ function ProductsContent() {
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">All Products</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Brand new & quality pre-owned tech — all tested and ready
+              Brand new and quality pre-owned tech. All tested and ready.
             </p>
           </div>
         </div>
@@ -145,7 +167,7 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center text-sm text-zinc-400">Loading…</div>}>
+    <Suspense fallback={<div className="p-10 text-center text-sm text-zinc-400">Loading...</div>}>
       <ProductsContent />
     </Suspense>
   );

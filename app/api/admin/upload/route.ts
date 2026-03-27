@@ -32,9 +32,8 @@ export async function POST(req: Request) {
 
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     
-    // Use UPLOAD_DIR env var or fallback to public/images/products
-    const uploadBaseDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'public', 'images', 'products');
-    const uploadDir = uploadBaseDir;
+    // ALWAYS save to public/images/products so Next.js can serve it
+    const uploadDir = path.join(process.cwd(), 'public', 'images', 'products');
     
     console.log(`[Upload] Uploading to: ${uploadDir}`);
     console.log(`[Upload] Filename: ${filename}`);

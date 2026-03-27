@@ -1,27 +1,34 @@
 import { notFound } from 'next/navigation';
-import productsData from '@/data/products.json';
 import categoriesData from '@/data/categories.json';
-import type { Product, Category } from '@/lib/types';
+import type { Category } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { AddToCartButton } from './AddToCartButton';
 import Link from 'next/link';
+import { getProductBySlug, readProducts } from '@/lib/admin-data';
 
-const products = productsData as Product[];
 const categories = categoriesData as Category[];
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+// Disable static generation since we're using database
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  // Return empty array since we're using dynamic rendering
+  return [];
 }
 
 type Props = { params: Promise<{ slug: string }> };
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await getProductBySlug(slug);
+  
   if (!product) notFound();
 
   const category = categories.find((c) => c.id === product.category);
-  const related = products
+  
+  // Get related products from database
+  const allProducts = await readProducts();
+  const related = allProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
@@ -87,7 +94,7 @@ export default async function ProductPage({ params }: Props) {
             )}
           </div>
 
-          <p className="text-xs text-zinc-400">Price indicative — confirm via WhatsApp before ordering.</p>
+          <p className="text-xs text-zinc-400">Price indicative. Confirm via WhatsApp before ordering.</p>
 
           <div className="mt-2 flex flex-col gap-3 sm:flex-row">
             <AddToCartButton product={product} />

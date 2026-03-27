@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { readProducts, writeProducts, nextId } from '@/lib/admin-data';
+import { readProducts, createProduct } from '@/lib/admin-data';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -17,9 +17,12 @@ export async function GET() {
 export async function POST(req: Request) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data = await req.json();
-  const products = await readProducts();
-  const product = { ...data, id: nextId(products) };
-  products.push(product);
-  await writeProducts(products);
-  return NextResponse.json(product, { status: 201 });
+  
+  try {
+    const product = await createProduct(data);
+    return NextResponse.json(product, { status: 201 });
+  } catch (error) {
+    console.error('Failed to create product:', error);
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+  }
 }

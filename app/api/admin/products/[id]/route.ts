@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { readProducts, writeProducts } from '@/lib/admin-data';
+import { updateProduct, deleteProduct } from '@/lib/admin-data';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -16,12 +16,11 @@ export async function PUT(
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const data = await req.json();
-  const products = await readProducts();
-  const idx = products.findIndex((p) => p.id === id);
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  products[idx] = { ...products[idx], ...data };
-  await writeProducts(products);
-  return NextResponse.json(products[idx]);
+  
+  const product = await updateProduct(id, data);
+  if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  
+  return NextResponse.json(product);
 }
 
 export async function DELETE(
@@ -30,9 +29,9 @@ export async function DELETE(
 ) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const products = await readProducts();
-  const filtered = products.filter((p) => p.id !== id);
-  if (filtered.length === products.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  await writeProducts(filtered);
+  
+  const success = await deleteProduct(id);
+  if (!success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  
   return NextResponse.json({ ok: true });
 }
