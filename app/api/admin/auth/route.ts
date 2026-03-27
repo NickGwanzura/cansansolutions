@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
