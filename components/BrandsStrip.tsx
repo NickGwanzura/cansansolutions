@@ -1,3 +1,5 @@
+'use client';
+
 // All logos rendered as inline SVG — no external images required.
 
 function AppleLogo() {
