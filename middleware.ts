@@ -1,24 +1,27 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Maintenance mode configuration
-const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === 'true';
-const BYPASS_PASSWORD = process.env.MAINTENANCE_PASSWORD || 'cansan2024';
 const BYPASS_COOKIE = 'maintenance_bypass';
 
 // Paths that are always accessible during maintenance
 const ALLOWED_PATHS = [
   '/coming-soon',
   '/api/maintenance',
+  '/api/health',
   '/favicon.svg',
   '/icon.svg',
   '/images/',
+  '/uploads/',
   '/_next/',
 ];
 
 export function middleware(request: NextRequest) {
-  // Check if maintenance mode is enabled
-  if (!MAINTENANCE_MODE) {
+  // Check if maintenance mode is enabled (read at runtime)
+  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  const bypassPassword = process.env.MAINTENANCE_PASSWORD || 'cansan2024';
+  
+  // If maintenance mode is not enabled, allow all requests
+  if (!maintenanceMode) {
     return NextResponse.next();
   }
 
@@ -31,7 +34,7 @@ export function middleware(request: NextRequest) {
 
   // Check if user has bypass cookie
   const bypassCookie = request.cookies.get(BYPASS_COOKIE);
-  if (bypassCookie?.value === BYPASS_PASSWORD) {
+  if (bypassCookie?.value === bypassPassword) {
     return NextResponse.next();
   }
 
@@ -43,6 +46,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/maintenance|_next/static|_next/image|favicon.ico|.*\\.svg$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$).*)',
   ],
 };
