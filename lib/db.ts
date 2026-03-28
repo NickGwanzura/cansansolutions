@@ -4,11 +4,19 @@ import path from 'path';
 
 const REDIS_URL = process.env.REDIS_URL;
 
+// DEBUG: Log environment on startup
+console.log('[DB] Environment check:');
+console.log('[DB]   DATA_DIR env:', process.env.DATA_DIR);
+console.log('[DB]   process.cwd():', process.cwd());
+
 // Data file path: use env var or fallback to project-relative path
 // In Docker: DATA_DIR=/app/data
 // Local dev: defaults to ./data relative to project root
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'products.json');
+
+console.log('[DB]   DATA_DIR resolved:', DATA_DIR);
+console.log('[DB]   DATA_FILE resolved:', DATA_FILE);
 
 // Try Redis, but fallback to file if not available
 let redis: Redis | null = null;
@@ -40,15 +48,37 @@ const KEYS = {
 async function readDataFile(): Promise<any[]> {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
+    const parsed = JSON.parse(data);
+    console.log(`[DB] Read ${parsed.length} products from ${DATA_FILE}`);
+    return parsed;
+  } catch (err: any) {
+    // CRITICAL: Log the actual error instead of silently returning []
+    if (err.code === 'ENOENT') {
+      console.log(`[DB] File not found: ${DATA_FILE}, returning empty array`);
+      // Initialize with empty array
+      try {
+        await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+        await fs.writeFile(DATA_FILE, '[]');
+        console.log(`[DB] Created empty products.json at ${DATA_FILE}`);
+      } catch (writeErr: any) {
+        console.error(`[DB] CRITICAL: Failed to create file: ${writeErr.message}`);
+      }
+    } else {
+      console.error(`[DB] CRITICAL: Read error: ${err.message}`);
+    }
     return [];
   }
 }
 
 async function writeDataFile(products: any[]): Promise<void> {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-  await fs.writeFile(DATA_FILE, JSON.stringify(products, null, 2));
+  try {
+    await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+    await fs.writeFile(DATA_FILE, JSON.stringify(products, null, 2));
+    console.log(`[DB] Saved ${products.length} products to ${DATA_FILE}`);
+  } catch (err: any) {
+    console.error(`[DB] CRITICAL: Write failed: ${err.message}`);
+    throw err; // Re-throw so API returns 500
+  }
 }
 
 export async function getProducts(): Promise<any[]> {
@@ -56,7 +86,6 @@ export async function getProducts(): Promise<any[]> {
   const fileProducts = await readDataFile();
   
   // If Redis available, try to sync any Redis-only products back to file
-  // This handles edge case where products were saved to Redis before this fix
   if (redis) {
     try {
       const ids = await redis.smembers(KEYS.PRODUCT_LIST);
@@ -126,8 +155,10 @@ export async function saveProduct(product: any): Promise<void> {
   
   if (existingIndex >= 0) {
     products[existingIndex] = productWithId;
+    console.log(`[DB] Updated product ${id}`);
   } else {
     products.push(productWithId);
+    console.log(`[DB] Added new product ${id}`);
   }
   
   await writeDataFile(products);
