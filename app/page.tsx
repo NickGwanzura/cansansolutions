@@ -1,12 +1,13 @@
-'use client';
-
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import categoriesData from '@/data/categories.json';
-import { FeaturedGrid } from '@/components/FeaturedGrid';
 import { BrandsStrip } from '@/components/BrandsStrip';
+import { FeaturedSection } from './FeaturedSection';
+import { readProducts } from '@/lib/admin-data';
 import type { Product, Category } from '@/lib/types';
 import type { ReactElement } from 'react';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const categories = categoriesData as Category[];
 
@@ -63,24 +64,9 @@ const categoryIcons: Record<string, ReactElement> = {
   ),
 };
 
-export default function HomePage() {
-  const [featured, setFeatured] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/products', { cache: 'no-store' })
-      .then(res => res.json())
-      .then((data: Product[]) => {
-        console.log('[Home] Loaded products:', data.length);
-        setFeatured(Array.isArray(data) ? data.filter((p) => p.featured) : []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load products:', err);
-        setLoading(false);
-      });
-  }, []);
-
+export default async function HomePage() {
+  const products = await readProducts();
+  
   return (
     <div className="overflow-x-hidden">
 
@@ -180,31 +166,7 @@ export default function HomePage() {
       <BrandsStrip />
 
       {/* Featured Products */}
-      <section className="px-6 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Curated picks</p>
-              <h2 className="mt-2 text-2xl font-bold text-zinc-900">Featured Products</h2>
-            </div>
-            <Link href="/products" className="text-sm font-medium text-red-600 hover:text-red-700">
-              View all
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="py-20 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></div>
-            </div>
-          ) : featured.length > 0 ? (
-            <FeaturedGrid products={featured} />
-          ) : (
-            <div className="py-12 text-center text-zinc-400">
-              <p>No featured products yet.</p>
-            </div>
-          )}
-        </div>
-      </section>
+      <FeaturedSection products={products} />
 
       {/* Why shop with us */}
       <section className="bg-zinc-50 px-6 py-16">

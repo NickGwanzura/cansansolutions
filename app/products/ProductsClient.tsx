@@ -1,32 +1,29 @@
-import { Suspense } from 'react';
-import { ProductsClient } from './ProductsClient';
-import { readProducts } from '@/lib/admin-data';
-import categoriesData from '@/data/categories.json';
-import type { Category } from '@/lib/types';
+'use client';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ProductCard } from '@/components/ProductCard';
+import { QuickPreview } from '@/components/QuickPreview';
+import type { Product, Category } from '@/lib/types';
 
-const categories = categoriesData as Category[];
-
-async function ProductsContent() {
-  const products = await readProducts();
-  
-  return (
-    <ProductsClient 
-      initialProducts={products} 
-      categories={categories}
-    />
-  );
+interface ProductsClientProps {
+  initialProducts: Product[];
+  categories: Category[];
 }
 
-export default function ProductsPage() {
-  return (
-    <Suspense fallback={<div className="p-10 text-center text-sm text-zinc-400">Loading...</div>}>
-      <ProductsContent />
-    </Suspense>
-  );
-}
+export function ProductsClient({ initialProducts, categories }: ProductsClientProps) {
+  const searchParams = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeCondition, setActiveCondition] = useState<'all' | 'new' | 'pre-owned'>('all');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) setActiveCategory(cat);
+    const cond = searchParams.get('condition') as typeof activeCondition | null;
+    if (cond && ['new', 'pre-owned'].includes(cond)) setActiveCondition(cond);
+  }, [searchParams]);
 
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
@@ -38,15 +35,6 @@ export default function ProductsPage() {
     new: products.filter((p) => p.condition === 'new' && (activeCategory === 'all' || p.category === activeCategory)).length,
     'pre-owned': products.filter((p) => p.condition === 'pre-owned' && (activeCategory === 'all' || p.category === activeCategory)).length,
   };
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></div>
-        <p className="mt-2 text-sm text-zinc-500">Loading products...</p>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -152,13 +140,5 @@ export default function ProductsPage() {
 
       <QuickPreview product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
     </>
-  );
-}
-
-export default function ProductsPage() {
-  return (
-    <Suspense fallback={<div className="p-10 text-center text-sm text-zinc-400">Loading...</div>}>
-      <ProductsContent />
-    </Suspense>
   );
 }
