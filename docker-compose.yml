@@ -14,6 +14,8 @@ services:
       - UPLOAD_DIR=/app/uploads/products
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
       - DATA_DIR=/app/data
+      - MAINTENANCE_MODE=${MAINTENANCE_MODE:-false}
+      - MAINTENANCE_PASSWORD=${MAINTENANCE_PASSWORD:-cansan2024}
     volumes:
       - uploads_data:/app/uploads
       - data_volume:/app/data
