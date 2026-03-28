@@ -13,6 +13,7 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
       - UPLOAD_DIR=/app/uploads/products
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
+      - DATA_DIR=/app/data
     volumes:
       - uploads_data:/app/uploads
       - data_volume:/app/data

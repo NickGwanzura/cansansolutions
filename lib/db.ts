@@ -3,7 +3,12 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const REDIS_URL = process.env.REDIS_URL;
-const DATA_FILE = '/app/data/products.json';
+
+// Data file path: use env var or fallback to project-relative path
+// In Docker: DATA_DIR=/app/data
+// Local dev: defaults to ./data relative to project root
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+const DATA_FILE = path.join(DATA_DIR, 'products.json');
 
 // Try Redis, but fallback to file if not available
 let redis: Redis | null = null;
