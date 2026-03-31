@@ -11,6 +11,7 @@ type ProductRecord = {
   bundleItems?: unknown;
   condition?: unknown;
   price?: number | string;
+  originalPrice?: number | string;
   currency?: string;
   description?: string;
   image?: string;
@@ -18,6 +19,11 @@ type ProductRecord = {
   in_stock?: boolean;
   featured?: boolean;
   tags?: unknown;
+  specs?: unknown;
+  stockCount?: number | string;
+  rating?: number | string;
+  reviewCount?: number | string;
+  dealLabel?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 } & Record<string, unknown>;
@@ -47,6 +53,12 @@ function mapRow(data: ProductRecord): Product {
     inStock: Boolean(data.inStock ?? data.in_stock ?? true),
     featured: Boolean(data.featured ?? false),
     tags,
+    originalPrice: data.originalPrice != null ? Number(data.originalPrice) : undefined,
+    specs: data.specs && typeof data.specs === 'object' ? data.specs as Record<string, string> : undefined,
+    stockCount: data.stockCount != null ? Number(data.stockCount) : undefined,
+    rating: data.rating != null ? Number(data.rating) : undefined,
+    reviewCount: data.reviewCount != null ? Number(data.reviewCount) : undefined,
+    dealLabel: data.dealLabel ? String(data.dealLabel) : undefined,
   };
 }
 

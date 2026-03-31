@@ -18,6 +18,9 @@ RUN rm -f .env .env.local .env.development .env.production
 # Build Next.js
 RUN npm run build
 
+# Keep a seed copy of data for volume initialization
+RUN mkdir -p /app/data.seed && cp /app/data/products.json /app/data.seed/products.json
+
 # Production stage
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -42,6 +45,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
+COPY --from=builder --chown=nextjs:nodejs /app/data.seed ./data.seed
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 RUN chmod +x start.sh
