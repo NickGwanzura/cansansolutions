@@ -1,13 +1,10 @@
 import { Suspense } from 'react';
 import { ProductsClient } from './ProductsClient';
 import { readProducts } from '@/lib/admin-data';
-import categoriesData from '@/data/categories.json';
-import type { Category } from '@/lib/types';
+import { CATALOG_CATEGORIES } from '@/lib/catalog';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-const categories = categoriesData as Category[];
 
 async function ProductsContent() {
   const products = await readProducts();
@@ -15,7 +12,7 @@ async function ProductsContent() {
   return (
     <ProductsClient 
       initialProducts={products} 
-      categories={categories}
+      categories={CATALOG_CATEGORIES}
     />
   );
 }

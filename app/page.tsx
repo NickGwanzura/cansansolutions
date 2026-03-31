@@ -1,72 +1,113 @@
 import Link from 'next/link';
-import categoriesData from '@/data/categories.json';
 import { BrandsStrip } from '@/components/BrandsStrip';
 import { FeaturedSection } from './FeaturedSection';
 import { readProducts } from '@/lib/admin-data';
-import type { Product, Category } from '@/lib/types';
 import type { ReactElement } from 'react';
+import { CATALOG_CATEGORIES } from '@/lib/catalog';
+import { ProductCard } from '@/components/ProductCard';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const categories = categoriesData as Category[];
-
 const categoryIcons: Record<string, ReactElement> = {
   smartphone: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <rect x="5" y="2" width="14" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
       <line x1="12" y1="18" x2="12.01" y2="18" strokeLinecap="round" strokeWidth={2}/>
     </svg>
   ),
   laptop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <rect x="2" y="4" width="20" height="13" rx="2" strokeLinecap="round"/>
       <path d="M1 20h22" strokeLinecap="round"/>
     </svg>
   ),
   desktop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <rect x="2" y="3" width="20" height="13" rx="2" strokeLinecap="round"/>
       <path d="M8 21h8M12 17v4" strokeLinecap="round"/>
     </svg>
   ),
+  monitor: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round"/>
+      <path d="M8 21h8M12 17v4" strokeLinecap="round"/>
+      <circle cx="12" cy="10" r="1" fill="currentColor"/>
+    </svg>
+  ),
   network: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
     </svg>
   ),
-  battery: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-      <rect x="1" y="7" width="18" height="10" rx="2" strokeLinecap="round"/>
-      <path d="M23 11v2" strokeLinecap="round" strokeWidth={2}/>
-      <path d="M5 11h6" strokeLinecap="round" strokeWidth={2}/>
+  'shield-camera': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5.25 12 5.25S20.268 7.943 21.542 12c-1.274 4.057-5.065 6.75-9.542 6.75S3.732 16.057 2.458 12Z" />
     </svg>
   ),
   headphones: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 14.25c0-4.972 4.03-9 9-9s9 4.028 9 9v3.75a2.25 2.25 0 0 1-2.25 2.25H18a2.25 2.25 0 0 1-2.25-2.25v-1.5a2.25 2.25 0 0 1 2.25-2.25h.75V14.25a6.75 6.75 0 0 0-13.5 0v.75H6A2.25 2.25 0 0 1 8.25 17.25v1.5A2.25 2.25 0 0 1 6 21H5.25A2.25 2.25 0 0 1 3 18.75V14.25Z" />
     </svg>
   ),
-  gadget: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-    </svg>
-  ),
   plug: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
     </svg>
   ),
   printer: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+    </svg>
+  ),
+  cpu: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <rect x="4" y="4" width="16" height="16" rx="2" strokeLinecap="round"/>
+      <rect x="8" y="8" width="8" height="8" rx="1" strokeLinecap="round"/>
+      <path d="M9 4V2M12 4V2M15 4V2M9 22v-2M12 22v-2M15 22v-2M4 9H2M4 12H2M4 15H2M22 9h-2M22 12h-2M22 15h-2" strokeLinecap="round"/>
+    </svg>
+  ),
+  storage: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <ellipse cx="12" cy="5" rx="9" ry="3" strokeLinecap="round"/>
+      <path d="M21 12c0 1.657-4.029 3-9 3S3 13.657 3 12" strokeLinecap="round"/>
+      <path d="M3 5v14c0 1.657 4.029 3 9 3s9-1.343 9-3V5" strokeLinecap="round"/>
+    </svg>
+  ),
+  bundle: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l.75.75 3.75-4.5m-3.75 9a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" />
+    </svg>
+  ),
+  deals: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
     </svg>
   ),
 };
 
+// Category color themes for the tiles
+const categoryColors: Record<string, { bg: string; icon: string; border: string }> = {
+  laptops: { bg: 'from-blue-50 to-blue-100', icon: 'text-blue-600', border: 'border-blue-100' },
+  printing: { bg: 'from-purple-50 to-purple-100', icon: 'text-purple-600', border: 'border-purple-100' },
+  networking: { bg: 'from-green-50 to-green-100', icon: 'text-green-600', border: 'border-green-100' },
+  desktops: { bg: 'from-zinc-50 to-zinc-100', icon: 'text-zinc-700', border: 'border-zinc-200' },
+  monitors: { bg: 'from-cyan-50 to-cyan-100', icon: 'text-cyan-600', border: 'border-cyan-100' },
+  accessories: { bg: 'from-amber-50 to-amber-100', icon: 'text-amber-600', border: 'border-amber-100' },
+  audio: { bg: 'from-rose-50 to-rose-100', icon: 'text-rose-600', border: 'border-rose-100' },
+  'pc-parts': { bg: 'from-orange-50 to-orange-100', icon: 'text-orange-600', border: 'border-orange-100' },
+  drives: { bg: 'from-indigo-50 to-indigo-100', icon: 'text-indigo-600', border: 'border-indigo-100' },
+  mobile: { bg: 'from-pink-50 to-pink-100', icon: 'text-pink-600', border: 'border-pink-100' },
+  cctv: { bg: 'from-teal-50 to-teal-100', icon: 'text-teal-600', border: 'border-teal-100' },
+  bundles: { bg: 'from-red-50 to-red-100', icon: 'text-red-600', border: 'border-red-100' },
+};
+
 export default async function HomePage() {
   const products = await readProducts();
-  
+  const dealProducts = products.filter((p) => p.dealLabel === 'Top Laptop Deals').slice(0, 6);
+
   return (
     <div className="overflow-x-hidden">
 
@@ -74,7 +115,6 @@ export default async function HomePage() {
       <section className="relative overflow-hidden bg-zinc-950 px-6 py-24 text-white sm:py-32">
         {/* Circuit board background */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat opacity-100" />
-        {/* Background blobs */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-red-600/20 blur-[120px]" />
           <div className="absolute -bottom-20 left-0 h-[400px] w-[400px] rounded-full bg-red-900/20 blur-[100px]" />
@@ -92,7 +132,7 @@ export default async function HomePage() {
                 Tech that works for you.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-zinc-300 sm:text-lg">
-                Mobiles, laptops, networking, power backup, audio, and more. Ordered in seconds via WhatsApp.
+                Laptops, desktops, networking, CCTV, audio, and more. Ordered in seconds via WhatsApp.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -141,29 +181,91 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Category pills grid */}
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/products?category=${cat.slug}`}
-                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
-                  >
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white/90 transition group-hover:scale-110 group-hover:bg-red-600">
-                      {categoryIcons[cat.icon] ?? categoryIcons.gadget}
-                    </div>
-                    <p className="text-sm font-semibold text-white/95">{cat.label}</p>
-                    <p className="mt-1 text-xs text-white/50">Browse {cat.slug}</p>
-                  </Link>
-                ))}
+            {/* Right side — promo grid */}
+            <div className="relative hidden lg:block">
+              <div className="grid grid-cols-2 gap-3">
+                {CATALOG_CATEGORIES.slice(0, 6).map((cat) => {
+                  const colors = categoryColors[cat.id] ?? categoryColors.laptops;
+                  return (
+                    <Link
+                      key={cat.id}
+                      href={`/products?category=${cat.slug}`}
+                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
+                    >
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white/90 transition group-hover:scale-110 group-hover:bg-red-600">
+                        {categoryIcons[cat.icon] ? (
+                          <span className="scale-75">{categoryIcons[cat.icon]}</span>
+                        ) : null}
+                      </div>
+                      <p className="text-sm font-semibold text-white/95">{cat.label}</p>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Shop by Category */}
+      <section className="bg-white px-6 py-14">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Browse</p>
+              <h2 className="mt-1 text-2xl font-bold text-zinc-900">Shop by Category</h2>
+            </div>
+            <Link href="/products" className="text-sm font-medium text-red-600 hover:text-red-700">
+              View all
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+            {CATALOG_CATEGORIES.map((cat) => {
+              const colors = categoryColors[cat.id] ?? { bg: 'from-zinc-50 to-zinc-100', icon: 'text-zinc-700', border: 'border-zinc-200' };
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/products?category=${cat.slug}`}
+                  className={`group flex flex-col items-center gap-3 rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 text-center transition hover:-translate-y-1 hover:shadow-md`}
+                >
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-white shadow-sm ${colors.icon} transition group-hover:scale-110`}>
+                    {categoryIcons[cat.icon] ?? categoryIcons.deals}
+                  </div>
+                  <span className="text-xs font-semibold leading-tight text-zinc-800">{cat.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       <BrandsStrip />
+
+      {/* Top Laptop Deals */}
+      {dealProducts.length > 0 && (
+        <section className="bg-zinc-50 px-6 py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Savings</p>
+                <h2 className="mt-1 text-2xl font-bold text-zinc-900">Our Top Laptop Deals</h2>
+              </div>
+              <Link href="/products?category=laptops" className="text-sm font-medium text-red-600 hover:text-red-700 underline underline-offset-2">
+                View all
+              </Link>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {dealProducts.map((product) => (
+                <div key={product.id} className="w-[260px] shrink-0 snap-start">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Products */}
       <FeaturedSection products={products} />
@@ -212,7 +314,7 @@ export default async function HomePage() {
                 We started small, helping friends and family source the right devices, and grew into a full-service tech retailer. Today we carry 200+ products backed by personal support and honest advice.
               </p>
               <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                Whether you are upgrading your phone, setting up a home network, or kitting out your office, we are here to help you make the right choice.
+                Whether you are upgrading your laptop, setting up a home network, or kitting out your office, we are here to help you make the right choice.
               </p>
               <div className="mt-6">
                 <Link
@@ -224,16 +326,38 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100">
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-600 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 0 0 3.75-.617A3.001 3.001 0 0 0 9 9.348m0 0a3 3 0 0 0 3 0m0 0a3.001 3.001 0 0 0 3.75.617A3.001 3.001 0 0 0 18 9.348" />
-                      </svg>
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-zinc-100 shadow-sm">
+                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(239,68,68,0.10),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(24,24,27,0.08),transparent_40%)]" />
+                <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.28em] text-zinc-400">Business Ready</p>
+                      <p className="mt-2 text-sm font-medium text-zinc-500">Laptops, accessories, and support for work, school, and everyday use.</p>
                     </div>
-                    <p className="text-lg font-semibold text-zinc-800">Cansan Solutions</p>
-                    <p className="text-sm text-zinc-500">Quality Electronics Since 2018</p>
+                    <span className="rounded-full bg-red-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm">
+                      In Stock
+                    </span>
+                  </div>
+
+                  <div className="flex flex-1 items-center justify-center py-6">
+                    <img
+                      src="/images/products/laptop-new.svg"
+                      alt="Laptop product showcase"
+                      className="h-full max-h-64 w-full max-w-md object-contain drop-shadow-[0_24px_30px_rgba(24,24,27,0.16)]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/80 px-4 py-3 backdrop-blur-sm">
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-900">Laptops & Computing</p>
+                      <p className="text-xs text-zinc-500">Reliable devices sourced for performance and value.</p>
+                    </div>
+                    <Link
+                      href="/products?category=laptops"
+                      className="shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                      Browse
+                    </Link>
                   </div>
                 </div>
               </div>

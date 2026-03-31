@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BrandLogo } from './BrandLogo';
+import { CATALOG_CATEGORIES } from '@/lib/catalog';
 
 const WA_NUMBER = '263773754747';
 const WA_DISPLAY = '+263 77 375 4747';
@@ -13,16 +14,10 @@ const quickLinks = [
   { href: '/contact', label: 'Contact' },
 ];
 
-const categories = [
-  { href: '/products?category=mobile', label: 'Mobile & Accessories' },
-  { href: '/products?category=laptops', label: 'Laptops & Computing' },
-  { href: '/products?category=networking', label: 'Networking & WiFi' },
-  { href: '/products?category=power', label: 'Power & Backup' },
-  { href: '/products?category=audio', label: 'Audio & Headphones' },
-  { href: '/products?category=gadgets', label: 'Gadgets & Devices' },
-  { href: '/products?category=accessories', label: 'Accessories & Cables' },
-  { href: '/products?category=printing', label: 'Printing & Office' },
-];
+const categories = CATALOG_CATEGORIES.map((category) => ({
+  href: `/products?category=${category.slug}`,
+  label: category.label,
+}));
 
 export function Footer() {
   const year = new Date().getFullYear();

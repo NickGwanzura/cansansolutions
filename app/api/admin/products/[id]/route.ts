@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { updateProduct, deleteProductById } from '@/lib/admin-data';
+import { normalizeBundleItems, normalizeProductType } from '@/lib/catalog';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -18,6 +19,10 @@ export async function PUT(
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const data = await req.json();
+
+  if (normalizeProductType(data.productType) === 'bundle' && normalizeBundleItems(data.bundleItems).length === 0) {
+    return NextResponse.json({ error: 'Bundle items are required for bundles' }, { status: 400 });
+  }
   
   const product = await updateProduct(id, data);
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });

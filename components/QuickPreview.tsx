@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
+import { getCategoryLabel, isBundleProduct } from '@/lib/catalog';
 
 const WA_NUMBER = '263773754747';
 
@@ -20,6 +21,7 @@ export function QuickPreview({ product, onClose }: Props) {
   const addToCart = useCartStore((s) => s.addToCart);
   const items = useCartStore((s) => s.items);
   const [added, setAdded] = useState(false);
+  const isBundle = product ? isBundleProduct(product) : false;
 
   const qtyInCart = product ? (items.find((i) => i.id === product.id)?.qty ?? 0) : 0;
 
@@ -30,7 +32,9 @@ export function QuickPreview({ product, onClose }: Props) {
   }, [product]);
 
   // Reset added state when product changes
-  useEffect(() => { setAdded(false); }, [product?.id]);
+  useEffect(() => {
+    queueMicrotask(() => setAdded(false));
+  }, [product?.id]);
 
   const handleAdd = () => {
     if (!product || !product.inStock) return;
@@ -40,7 +44,9 @@ export function QuickPreview({ product, onClose }: Props) {
   };
 
   const waText = product
-    ? encodeURIComponent(`Hi Cansan Solutions, I'd like to enquire about: ${product.name} ($${product.price})`)
+    ? encodeURIComponent(
+        `Hi Cansan Solutions, I'd like to enquire about: ${product.name}${isBundle ? ' bundle' : ''} ($${product.price})`
+      )
     : '';
 
   return (
@@ -82,6 +88,11 @@ export function QuickPreview({ product, onClose }: Props) {
                     {CONDITION_LABEL[product.condition]?.label}
                   </span>
                 )}
+                {isBundle && (
+                  <span className="absolute top-4 right-4 rounded-full bg-zinc-900 px-2.5 py-1 text-[11px] font-bold text-white">
+                    Bundle
+                  </span>
+                )}
                 {!product.inStock && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
                     <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-semibold text-white">
@@ -106,7 +117,7 @@ export function QuickPreview({ product, onClose }: Props) {
 
                 <div>
                   <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-red-500">
-                    {product.category}
+                    {getCategoryLabel(product.category)}
                   </p>
                   <h2 className="font-heading text-lg font-bold leading-snug text-zinc-900">
                     {product.name}
@@ -116,6 +127,17 @@ export function QuickPreview({ product, onClose }: Props) {
                 <p className="text-sm leading-relaxed text-zinc-500 line-clamp-3">
                   {product.description}
                 </p>
+
+                {isBundle && product.bundleItems.length > 0 && (
+                  <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Bundle includes</p>
+                    <ul className="mt-2 space-y-1 text-xs text-zinc-600">
+                      {product.bundleItems.slice(0, 4).map((item) => (
+                        <li key={item}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1">
@@ -159,7 +181,7 @@ export function QuickPreview({ product, onClose }: Props) {
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                         </svg>
-                        Add to Cart
+                        {isBundle ? 'Add Bundle to Cart' : 'Add to Cart'}
                       </>
                     )}
                   </motion.button>

@@ -3,6 +3,7 @@
     "name": "Your Product Name",
     "slug": "your-product-name",
     "category": "mobile",
+    "productType": "single",
     "condition": "new",
     "price": 199,
     "currency": "USD",
@@ -11,5 +12,19 @@
     "inStock": true,
     "featured": false,
     "tags": ["tag one", "tag two"]
+  },
+  {
+    "name": "Starter CCTV Bundle",
+    "slug": "starter-cctv-bundle",
+    "category": "cctv",
+    "productType": "bundle",
+    "price": 499,
+    "currency": "USD",
+    "description": "Bundle deal for a small shop or home setup.",
+    "image": "/images/products/your-bundle.jpg",
+    "inStock": true,
+    "featured": true,
+    "tags": ["bundle", "cctv", "security"],
+    "bundleItems": ["4x HD Cameras", "1x 4-Channel DVR", "1x 1TB HDD", "Power Supply Kit"]
   }
 ]

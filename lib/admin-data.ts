@@ -1,20 +1,52 @@
 import { getProducts, getProduct, saveProduct, deleteProduct, getCategories, replaceProducts } from './db';
 import type { Product } from './types';
+import { normalizeBundleItems, normalizeProductType } from './catalog';
 
-function mapRow(data: any): Product {
+type ProductRecord = {
+  id?: string;
+  slug?: string;
+  name?: string;
+  category?: string;
+  productType?: unknown;
+  bundleItems?: unknown;
+  condition?: unknown;
+  price?: number | string;
+  currency?: string;
+  description?: string;
+  image?: string;
+  inStock?: boolean;
+  in_stock?: boolean;
+  featured?: boolean;
+  tags?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+} & Record<string, unknown>;
+
+function mapRow(data: ProductRecord): Product {
+  const productType = normalizeProductType(data.productType);
+  const bundleItems = normalizeBundleItems(data.bundleItems);
+  const tags = Array.isArray(data.tags)
+    ? data.tags.map((tag) => String(tag).trim()).filter(Boolean)
+    : [];
+
   return {
-    id: data.id,
-    slug: data.slug,
-    name: data.name,
-    category: data.category,
-    condition: data.condition,
-    price: typeof data.price === 'number' ? data.price : parseFloat(data.price),
-    currency: data.currency || 'USD',
-    description: data.description,
-    image: data.image,
-    inStock: data.inStock ?? data.in_stock ?? true,
-    featured: data.featured ?? data.featured ?? false,
-    tags: data.tags || [],
+    id: String(data.id || ''),
+    slug: String(data.slug || ''),
+    name: String(data.name || ''),
+    category: String(data.category || ''),
+    productType,
+    bundleItems,
+    condition:
+      productType === 'bundle' || (data.condition !== 'new' && data.condition !== 'pre-owned')
+        ? undefined
+        : data.condition,
+    price: typeof data.price === 'number' ? data.price : parseFloat(String(data.price)),
+    currency: String(data.currency || 'USD'),
+    description: String(data.description || ''),
+    image: String(data.image || ''),
+    inStock: Boolean(data.inStock ?? data.in_stock ?? true),
+    featured: Boolean(data.featured ?? false),
+    tags,
   };
 }
 
@@ -40,8 +72,8 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const products = await getProducts();
-    const found = products.find((p: any) => p.slug === slug);
+    const products = (await getProducts()) as ProductRecord[];
+    const found = products.find((p) => p.slug === slug);
     return found ? mapRow(found) : null;
   } catch (error) {
     console.error('[getProductBySlug] Failed:', error);
@@ -53,6 +85,8 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
   try {
     const products = await readProducts();
     const id = nextId(products);
+    const productType = normalizeProductType(data.productType);
+    const bundleItems = normalizeBundleItems(data.bundleItems);
     
     if (!data.slug) throw new Error('slug required');
     if (!data.name) throw new Error('name required');
@@ -60,10 +94,14 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
     if (data.price == null) throw new Error('price required');
     if (!data.description) throw new Error('description required');
     if (!data.image) throw new Error('image required');
+    if (productType === 'bundle' && bundleItems.length === 0) throw new Error('bundle items required');
     
     const product = {
       id,
       ...data,
+      productType,
+      bundleItems,
+      condition: productType === 'bundle' ? undefined : data.condition,
       currency: data.currency || 'USD',
       inStock: data.inStock ?? true,
       featured: data.featured ?? false,
@@ -84,8 +122,22 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
   try {
     const existing = await getProduct(id);
     if (!existing) return null;
+
+    const productType = normalizeProductType(data.productType ?? existing.productType);
+    const bundleItems = normalizeBundleItems(data.bundleItems ?? existing.bundleItems);
+
+    if (productType === 'bundle' && bundleItems.length === 0) {
+      throw new Error('bundle items required');
+    }
     
-    const updated = { ...existing, ...data, updatedAt: Date.now() };
+    const updated = {
+      ...existing,
+      ...data,
+      productType,
+      bundleItems,
+      condition: productType === 'bundle' ? undefined : (data.condition ?? existing.condition),
+      updatedAt: Date.now(),
+    };
     await saveProduct(updated);
     
     return mapRow(updated);
@@ -109,13 +161,15 @@ function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function sanitizeImportedProduct(data: any, fallbackId: string, existingId?: string): Product {
+function sanitizeImportedProduct(data: ProductRecord, fallbackId: string, existingId?: string): Product {
   const name = String(data.name || '').trim();
   const slug = slugify(String(data.slug || name));
   const category = String(data.category || '').trim();
   const description = String(data.description || '').trim();
   const image = String(data.image || '').trim();
   const price = typeof data.price === 'number' ? data.price : parseFloat(String(data.price));
+  const productType = normalizeProductType(data.productType);
+  const bundleItems = normalizeBundleItems(data.bundleItems);
   const condition = data.condition === 'new' || data.condition === 'pre-owned' ? data.condition : undefined;
   const tags = Array.isArray(data.tags)
     ? data.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean)
@@ -130,13 +184,18 @@ function sanitizeImportedProduct(data: any, fallbackId: string, existingId?: str
   if (!Number.isFinite(price)) throw new Error(`Product "${name}" needs a valid price`);
   if (!description) throw new Error(`Product "${name}" needs a description`);
   if (!image) throw new Error(`Product "${name}" needs an image path`);
+  if (productType === 'bundle' && bundleItems.length === 0) {
+    throw new Error(`Bundle "${name}" needs at least one bundled item`);
+  }
 
   return {
     id: existingId || fallbackId,
     slug,
     name,
     category,
-    condition,
+    productType,
+    bundleItems,
+    condition: productType === 'bundle' ? undefined : condition,
     price,
     currency: String(data.currency || 'USD').trim() || 'USD',
     description,
@@ -147,7 +206,7 @@ function sanitizeImportedProduct(data: any, fallbackId: string, existingId?: str
   };
 }
 
-export async function importProducts(data: any[], mode: 'append' | 'replace' = 'replace'): Promise<Product[]> {
+export async function importProducts(data: ProductRecord[], mode: 'append' | 'replace' = 'replace'): Promise<Product[]> {
   const baseProducts = mode === 'append' ? await readProducts() : [];
   const importedProducts = [...baseProducts];
 

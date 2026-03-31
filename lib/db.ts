@@ -236,12 +236,15 @@ function defaultCategories() {
   return [
     { id: 'mobile', label: 'Mobile & Accessories', icon: 'smartphone', slug: 'mobile' },
     { id: 'laptops', label: 'Laptops & Computing', icon: 'laptop', slug: 'laptops' },
+    { id: 'desktops', label: 'Desktops & All-in-Ones', icon: 'desktop', slug: 'desktops' },
     { id: 'networking', label: 'Networking & Wi-Fi', icon: 'network', slug: 'networking' },
+    { id: 'cctv', label: 'CCTV & Security', icon: 'shield-camera', slug: 'cctv' },
     { id: 'power', label: 'Power & Backup', icon: 'battery', slug: 'power' },
     { id: 'audio', label: 'Audio & Headphones', icon: 'headphones', slug: 'audio' },
     { id: 'gadgets', label: 'Gadgets & Devices', icon: 'gadget', slug: 'gadgets' },
     { id: 'accessories', label: 'Accessories & Cables', icon: 'plug', slug: 'accessories' },
     { id: 'printing', label: 'Printing & Office', icon: 'printer', slug: 'printing' },
+    { id: 'bundles', label: 'Bundles & Deals', icon: 'bundle', slug: 'bundles' },
   ];
 }
 

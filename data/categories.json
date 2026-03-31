@@ -1,56 +1,14 @@
 [
-  {
-    "id": "mobile",
-    "label": "Mobile & Accessories",
-    "icon": "smartphone",
-    "slug": "mobile"
-  },
-  {
-    "id": "laptops",
-    "label": "Laptops & Computing",
-    "icon": "laptop",
-    "slug": "laptops"
-  },
-  {
-    "id": "desktops",
-    "label": "Desktops & All-in-Ones",
-    "icon": "desktop",
-    "slug": "desktops"
-  },
-  {
-    "id": "networking",
-    "label": "Networking & Wi-Fi",
-    "icon": "network",
-    "slug": "networking"
-  },
-  {
-    "id": "power",
-    "label": "Power & Backup",
-    "icon": "battery",
-    "slug": "power"
-  },
-  {
-    "id": "audio",
-    "label": "Audio & Headphones",
-    "icon": "headphones",
-    "slug": "audio"
-  },
-  {
-    "id": "gadgets",
-    "label": "Gadgets & Devices",
-    "icon": "gadget",
-    "slug": "gadgets"
-  },
-  {
-    "id": "accessories",
-    "label": "Accessories & Cables",
-    "icon": "plug",
-    "slug": "accessories"
-  },
-  {
-    "id": "printing",
-    "label": "Printing & Office",
-    "icon": "printer",
-    "slug": "printing"
-  }
+  { "id": "laptops", "label": "Laptops", "icon": "laptop", "slug": "laptops" },
+  { "id": "printing", "label": "Printers", "icon": "printer", "slug": "printing" },
+  { "id": "networking", "label": "WiFi & Networking", "icon": "network", "slug": "networking" },
+  { "id": "desktops", "label": "Desktops", "icon": "desktop", "slug": "desktops" },
+  { "id": "monitors", "label": "Monitors", "icon": "monitor", "slug": "monitors" },
+  { "id": "accessories", "label": "Computer Accessories", "icon": "plug", "slug": "accessories" },
+  { "id": "audio", "label": "TV, Audio & Video", "icon": "headphones", "slug": "audio" },
+  { "id": "pc-parts", "label": "PC Parts & Components", "icon": "cpu", "slug": "pc-parts" },
+  { "id": "drives", "label": "Drives & Storage", "icon": "storage", "slug": "drives" },
+  { "id": "mobile", "label": "Mobile & Accessories", "icon": "smartphone", "slug": "mobile" },
+  { "id": "cctv", "label": "CCTV & Security", "icon": "shield-camera", "slug": "cctv" },
+  { "id": "bundles", "label": "Top Deals", "icon": "deals", "slug": "bundles" }
 ]

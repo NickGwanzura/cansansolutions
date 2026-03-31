@@ -1,23 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Product } from '@/lib/types';
+import type { Product, Category } from '@/lib/types';
+import { CATALOG_CATEGORIES, getCategoryLabel, isBundleProduct } from '@/lib/catalog';
 
-const CATEGORIES = [
-  { id: 'mobile', label: 'Mobile & Accessories' },
-  { id: 'laptops', label: 'Laptops & Computing' },
-  { id: 'networking', label: 'Networking & Wi-Fi' },
-  { id: 'power', label: 'Power & Backup' },
-  { id: 'audio', label: 'Audio & Headphones' },
-  { id: 'gadgets', label: 'Gadgets & Devices' },
-  { id: 'accessories', label: 'Accessories & Cables' },
-  { id: 'printing', label: 'Printing & Office' },
-];
+const CATEGORIES = CATALOG_CATEGORIES as Category[];
 
 const EMPTY_FORM = {
   name: '',
   slug: '',
   category: 'mobile',
+  productType: 'single',
+  bundleItems: '',
   condition: '',
   price: '',
   currency: 'USD',
@@ -33,6 +27,7 @@ const IMPORT_PLACEHOLDER = `[
     "name": "Your Product Name",
     "slug": "your-product-name",
     "category": "mobile",
+    "productType": "single",
     "condition": "new",
     "price": 199,
     "currency": "USD",
@@ -41,6 +36,20 @@ const IMPORT_PLACEHOLDER = `[
     "inStock": true,
     "featured": false,
     "tags": ["tag one", "tag two"]
+  },
+  {
+    "name": "Starter CCTV Bundle",
+    "slug": "starter-cctv-bundle",
+    "category": "cctv",
+    "productType": "bundle",
+    "price": 499,
+    "currency": "USD",
+    "description": "Bundle deal for a small shop or home setup.",
+    "image": "/images/products/your-bundle.jpg",
+    "inStock": true,
+    "featured": true,
+    "tags": ["bundle", "cctv"],
+    "bundleItems": ["4x HD Cameras", "1x 4-Channel DVR", "1x 1TB HDD", "Power Supply Kit"]
   }
 ]`;
 
@@ -223,6 +232,7 @@ function ProductForm({
     if (!form.price || isNaN(parseFloat(String(form.price)))) { setError('Valid price is required'); return false; }
     if (!form.description.trim()) { setError('Description is required'); return false; }
     if (!form.image || form.image === '/images/products/placeholder.svg') { setError('Image is required'); return false; }
+    if (form.productType === 'bundle' && !String(form.bundleItems).trim()) { setError('Add at least one bundle item'); return false; }
     return true;
   };
 
@@ -292,10 +302,26 @@ function ProductForm({
               </select>
             </div>
             <div>
+              <label className="block text-xs font-semibold text-zinc-500 mb-1">Listing Type *</label>
+              <select
+                value={form.productType}
+                onChange={(e) => {
+                  const nextType = e.target.value;
+                  set('productType', nextType);
+                  if (nextType === 'bundle') set('condition', '');
+                }}
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+              >
+                <option value="single">Single Product</option>
+                <option value="bundle">Bundle</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-semibold text-zinc-500 mb-1">Condition</label>
               <select
                 value={form.condition}
                 onChange={(e) => set('condition', e.target.value)}
+                disabled={form.productType === 'bundle'}
                 className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
               >
                 <option value="">Select condition</option>
@@ -329,6 +355,22 @@ function ProductForm({
               placeholder="Short product description…"
             />
           </div>
+
+          {form.productType === 'bundle' && (
+            <div>
+              <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                Bundle Items * <span className="font-normal text-zinc-400">(one per line)</span>
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={form.bundleItems}
+                onChange={(e) => set('bundleItems', e.target.value)}
+                className="w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                placeholder={`4x HD Cameras\n1x 4-Channel DVR\n1x 1TB HDD\nPower Supply Kit`}
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-zinc-500 mb-1">
@@ -507,7 +549,7 @@ function ImportProductsModal({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
-          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`, and `image`. `slug` is optional.</p>
+          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`, and `image`. Add `productType: &quot;bundle&quot;` plus `bundleItems` for bundle deals.</p>
           <div className="flex gap-2">
             <button
               type="button"
@@ -569,10 +611,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchProducts();
+    });
+  }, [fetchProducts]);
 
   const filtered = products.filter((p) => {
-    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category.includes(search.toLowerCase());
+    const query = search.toLowerCase();
+    const matchSearch =
+      !search ||
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
+      p.productType.toLowerCase().includes(query) ||
+      p.bundleItems.some((item) => item.toLowerCase().includes(query));
     const matchCat = !filterCat || p.category === filterCat;
     const matchStock = filterStock === 'all' || (filterStock === 'in' ? p.inStock : !p.inStock);
     return matchSearch && matchCat && matchStock;
@@ -604,8 +656,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     const body = {
       ...form,
       price: parseFloat(String(form.price)),
-      condition: form.condition || undefined,
+      condition: form.productType === 'bundle' ? undefined : (form.condition || undefined),
       tags: String(form.tags).split(',').map((t) => t.trim()).filter(Boolean),
+      bundleItems: String(form.bundleItems).split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
     };
     if (editTarget) {
       return fetch(`/api/admin/products/${editTarget.id}`, {
@@ -896,6 +949,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </th>
                       <th className="px-4 py-3">Product</th>
                       <th className="px-4 py-3 hidden sm:table-cell">Category</th>
+                      <th className="px-4 py-3 hidden lg:table-cell">Type</th>
                       <th className="px-4 py-3">Price</th>
                       <th className="px-4 py-3 hidden md:table-cell">Status</th>
                       <th className="px-4 py-3 text-right">Actions</th>
@@ -920,12 +974,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <div>
                               <p className="font-semibold text-zinc-900 line-clamp-1">{p.name}</p>
                               <p className="text-[11px] text-zinc-400 font-mono">{p.slug}</p>
+                              {isBundleProduct(p) && p.bundleItems.length > 0 && (
+                                <p className="text-[11px] text-zinc-500 line-clamp-1">
+                                  {p.bundleItems.length} bundled item{p.bundleItems.length === 1 ? '' : 's'}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">
                           <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-600 capitalize">
-                            {p.category}
+                            {getCategoryLabel(p.category)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${isBundleProduct(p) ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                            {isBundleProduct(p) ? 'Bundle' : 'Single'}
                           </span>
                         </td>
                         <td className="px-4 py-3 font-semibold text-zinc-900">
@@ -973,7 +1037,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <ProductForm
           initial={
             editTarget
-              ? { ...editTarget, price: String(editTarget.price), tags: editTarget.tags.join(', '), condition: editTarget.condition || '' }
+              ? {
+                  ...editTarget,
+                  price: String(editTarget.price),
+                  tags: editTarget.tags.join(', '),
+                  condition: editTarget.condition || '',
+                  productType: editTarget.productType || 'single',
+                  bundleItems: editTarget.bundleItems.join('\n'),
+                }
               : EMPTY_FORM
           }
           onSave={handleSave}

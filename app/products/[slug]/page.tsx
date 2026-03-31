@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import categoriesData from '@/data/categories.json';
-import type { Product, Category } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { AddToCartButton } from './AddToCartButton';
 import Link from 'next/link';
-
-const categories = categoriesData as Category[];
+import { CATALOG_CATEGORIES, isBundleProduct } from '@/lib/catalog';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -58,10 +56,11 @@ export default function ProductPage({ params }: Props) {
 
   if (!product) return null;
 
-  const category = categories.find((c) => c.id === product.category);
+  const category = CATALOG_CATEGORIES.find((c) => c.id === product.category);
+  const isBundle = isBundleProduct(product);
   
   const waText = encodeURIComponent(
-    `Hi Cansan Solutions, I'd like to enquire about: ${product.name} ($${product.price})`
+    `Hi Cansan Solutions, I'd like to enquire about: ${product.name}${isBundle ? ' bundle' : ''} ($${product.price})`
   );
 
   return (
@@ -103,8 +102,27 @@ export default function ProductPage({ params }: Props) {
               {category.label}
             </Link>
           )}
+          {isBundle && (
+            <span className="w-fit rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
+              Bundle Deal
+            </span>
+          )}
           <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">{product.name}</h1>
           <p className="text-sm leading-relaxed text-zinc-500">{product.description}</p>
+
+          {isBundle && product.bundleItems.length > 0 && (
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">What&apos;s included</p>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-700">
+                {product.bundleItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
@@ -156,6 +174,11 @@ export default function ProductPage({ params }: Props) {
                   <img src={p.image} alt={p.name} className="max-h-full object-contain" />
                 </div>
                 <p className="text-xs font-semibold text-zinc-800 line-clamp-2 group-hover:underline">{p.name}</p>
+                {isBundleProduct(p) && (
+                  <p className="mt-1 text-[11px] font-medium text-zinc-500">
+                    {p.bundleItems.length} item bundle
+                  </p>
+                )}
                 <p className="mt-1 text-xs font-bold text-zinc-900">{formatCurrency(p.price, p.currency)}</p>
               </Link>
             ))}

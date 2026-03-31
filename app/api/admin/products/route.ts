@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { readProducts, createProduct } from '@/lib/admin-data';
+import { normalizeBundleItems, normalizeProductType } from '@/lib/catalog';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -67,6 +68,9 @@ export async function POST(req: Request) {
     if (data.price == null || isNaN(parseFloat(data.price))) return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
     if (!data.description?.trim()) return NextResponse.json({ error: 'Description is required' }, { status: 400 });
     if (!data.image || data.image === '/images/products/placeholder.svg') return NextResponse.json({ error: 'Image is required' }, { status: 400 });
+    if (normalizeProductType(data.productType) === 'bundle' && normalizeBundleItems(data.bundleItems).length === 0) {
+      return NextResponse.json({ error: 'Bundle items are required for bundles' }, { status: 400 });
+    }
     
     console.log('[API POST] Calling createProduct...');
     const product = await createProduct(data);

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { ProductCard } from '@/components/ProductCard';
 import { QuickPreview } from '@/components/QuickPreview';
 import type { Product, Category } from '@/lib/types';
+import { isBundleProduct } from '@/lib/catalog';
 
 interface ProductsClientProps {
   initialProducts: Product[];
@@ -14,26 +15,38 @@ interface ProductsClientProps {
 export function ProductsClient({ initialProducts, categories }: ProductsClientProps) {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeType, setActiveType] = useState<'all' | 'single' | 'bundle'>('all');
   const [activeCondition, setActiveCondition] = useState<'all' | 'new' | 'pre-owned'>('all');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const products = initialProducts;
 
   useEffect(() => {
     const cat = searchParams.get('category');
-    if (cat) setActiveCategory(cat);
+    const type = searchParams.get('type');
     const cond = searchParams.get('condition') as typeof activeCondition | null;
-    if (cond && ['new', 'pre-owned'].includes(cond)) setActiveCondition(cond);
+    queueMicrotask(() => {
+      setActiveCategory(cat ?? 'all');
+      setActiveType(type === 'single' || type === 'bundle' ? type : 'all');
+      setActiveCondition(cond && ['new', 'pre-owned'].includes(cond) ? cond : 'all');
+    });
   }, [searchParams]);
 
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
-    const matchCond = activeCondition === 'all' || p.condition === activeCondition;
-    return matchCat && matchCond;
+    const productType = isBundleProduct(p) ? 'bundle' : 'single';
+    const matchType = activeType === 'all' || productType === activeType;
+    const matchCond = activeType === 'bundle' || activeCondition === 'all' || p.condition === activeCondition;
+    return matchCat && matchType && matchCond;
   });
 
+  const typeCounts = {
+    single: products.filter((p) => !isBundleProduct(p) && (activeCategory === 'all' || p.category === activeCategory)).length,
+    bundle: products.filter((p) => isBundleProduct(p) && (activeCategory === 'all' || p.category === activeCategory)).length,
+  };
+
   const conditionCounts = {
-    new: products.filter((p) => p.condition === 'new' && (activeCategory === 'all' || p.category === activeCategory)).length,
-    'pre-owned': products.filter((p) => p.condition === 'pre-owned' && (activeCategory === 'all' || p.category === activeCategory)).length,
+    new: products.filter((p) => !isBundleProduct(p) && p.condition === 'new' && (activeCategory === 'all' || p.category === activeCategory)).length,
+    'pre-owned': products.filter((p) => !isBundleProduct(p) && p.condition === 'pre-owned' && (activeCategory === 'all' || p.category === activeCategory)).length,
   };
 
   return (
@@ -49,8 +62,38 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
           </div>
         </div>
 
-        {/* Condition filter */}
+        {/* Product type filter */}
         <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mr-1">Type:</span>
+          {(
+            [
+              { value: 'all', label: 'Everything' },
+              { value: 'single', label: `Products${typeCounts.single > 0 ? ` (${typeCounts.single})` : ''}` },
+              { value: 'bundle', label: `Bundles${typeCounts.bundle > 0 ? ` (${typeCounts.bundle})` : ''}` },
+            ] as const
+          ).map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => {
+                setActiveType(value);
+                if (value === 'bundle') setActiveCondition('all');
+              }}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                activeType === value
+                  ? value === 'bundle'
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-red-600 text-white'
+                  : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Condition filter */}
+        {activeType !== 'bundle' && (
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mr-1">Condition:</span>
           {(
             [
@@ -75,7 +118,8 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
               {label}
             </button>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Category filter */}
         <div className="mb-8 flex flex-wrap gap-2">
@@ -108,6 +152,7 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
         <p className="mb-5 text-sm text-zinc-500">
           {filtered.length} {filtered.length === 1 ? 'product' : 'products'}
           {activeCategory !== 'all' && ` in ${categories.find((c) => c.slug === activeCategory)?.label ?? activeCategory}`}
+          {activeType !== 'all' && ` · ${activeType === 'bundle' ? 'Bundles' : 'Single products'}`}
           {activeCondition !== 'all' && ` · ${activeCondition === 'new' ? 'Brand New' : 'Pre-owned'}`}
         </p>
 
@@ -129,7 +174,7 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
             </svg>
             <p className="text-sm">No products match this filter.</p>
             <button
-              onClick={() => { setActiveCategory('all'); setActiveCondition('all'); }}
+              onClick={() => { setActiveCategory('all'); setActiveType('all'); setActiveCondition('all'); }}
               className="text-xs font-medium text-red-500 hover:text-red-700"
             >
               Clear filters
