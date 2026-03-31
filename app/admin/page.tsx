@@ -174,17 +174,20 @@ type FormData = typeof EMPTY_FORM;
 function ProductForm({
   initial,
   onSave,
+  onSaveAndAdd,
   onClose,
   saving,
 }: {
   initial: FormData;
   onSave: (data: FormData) => void;
+  onSaveAndAdd?: (data: FormData) => void;
   onClose: () => void;
   saving: boolean;
 }) {
   const [form, setForm] = useState<FormData>(initial);
   const [slugManual, setSlugManual] = useState(!!initial.slug);
   const [error, setError] = useState('');
+  const [addAnother, setAddAnother] = useState(false);
 
   const set = (k: keyof FormData, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -198,17 +201,21 @@ function ProductForm({
     set('slug', slugify(v));
   };
 
+  const validate = () => {
+    if (!form.name.trim()) { setError('Product name is required'); return false; }
+    if (!form.slug.trim()) { setError('Slug is required'); return false; }
+    if (!form.price || isNaN(parseFloat(String(form.price)))) { setError('Valid price is required'); return false; }
+    if (!form.description.trim()) { setError('Description is required'); return false; }
+    if (!form.image || form.image === '/images/products/placeholder.svg') { setError('Image is required'); return false; }
+    return true;
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (!form.name.trim()) return setError('Product name is required');
-    if (!form.slug.trim()) return setError('Slug is required');
-    if (!form.price || isNaN(parseFloat(String(form.price)))) return setError('Valid price is required');
-    if (!form.description.trim()) return setError('Description is required');
-    if (!form.image || form.image === '/images/products/placeholder.svg') return setError('Image is required');
-    
-    onSave(form);
+    if (!validate()) return;
+    if (addAnother && onSaveAndAdd) onSaveAndAdd(form);
+    else onSave(form);
   };
 
   return (
@@ -347,23 +354,46 @@ function ProductForm({
           </div>
         </form>
 
-        <div className="border-t border-zinc-100 px-5 py-4 flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={saving}
-            onClick={() => {
-              const el = document.querySelector('form');
-              el?.requestSubmit();
-            }}
-            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-          >
-            {saving ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
-          </button>
+        <div className="border-t border-zinc-100 px-5 py-4 space-y-2">
+          {!initial.name && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                setAddAnother(true);
+                setTimeout(() => {
+                  const el = document.querySelector('form');
+                  el?.requestSubmit();
+                }, 0);
+              }}
+              className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+            >
+              {saving && addAnother ? 'Saving…' : '+ Save & Add Another'}
+            </button>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                setAddAnother(false);
+                setTimeout(() => {
+                  const el = document.querySelector('form');
+                  el?.requestSubmit();
+                }, 0);
+              }}
+              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+            >
+              {saving && !addAnother ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -435,33 +465,52 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const openAdd = () => { setEditTarget(null); setFormOpen(true); };
   const openEdit = (p: Product) => { setEditTarget(p); setFormOpen(true); };
 
-  const handleSave = async (form: typeof EMPTY_FORM) => {
-    setSaving(true);
+  const saveProduct = async (form: typeof EMPTY_FORM) => {
     const body = {
       ...form,
       price: parseFloat(String(form.price)),
       condition: form.condition || undefined,
       tags: String(form.tags).split(',').map((t) => t.trim()).filter(Boolean),
     };
-    let res: Response;
     if (editTarget) {
-      res = await fetch(`/api/admin/products/${editTarget.id}`, {
+      return fetch(`/api/admin/products/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-    } else {
-      res = await fetch('/api/admin/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
     }
+    return fetch('/api/admin/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  };
+
+  const handleSave = async (form: typeof EMPTY_FORM) => {
+    setSaving(true);
+    const res = await saveProduct(form);
     setSaving(false);
     if (res.ok) {
       setFormOpen(false);
       fetchProducts();
       showToast(editTarget ? 'Product updated' : 'Product added');
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed' }));
+      showToast(err.error || err.message || 'Failed to save');
+    }
+  };
+
+  const handleSaveAndAdd = async (form: typeof EMPTY_FORM) => {
+    setSaving(true);
+    const res = await saveProduct(form);
+    setSaving(false);
+    if (res.ok) {
+      setEditTarget(null);
+      // Re-mount form with fresh state by toggling
+      setFormOpen(false);
+      setTimeout(() => setFormOpen(true), 0);
+      fetchProducts();
+      showToast('Product added — ready for next');
     } else {
       const err = await res.json().catch(() => ({ error: 'Failed' }));
       showToast(err.error || err.message || 'Failed to save');
@@ -715,6 +764,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               : EMPTY_FORM
           }
           onSave={handleSave}
+          onSaveAndAdd={handleSaveAndAdd}
           onClose={() => setFormOpen(false)}
           saving={saving}
         />
