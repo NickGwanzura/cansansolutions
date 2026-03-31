@@ -28,6 +28,22 @@ const EMPTY_FORM = {
   featured: false,
 };
 
+const IMPORT_PLACEHOLDER = `[
+  {
+    "name": "Your Product Name",
+    "slug": "your-product-name",
+    "category": "mobile",
+    "condition": "new",
+    "price": 199,
+    "currency": "USD",
+    "description": "Short product description.",
+    "image": "/images/products/your-image.jpg",
+    "inStock": true,
+    "featured": false,
+    "tags": ["tag one", "tag two"]
+  }
+]`;
+
 function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -400,6 +416,121 @@ function ProductForm({
   );
 }
 
+function ImportProductsModal({
+  value,
+  mode,
+  loading,
+  onChange,
+  onModeChange,
+  onImport,
+  onClose,
+}: {
+  value: string;
+  mode: 'replace' | 'append';
+  loading: boolean;
+  onChange: (value: string) => void;
+  onModeChange: (mode: 'replace' | 'append') => void;
+  onImport: () => void;
+  onClose: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    onChange(await file.text());
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
+          <div>
+            <h2 className="font-heading text-lg font-bold text-zinc-900">Import Your Products</h2>
+            <p className="mt-1 text-sm text-zinc-500">Paste a JSON array or load a `.json` file from your computer.</p>
+          </div>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-zinc-100 transition">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-5 px-6 py-5">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Use `replace current catalog` if you want only your products on the site. Use `add to current catalog` if you want to keep what is already there.
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onModeChange('replace')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${mode === 'replace' ? 'bg-red-600 text-white' : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'}`}
+            >
+              Replace Current Catalog
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('append')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${mode === 'append' ? 'bg-zinc-900 text-white' : 'border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900'}`}
+            >
+              Add To Current Catalog
+            </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="ml-auto rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+            >
+              Load JSON File
+            </button>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleFile(file);
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">Products JSON</label>
+            <textarea
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              rows={18}
+              spellCheck={false}
+              placeholder={IMPORT_PLACEHOLDER}
+              className="w-full rounded-2xl border border-zinc-200 bg-zinc-950 px-4 py-3 font-mono text-sm text-zinc-100 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
+          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`, and `image`. `slug` is optional.</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={onImport}
+              className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+            >
+              {loading ? 'Importing…' : 'Import Products'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────
 // Main Admin Dashboard
 // ─────────────────────────────────────────────
@@ -419,6 +550,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [batchDeleting, setBatchDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
+  const [importText, setImportText] = useState('');
 
   const [toast, setToast] = useState('');
 
@@ -553,6 +688,41 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onLogout();
   };
 
+  const handleImport = async () => {
+    let parsed;
+
+    try {
+      parsed = JSON.parse(importText);
+    } catch {
+      showToast('Invalid JSON format');
+      return;
+    }
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      showToast('Paste a JSON array with at least one product');
+      return;
+    }
+
+    setImporting(true);
+    const res = await fetch('/api/admin/products/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products: parsed, mode: importMode }),
+    });
+    setImporting(false);
+
+    if (res.ok) {
+      setImportOpen(false);
+      setImportText('');
+      await fetchProducts();
+      showToast(importMode === 'replace' ? 'Catalog replaced successfully' : 'Products imported successfully');
+      return;
+    }
+
+    const err = await res.json().catch(() => ({ error: 'Import failed' }));
+    showToast(err.error || 'Import failed');
+  };
+
   const inStockCount = products.filter((p) => p.inStock).length;
 
   return (
@@ -644,6 +814,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               Delete {selectedIds.size} selected
             </button>
           )}
+
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
+            </svg>
+            Import JSON
+          </button>
           
           <button
             onClick={openAdd}
@@ -767,6 +947,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           onSaveAndAdd={handleSaveAndAdd}
           onClose={() => setFormOpen(false)}
           saving={saving}
+        />
+      )}
+
+      {importOpen && (
+        <ImportProductsModal
+          value={importText}
+          mode={importMode}
+          loading={importing}
+          onChange={setImportText}
+          onModeChange={setImportMode}
+          onImport={handleImport}
+          onClose={() => setImportOpen(false)}
         />
       )}
 

@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Your Product Name",
+    "slug": "your-product-name",
+    "category": "mobile",
+    "condition": "new",
+    "price": 199,
+    "currency": "USD",
+    "description": "Short product description.",
+    "image": "/images/products/your-image.jpg",
+    "inStock": true,
+    "featured": false,
+    "tags": ["tag one", "tag two"]
+  }
+]

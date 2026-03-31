@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { deleteProductById } from '@/lib/admin-data';
+import { deleteProductById, importProducts } from '@/lib/admin-data';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
@@ -55,5 +55,36 @@ export async function DELETE(req: Request) {
       error: 'Batch delete failed',
       message: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    if (!(await checkAuth())) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { products, mode } = await req.json();
+
+    if (!Array.isArray(products) || products.length === 0) {
+      return NextResponse.json({ error: 'No products provided' }, { status: 400 });
+    }
+
+    const normalizedMode = mode === 'append' ? 'append' : 'replace';
+    const saved = await importProducts(products, normalizedMode);
+
+    return NextResponse.json({
+      success: true,
+      count: saved.length,
+      mode: normalizedMode,
+    });
+  } catch (error) {
+    console.error('[API BATCH IMPORT] ERROR:', error);
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Import failed',
+      },
+      { status: 400 }
+    );
   }
 }

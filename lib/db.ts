@@ -193,6 +193,32 @@ export async function deleteProduct(id: string): Promise<void> {
   }
 }
 
+export async function replaceProducts(products: any[]): Promise<void> {
+  await writeDataFile(products);
+
+  if (redis) {
+    try {
+      const existingIds = await redis.smembers(KEYS.PRODUCT_LIST);
+      const pipeline = redis.pipeline();
+
+      existingIds.forEach((id) => {
+        pipeline.del(KEYS.PRODUCTS + id);
+      });
+
+      pipeline.del(KEYS.PRODUCT_LIST);
+
+      products.forEach((product) => {
+        pipeline.set(KEYS.PRODUCTS + product.id, JSON.stringify(product));
+        pipeline.sadd(KEYS.PRODUCT_LIST, product.id);
+      });
+
+      await pipeline.exec();
+    } catch (err) {
+      console.error('[replaceProducts] Redis sync failed, but file updated:', err);
+    }
+  }
+}
+
 export async function getCategories(): Promise<any[]> {
   if (redis) {
     try {
