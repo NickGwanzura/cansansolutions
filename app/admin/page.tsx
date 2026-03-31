@@ -822,7 +822,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
             </svg>
-            Import JSON
+            Import Products JSON
           </button>
           
           <button
@@ -836,6 +836,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </button>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm">
+          <span className="font-medium text-zinc-900">Need to load your catalog?</span>
+          <span>Use the import button to paste a JSON array or upload a `.json` file.</span>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="ml-auto rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800"
+          >
+            Open Import
+          </button>
+        </div>
+
         {/* Products table */}
         {loading ? (
           <div className="flex h-48 items-center justify-center">
@@ -844,8 +855,30 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         ) : (
           <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden">
             {filtered.length === 0 ? (
-              <div className="flex h-32 items-center justify-center text-sm text-zinc-400">
-                No products found
+              <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500">
+                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-zinc-900">No products yet</p>
+                  <p className="mt-1 text-sm text-zinc-500">Import your catalog JSON or add items one by one.</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={() => setImportOpen(true)}
+                    className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                  >
+                    Import Products JSON
+                  </button>
+                  <button
+                    onClick={openAdd}
+                    className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Add Product Manually
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">
