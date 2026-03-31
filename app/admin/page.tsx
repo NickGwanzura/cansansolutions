@@ -14,12 +14,18 @@ const EMPTY_FORM = {
   bundleItems: '',
   condition: '',
   price: '',
+  originalPrice: '',
   currency: 'USD',
   description: '',
   tags: '',
   image: '/images/products/placeholder.svg',
   inStock: true,
   featured: false,
+  stockCount: '',
+  rating: '',
+  reviewCount: '',
+  dealLabel: '',
+  specsText: '',
 };
 
 const IMPORT_PLACEHOLDER = `[
@@ -384,6 +390,87 @@ function ProductForm({
             />
           </div>
 
+          {/* Deals & Details section */}
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Deals & Details</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price (USD)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.originalPrice}
+                  onChange={(e) => set('originalPrice', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="1299.00"
+                />
+                <p className="mt-0.5 text-[10px] text-zinc-400">Set higher than price to show discount badge</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Deal Label</label>
+                <input
+                  value={form.dealLabel}
+                  onChange={(e) => set('dealLabel', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="Top Laptop Deals"
+                />
+                <p className="mt-0.5 text-[10px] text-zinc-400">Products with same label appear in a deal section</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Stock Count</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.stockCount}
+                  onChange={(e) => set('stockCount', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="10"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Rating (0-5)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={5}
+                  value={form.rating}
+                  onChange={(e) => set('rating', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="4"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Review Count</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.reviewCount}
+                  onChange={(e) => set('reviewCount', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="12"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
+              </label>
+              <textarea
+                rows={4}
+                value={form.specsText}
+                onChange={(e) => set('specsText', e.target.value)}
+                className="w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-mono outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                placeholder={`Processor: Intel Core i5\nRAM: 16 GB\nSSD / Storage: 512 GB\nScreen: 15.6 Inch`}
+              />
+            </div>
+          </div>
+
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <button
@@ -653,12 +740,33 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const openEdit = (p: Product) => { setEditTarget(p); setFormOpen(true); };
 
   const saveProduct = async (form: typeof EMPTY_FORM) => {
+    // Parse specs from "Key: Value" lines
+    const specs: Record<string, string> = {};
+    if (form.specsText.trim()) {
+      for (const line of form.specsText.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const colonIdx = trimmed.indexOf(':');
+        if (colonIdx > 0) {
+          const key = trimmed.slice(0, colonIdx).trim();
+          const val = trimmed.slice(colonIdx + 1).trim();
+          if (key && val) specs[key] = val;
+        }
+      }
+    }
+
     const body = {
       ...form,
       price: parseFloat(String(form.price)),
+      originalPrice: form.originalPrice ? parseFloat(String(form.originalPrice)) : undefined,
       condition: form.productType === 'bundle' ? undefined : (form.condition || undefined),
       tags: String(form.tags).split(',').map((t) => t.trim()).filter(Boolean),
       bundleItems: String(form.bundleItems).split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
+      stockCount: form.stockCount ? parseInt(String(form.stockCount), 10) : undefined,
+      rating: form.rating ? Math.min(5, Math.max(0, parseInt(String(form.rating), 10))) : undefined,
+      reviewCount: form.reviewCount ? parseInt(String(form.reviewCount), 10) : undefined,
+      dealLabel: form.dealLabel.trim() || undefined,
+      specs: Object.keys(specs).length > 0 ? specs : undefined,
     };
     if (editTarget) {
       return fetch(`/api/admin/products/${editTarget.id}`, {
@@ -1040,10 +1148,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               ? {
                   ...editTarget,
                   price: String(editTarget.price),
+                  originalPrice: editTarget.originalPrice != null ? String(editTarget.originalPrice) : '',
                   tags: editTarget.tags.join(', '),
                   condition: editTarget.condition || '',
                   productType: editTarget.productType || 'single',
                   bundleItems: editTarget.bundleItems.join('\n'),
+                  stockCount: editTarget.stockCount != null ? String(editTarget.stockCount) : '',
+                  rating: editTarget.rating != null ? String(editTarget.rating) : '',
+                  reviewCount: editTarget.reviewCount != null ? String(editTarget.reviewCount) : '',
+                  dealLabel: editTarget.dealLabel || '',
+                  specsText: editTarget.specs
+                    ? Object.entries(editTarget.specs).map(([k, v]) => `${k}: ${v}`).join('\n')
+                    : '',
                 }
               : EMPTY_FORM
           }
