@@ -5,8 +5,10 @@ import { notFound } from 'next/navigation';
 import type { Product } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { AddToCartButton } from './AddToCartButton';
+import { ProductDetailSkeleton } from '@/components/ProductSkeleton';
 import Link from 'next/link';
 import { CATALOG_CATEGORIES, isBundleProduct } from '@/lib/catalog';
+import { ProductJsonLd } from '@/components/JsonLd';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -47,11 +49,7 @@ export default function ProductPage({ params }: Props) {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></div>
-      </div>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (!product) return null;
@@ -64,7 +62,9 @@ export default function ProductPage({ params }: Props) {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <>
+      <ProductJsonLd product={product} categoryName={category?.label} />
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-2 text-xs text-zinc-400">
         <Link href="/" className="hover:text-zinc-600">Home</Link>
@@ -108,7 +108,18 @@ export default function ProductPage({ params }: Props) {
             </span>
           )}
           <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">{product.name}</h1>
-          <p className="text-sm leading-relaxed text-zinc-500">{product.description}</p>
+          
+          {/* Specs bullets */}
+          {product.specs && Object.keys(product.specs).length > 0 && (
+            <ul className="space-y-1">
+              {Object.entries(product.specs).map(([key, val]) => (
+                <li key={key} className="flex items-start gap-2 text-sm text-zinc-600">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                  <span><span className="font-semibold text-zinc-700">{key}:</span> {val}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {isBundle && product.bundleItems.length > 0 && (
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
@@ -133,10 +144,31 @@ export default function ProductPage({ params }: Props) {
             ))}
           </div>
 
-          <div className="mt-2 flex items-baseline gap-3">
+          {/* Separator */}
+          <div className="h-px bg-zinc-200 my-2" />
+          
+          {/* Stock status */}
+          <div className="flex items-center gap-2">
+            {product.inStock ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                In stock
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-red-600">
+                <span className="h-2 w-2 rounded-full bg-red-500" />
+                Out of stock
+              </span>
+            )}
+          </div>
+
+          {/* Price */}
+          <div className="flex items-baseline gap-3">
             <span className="text-3xl font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</span>
-            {!product.inStock && (
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">Out of stock</span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-lg text-zinc-400 line-through">
+                {formatCurrency(product.originalPrice, product.currency)}
+              </span>
             )}
           </div>
 
@@ -186,5 +218,6 @@ export default function ProductPage({ params }: Props) {
         </section>
       )}
     </div>
+    </>
   );
 }

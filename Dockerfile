@@ -55,4 +55,4 @@ USER nextjs
 EXPOSE 3000
 
 CMD ["dumb-init", "./start.sh"]
-# Build: Fri Mar 27 14:14:06 CAT 2026
+# Build: Tue Apr  1 00:00:00 CAT 2026
