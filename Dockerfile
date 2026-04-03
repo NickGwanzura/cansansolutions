@@ -28,6 +28,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ENV DATA_DIR=/app/data
 
 # Install dumb-init and curl
 RUN apk add --no-cache dumb-init curl
