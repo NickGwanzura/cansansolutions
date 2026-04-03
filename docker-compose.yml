@@ -11,14 +11,10 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_TELEMETRY_DISABLED=1
-      - UPLOAD_DIR=/app/uploads/products
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
       - DATA_DIR=/app/data
       - MAINTENANCE_MODE=${MAINTENANCE_MODE:-false}
       - MAINTENANCE_PASSWORD=${MAINTENANCE_PASSWORD:-cansan2024}
-    volumes:
-      - uploads_data:/app/uploads/products
-      - data_volume:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
@@ -26,7 +22,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-volumes:
-  uploads_data:
-  data_volume:
