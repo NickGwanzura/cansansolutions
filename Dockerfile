@@ -1,24 +1,18 @@
-# Production Dockerfile for Dokploy
+# Production Dockerfile
 FROM node:22-alpine AS builder
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy package files
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy source code
 COPY . .
-
-# Remove any local .env to prevent conflicts
 RUN rm -f .env .env.local .env.development .env.production
-
-# Build Next.js
 RUN npm run build
 
-# Keep a seed copy of data for volume initialization
+# Keep seed data
 RUN mkdir -p /app/data.seed && cp /app/data/products.json /app/data.seed/products.json
 
 # Production stage
@@ -30,27 +24,29 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV DATA_DIR=/app/data
 
-# Install dumb-init, curl, and su-exec for user switching
 RUN apk add --no-cache dumb-init curl su-exec
 
-# Create non-root user
+# Create user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built files with correct ownership
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Copy standalone build
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/ ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 COPY --from=builder --chown=nextjs:nodejs /app/data.seed ./data.seed
-COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
-COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
 
-RUN chmod +x start.sh entrypoint.sh
+# Create directories with correct permissions
+RUN mkdir -p /app/data /app/uploads/products && \
+    chown -R nextjs:nodejs /app/data /app/uploads/products
+
+# Copy and setup entrypoint
+COPY --from=builder --chown=root:root /app/entrypoint.sh ./
+COPY --from=builder --chown=root:root /app/start.sh ./
+RUN chmod +x entrypoint.sh start.sh
 
 EXPOSE 3000
 
-# Run as root initially - entrypoint will fix permissions and switch to nextjs
+# Run entrypoint as root (it will fix perms and switch user)
 ENTRYPOINT ["dumb-init", "./entrypoint.sh"]
 CMD ["./start.sh"]
