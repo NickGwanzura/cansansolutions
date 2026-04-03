@@ -8,17 +8,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_TELEMETRY_DISABLED=1
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
-      - DATA_DIR=/app/data
-      - MAINTENANCE_MODE=${MAINTENANCE_MODE:-false}
-      - MAINTENANCE_PASSWORD=${MAINTENANCE_PASSWORD:-cansan2024}
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-cansan2024}
+      DATA_DIR: /app/data
+      MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
+      MAINTENANCE_PASSWORD: ${MAINTENANCE_PASSWORD:-cansan2024}
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
