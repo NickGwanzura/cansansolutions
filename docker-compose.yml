@@ -17,7 +17,7 @@ services:
       - MAINTENANCE_MODE=${MAINTENANCE_MODE:-false}
       - MAINTENANCE_PASSWORD=${MAINTENANCE_PASSWORD:-cansan2024}
     volumes:
-      - uploads_data:/app/uploads
+      - uploads_data:/app/uploads/products
       - data_volume:/app/data
     restart: unless-stopped
     healthcheck:
