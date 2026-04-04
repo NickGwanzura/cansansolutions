@@ -1,0 +1,23 @@
+# Nixpacks configuration for Dokploy
+# Auto-detects Next.js and handles build/start
+
+[phases.build]
+# Build commands run during image creation
+cmds = [
+  "mkdir -p data && if [ ! -f data/products.json ]; then echo '[]' > data/products.json; fi",
+  "npm run build"
+]
+
+[phases.setup]
+# Setup node version
+nixPkgs = ["nodejs_22", "curl"]
+
+[start]
+# Start command for runtime
+cmd = "mkdir -p /app/data && if [ ! -f /app/data/products.json ]; then echo '[]' > /app/data/products.json; fi && npm start"
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
+DATA_DIR = "/app/data"
+NEXT_TELEMETRY_DISABLED = "1"
