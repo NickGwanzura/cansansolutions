@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import AdminLayout from '../components/AdminLayout';
 
 interface Banner {
   id: string;
@@ -194,31 +194,14 @@ export default function BannersAdmin() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-zinc-50">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white">
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
-              </svg>
-            </div>
-            <div>
-              <span className="font-heading text-sm font-bold text-zinc-900">Cansan Admin</span>
-              <span className="ml-2 text-xs text-zinc-400">Banner Manager</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/admin" className="text-xs text-zinc-400 hover:text-zinc-700 transition">
-              ← Back to Products
-            </Link>
-          </div>
-        </div>
-      </header>
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    window.location.reload();
+  };
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+  return (
+    <AdminLayout onLogout={handleLogout}>
+      <main className="p-6">
         {message && (
           <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             {message}
@@ -409,6 +392,6 @@ export default function BannersAdmin() {
           </div>
         )}
       </main>
-    </div>
+    </AdminLayout>
   );
 }

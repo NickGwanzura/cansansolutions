@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import type { Product, Category } from '@/lib/types';
 import { CATALOG_CATEGORIES, getCategoryLabel, isBundleProduct } from '@/lib/catalog';
+import AdminLayout from './components/AdminLayout';
 
 const CATEGORIES = CATALOG_CATEGORIES as Category[];
 
@@ -18,7 +20,7 @@ const EMPTY_FORM = {
   currency: 'USD',
   description: '',
   tags: '',
-  image: '/images/products/placeholder.svg',
+  images: [] as string[],
   inStock: true,
   featured: false,
   stockCount: '',
@@ -28,34 +30,13 @@ const EMPTY_FORM = {
   specsText: '',
 };
 
-const IMPORT_PLACEHOLDER = `[
-  {
-    "name": "Your Product Name",
-    "slug": "your-product-name",
-    "category": "mobile",
-    "productType": "single",
-    "condition": "new",
-    "price": 199,
-    "currency": "USD",
-    "description": "Short product description.",
-    "inStock": true,
-    "featured": false,
-    "tags": ["tag one", "tag two"]
-  },
-  {
-    "name": "Starter CCTV Bundle",
-    "slug": "starter-cctv-bundle",
-    "category": "cctv",
-    "productType": "bundle",
-    "price": 499,
-    "currency": "USD",
-    "description": "Bundle deal for a small shop or home setup.",
-    "inStock": true,
-    "featured": true,
-    "tags": ["bundle", "cctv"],
-    "bundleItems": ["4x HD Cameras", "1x 4-Channel DVR", "1x 1TB HDD", "Power Supply Kit"]
-  }
-]`;
+const IMPORT_PLACEHOLDER = `[\n  {\n    "name": "Your Product Name",\n    "slug": "your-product-name",\n    "category": "mobile",\n    "productType": "single",\n    "condition": "new",\n    "price": 199,\n    "currency": "USD",\n    "description": "Short product description.",\n    "inStock": true,\n    "featured": false,\n    "tags": ["tag one", "tag two"]\n  },\n  {\n    "name": "Starter CCTV Bundle",\n    "slug": "starter-cctv-bundle",\n    "category": "cctv",\n    "productType": "bundle",\n    "price": 499,\n    "currency": "USD",\n    "description": "Bundle deal for a small shop or home setup.",\n    "inStock": true,\n    "featured": true,\n    "tags": ["bundle", "cctv"],\n    "bundleItems": ["4x HD Cameras", "1x 4-Channel DVR", "1x 1TB HDD", "Power Supply Kit"]\n  }\n]`;
+
+// Dynamically import RichTextEditor to avoid SSR issues
+const RichTextEditor = dynamic(() => import('./components/RichTextEditor'), {
+  ssr: false,
+  loading: () => <div className="h-32 rounded-lg border border-zinc-200 bg-zinc-50" />,
+});
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -120,12 +101,17 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 }
 
 // ─────────────────────────────────────────────
-// Image upload field
+// Image Gallery Upload (multiple images)
 // ─────────────────────────────────────────────
-function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+function ImageGalleryUpload({
+  images,
+  onChange,
+}: {
+  images: string[];
+  onChange: (images: string[]) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -135,68 +121,99 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
     setUploading(false);
     if (res.ok) {
       const { url } = await res.json();
-      onChange(url);
+      onChange([...images, url]);
     }
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) upload(file);
+  const removeImage = (index: number) => {
+    onChange(images.filter((_, i) => i !== index));
   };
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) upload(file);
+  const moveImage = (from: number, to: number) => {
+    if (to < 0 || to >= images.length) return;
+    const newImages = [...images];
+    const [removed] = newImages.splice(from, 1);
+    newImages.splice(to, 0, removed);
+    onChange(newImages);
   };
 
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide">Product Image *</label>
-      <div
+    <div className="space-y-3">
+      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+        Product Images {images.length > 0 && `(${images.length})`}
+      </label>
+
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((img, idx) => (
+            <div key={idx} className="relative group rounded-lg border border-zinc-200 overflow-hidden bg-zinc-50">
+              <img src={img} alt={`Product ${idx + 1}`} className="h-20 w-full object-contain p-1" />
+              {idx === 0 && (
+                <span className="absolute top-1 left-1 text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded">
+                  Main
+                </span>
+              )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveImage(idx, idx - 1)}
+                  disabled={idx === 0}
+                  className="p-1 bg-white rounded hover:bg-zinc-100 disabled:opacity-30"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeImage(idx)}
+                  className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveImage(idx, idx + 1)}
+                  disabled={idx === images.length - 1}
+                  className="p-1 bg-white rounded hover:bg-zinc-100 disabled:opacity-30"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
         onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        className={`relative cursor-pointer rounded-xl border-2 border-dashed transition flex flex-col items-center justify-center gap-2 p-4 min-h-[120px]
-          ${dragOver ? 'border-red-400 bg-red-50' : 'border-zinc-200 bg-zinc-50 hover:border-red-300 hover:bg-red-50/50'}`}
+        disabled={uploading}
+        className="w-full rounded-xl border-2 border-dashed border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
       >
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-            <span className="text-xs text-zinc-400">Uploading…</span>
-          </div>
-        ) : value && value !== '/images/products/placeholder.svg' ? (
-          <div className="flex flex-col items-center gap-2 w-full">
-            <img src={value} alt="Product" className="h-24 object-contain rounded-lg" />
-            <span className="text-[11px] text-zinc-400 truncate max-w-full px-2">{value.split('/').pop()}</span>
-            <span className="text-[11px] text-red-500">Click or drop to replace</span>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-1.5 text-center">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="text-zinc-300">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-            </svg>
-            <p className="text-xs font-medium text-zinc-500">Click or drag & drop image</p>
-            <p className="text-[11px] text-zinc-400">JPG, PNG, WebP, SVG</p>
-          </div>
-        )}
-        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-      </div>
+        {uploading ? 'Uploading…' : '+ Add Image'}
+      </button>
       <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="/images/products/filename.jpg"
-        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) upload(file);
+          e.target.value = '';
+        }}
       />
     </div>
   );
 }
 
 // ─────────────────────────────────────────────
-// Product form panel
+// Product form panel with Rich Text & Gallery
 // ─────────────────────────────────────────────
 type FormData = typeof EMPTY_FORM;
 
@@ -217,6 +234,7 @@ function ProductForm({
   const [slugManual, setSlugManual] = useState(!!initial.slug);
   const [error, setError] = useState('');
   const [addAnother, setAddAnother] = useState(false);
+  const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'variants'>('basic');
 
   const set = (k: keyof FormData, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -235,7 +253,6 @@ function ProductForm({
     if (!form.slug.trim()) { setError('Slug is required'); return false; }
     if (!form.price || isNaN(parseFloat(String(form.price)))) { setError('Valid price is required'); return false; }
     if (!form.description.trim()) { setError('Description is required'); return false; }
-    if (!form.image || form.image === '/images/products/placeholder.svg') { setError('Image is required'); return false; }
     if (form.productType === 'bundle' && !String(form.bundleItems).trim()) { setError('Add at least one bundle item'); return false; }
     return true;
   };
@@ -248,10 +265,18 @@ function ProductForm({
     else onSave(form);
   };
 
+  // Convert legacy single image to array
+  const images = form.images.length > 0 ? form.images : 
+    ((form as unknown as { image?: string }).image ? [(form as unknown as { image: string }).image] : []);
+
+  const updateImages = (newImages: string[]) => {
+    set('images', newImages);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="w-full max-w-md bg-white flex flex-col shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg bg-white flex flex-col shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
           <h2 className="font-heading text-sm font-bold text-zinc-900">
             {initial.name ? 'Edit Product' : 'Add Product'}
@@ -263,238 +288,267 @@ function ProductForm({
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-zinc-100">
+          {(['basic', 'details', 'variants'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-3 text-sm font-medium transition ${
+                activeTab === tab
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-zinc-500 hover:text-zinc-700'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
-          
-          <ImageUpload value={form.image} onChange={(url) => set('image', url)} />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Product Name *</label>
-              <input
-                required
-                value={form.name}
-                onChange={(e) => handleName(e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                placeholder="e.g. Samsung Galaxy A15"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Slug *</label>
-              <input
-                required
-                value={form.slug}
-                onChange={(e) => handleSlug(e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm font-mono outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                placeholder="samsung-galaxy-a15"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Category *</label>
-              <select
-                value={form.category}
-                onChange={(e) => set('category', e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Listing Type *</label>
-              <select
-                value={form.productType}
-                onChange={(e) => {
-                  const nextType = e.target.value;
-                  set('productType', nextType);
-                  if (nextType === 'bundle') set('condition', '');
-                }}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-              >
-                <option value="single">Single Product</option>
-                <option value="bundle">Bundle</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Condition</label>
-              <select
-                value={form.condition}
-                onChange={(e) => set('condition', e.target.value)}
-                disabled={form.productType === 'bundle'}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-              >
-                <option value="">Select condition</option>
-                <option value="new">Brand New</option>
-                <option value="pre-owned">Pre-owned</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">Price (USD) *</label>
-              <input
-                required
-                type="number"
-                min={0}
-                step="0.01"
-                value={form.price}
-                onChange={(e) => set('price', e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                placeholder="99.00"
-              />
-            </div>
-          </div>
+          {activeTab === 'basic' && (
+            <>
+              <ImageGalleryUpload images={images} onChange={updateImages} />
 
-          <div>
-            <label className="block text-xs font-semibold text-zinc-500 mb-1">Description *</label>
-            <textarea
-              required
-              rows={3}
-              value={form.description}
-              onChange={(e) => set('description', e.target.value)}
-              className="w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-              placeholder="Short product description…"
-            />
-          </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Product Name *</label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) => handleName(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    placeholder="e.g. Samsung Galaxy A15"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Slug *</label>
+                  <input
+                    required
+                    value={form.slug}
+                    onChange={(e) => handleSlug(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm font-mono outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    placeholder="samsung-galaxy-a15"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Category *</label>
+                  <select
+                    value={form.category}
+                    onChange={(e) => set('category', e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Listing Type *</label>
+                  <select
+                    value={form.productType}
+                    onChange={(e) => {
+                      const nextType = e.target.value;
+                      set('productType', nextType);
+                      if (nextType === 'bundle') set('condition', '');
+                    }}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  >
+                    <option value="single">Single Product</option>
+                    <option value="bundle">Bundle</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Condition</label>
+                  <select
+                    value={form.condition}
+                    onChange={(e) => set('condition', e.target.value)}
+                    disabled={form.productType === 'bundle'}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  >
+                    <option value="">Select condition</option>
+                    <option value="new">Brand New</option>
+                    <option value="pre-owned">Pre-owned</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Price (USD) *</label>
+                  <input
+                    required
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.price}
+                    onChange={(e) => set('price', e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    placeholder="99.00"
+                  />
+                </div>
+              </div>
 
-          {form.productType === 'bundle' && (
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">
-                Bundle Items * <span className="font-normal text-zinc-400">(one per line)</span>
-              </label>
-              <textarea
-                required
-                rows={4}
-                value={form.bundleItems}
-                onChange={(e) => set('bundleItems', e.target.value)}
-                className="w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                placeholder={`4x HD Cameras\n1x 4-Channel DVR\n1x 1TB HDD\nPower Supply Kit`}
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Description *</label>
+                <RichTextEditor
+                  value={form.description}
+                  onChange={(v) => set('description', v)}
+                  placeholder="Describe your product..."
+                />
+              </div>
+
+              {form.productType === 'bundle' && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Bundle Items * <span className="font-normal text-zinc-400">(one per line)</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={form.bundleItems}
+                    onChange={(e) => set('bundleItems', e.target.value)}
+                    className="w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    placeholder={`4x HD Cameras\n1x 4-Channel DVR\n1x 1TB HDD\nPower Supply Kit`}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Tags <span className="font-normal text-zinc-400">(comma separated)</span>
+                </label>
+                <input
+                  value={form.tags}
+                  onChange={(e) => set('tags', e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  placeholder="smartphone, android, samsung"
+                />
+              </div>
+            </>
           )}
 
-          <div>
-            <label className="block text-xs font-semibold text-zinc-500 mb-1">
-              Tags <span className="font-normal text-zinc-400">(comma separated)</span>
-            </label>
-            <input
-              value={form.tags}
-              onChange={(e) => set('tags', e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-              placeholder="smartphone, android, samsung"
-            />
-          </div>
+          {activeTab === 'details' && (
+            <>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Deals & Details</p>
 
-          {/* Deals & Details section */}
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 space-y-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Deals & Details</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price (USD)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={form.originalPrice}
+                      onChange={(e) => set('originalPrice', e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                      placeholder="1299.00"
+                    />
+                    <p className="mt-0.5 text-[10px] text-zinc-400">Set higher than price to show discount badge</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Deal Label</label>
+                    <input
+                      value={form.dealLabel}
+                      onChange={(e) => set('dealLabel', e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                      placeholder="Top Laptop Deals"
+                    />
+                    <p className="mt-0.5 text-[10px] text-zinc-400">Products with same label appear in a deal section</p>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price (USD)</label>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.originalPrice}
-                  onChange={(e) => set('originalPrice', e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  placeholder="1299.00"
-                />
-                <p className="mt-0.5 text-[10px] text-zinc-400">Set higher than price to show discount badge</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Stock Count</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.stockCount}
+                      onChange={(e) => set('stockCount', e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                      placeholder="10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Rating (0-5)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={form.rating}
+                      onChange={(e) => set('rating', e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                      placeholder="4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Review Count</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.reviewCount}
+                      onChange={(e) => set('reviewCount', e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                      placeholder="12"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={form.specsText}
+                    onChange={(e) => set('specsText', e.target.value)}
+                    className="w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-mono outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    placeholder={`Processor: Intel Core i5\nRAM: 16 GB\nSSD / Storage: 512 GB\nScreen: 15.6 Inch`}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Deal Label</label>
-                <input
-                  value={form.dealLabel}
-                  onChange={(e) => set('dealLabel', e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  placeholder="Top Laptop Deals"
-                />
-                <p className="mt-0.5 text-[10px] text-zinc-400">Products with same label appear in a deal section</p>
+
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.inStock}
+                    onClick={() => set('inStock', !form.inStock)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.inStock ? 'bg-green-500' : 'bg-zinc-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.inStock ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  </button>
+                  <span className="text-xs font-semibold text-zinc-700">In Stock</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.featured}
+                    onClick={() => set('featured', !form.featured)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.featured ? 'bg-red-500' : 'bg-zinc-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.featured ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  </button>
+                  <span className="text-xs font-semibold text-zinc-700">Featured</span>
+                </label>
               </div>
+            </>
+          )}
+
+          {activeTab === 'variants' && (
+            <div className="text-center py-8 text-zinc-500">
+              <p>Product variants coming soon.</p>
+              <p className="text-sm mt-2">Use the description field to mention available sizes/colors for now.</p>
             </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Stock Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.stockCount}
-                  onChange={(e) => set('stockCount', e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  placeholder="10"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Rating (0-5)</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={5}
-                  value={form.rating}
-                  onChange={(e) => set('rating', e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  placeholder="4"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Review Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.reviewCount}
-                  onChange={(e) => set('reviewCount', e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  placeholder="12"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 mb-1">
-                Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
-              </label>
-              <textarea
-                rows={4}
-                value={form.specsText}
-                onChange={(e) => set('specsText', e.target.value)}
-                className="w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-mono outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                placeholder={`Processor: Intel Core i5\nRAM: 16 GB\nSSD / Storage: 512 GB\nScreen: 15.6 Inch`}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={form.inStock}
-                onClick={() => set('inStock', !form.inStock)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.inStock ? 'bg-green-500' : 'bg-zinc-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.inStock ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </button>
-              <span className="text-xs font-semibold text-zinc-700">In Stock</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={form.featured}
-                onClick={() => set('featured', !form.featured)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.featured ? 'bg-red-500' : 'bg-zinc-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.featured ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </button>
-              <span className="text-xs font-semibold text-zinc-700">Featured</span>
-            </label>
-          </div>
+          )}
         </form>
 
         <div className="border-t border-zinc-100 px-5 py-4 space-y-2">
@@ -543,6 +597,9 @@ function ProductForm({
   );
 }
 
+// ─────────────────────────────────────────────
+// Import Modal
+// ─────────────────────────────────────────────
 function ImportProductsModal({
   value,
   mode,
@@ -634,7 +691,7 @@ function ImportProductsModal({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
-          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`, and `image`. Add `productType: &quot;bundle&quot;` plus `bundleItems` for bundle deals.</p>
+          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`. Images are optional and can be added later.</p>
           <div className="flex gap-2">
             <button
               type="button"
@@ -659,24 +716,152 @@ function ImportProductsModal({
 }
 
 // ─────────────────────────────────────────────
-// Main Admin Dashboard
+// Bulk Edit Modal
 // ─────────────────────────────────────────────
+function BulkEditModal({
+  selectedCount,
+  onClose,
+  onApply,
+  loading,
+}: {
+  selectedCount: number;
+  onClose: () => void;
+  onApply: (changes: Partial<Product>) => void;
+  loading: boolean;
+}) {
+  const [category, setCategory] = useState('');
+  const [inStock, setInStock] = useState<boolean | ''>('');
+  const [featured, setFeatured] = useState<boolean | ''>('');
+
+  const handleApply = () => {
+    const changes: Partial<Product> = {};
+    if (category) changes.category = category;
+    if (inStock !== '') changes.inStock = inStock;
+    if (featured !== '') changes.featured = featured;
+    onApply(changes);
+  };
+
+  const hasChanges = category || inStock !== '' || featured !== '';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+        <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">Bulk Edit {selectedCount} Products</h3>
+        <p className="text-sm text-zinc-500 mb-5">Select fields to update on all selected products.</p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-zinc-500 mb-2">Change Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+            >
+              <option value="">— Keep unchanged —</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-500 mb-2">Stock Status</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setInStock(inStock === true ? '' : true)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                  inStock === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                Set In Stock
+              </button>
+              <button
+                type="button"
+                onClick={() => setInStock(inStock === false ? '' : false)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                  inStock === false ? 'border-red-500 bg-red-50 text-red-700' : 'border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                Set Out of Stock
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-500 mb-2">Featured Status</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setFeatured(featured === true ? '' : true)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                  featured === true ? 'border-red-500 bg-red-50 text-red-700' : 'border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                Set Featured
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeatured(featured === false ? '' : false)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                  featured === false ? 'border-zinc-500 bg-zinc-100 text-zinc-700' : 'border-zinc-200 hover:bg-zinc-50'
+                }`}
+              >
+                Remove Featured
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={!hasChanges || loading}
+            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-60"
+          >
+            {loading ? 'Applying…' : `Update ${selectedCount} Products`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Main Admin Dashboard with Pagination, Export, etc.
+// ─────────────────────────────────────────────
+const ITEMS_PER_PAGE = 20;
+
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [filterStock, setFilterStock] = useState<'all' | 'in' | 'out'>('all');
+  const [filterFeatured, setFilterFeatured] = useState<'all' | 'yes' | 'no'>('all');
+  const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
-  // Batch delete states
+  // Batch operations
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [batchDeleting, setBatchDeleting] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkEditing, setBulkEditing] = useState(false);
+  
+  // Import
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
@@ -702,28 +887,50 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
   }, [fetchProducts]);
 
-  const filtered = products.filter((p) => {
-    const query = search.toLowerCase();
-    const matchSearch =
-      !search ||
-      p.name.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query) ||
-      p.productType.toLowerCase().includes(query) ||
-      p.bundleItems.some((item) => item.toLowerCase().includes(query));
-    const matchCat = !filterCat || p.category === filterCat;
-    const matchStock = filterStock === 'all' || (filterStock === 'in' ? p.inStock : !p.inStock);
-    return matchSearch && matchCat && matchStock;
-  });
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterCat, filterStock, filterFeatured, priceRange]);
+
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      const query = search.toLowerCase();
+      const matchSearch =
+        !search ||
+        p.name.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        p.productType.toLowerCase().includes(query) ||
+        p.bundleItems.some((item) => item.toLowerCase().includes(query));
+      const matchCat = !filterCat || p.category === filterCat;
+      const matchStock = filterStock === 'all' || (filterStock === 'in' ? p.inStock : !p.inStock);
+      const matchFeatured = filterFeatured === 'all' || (filterFeatured === 'yes' ? p.featured : !p.featured);
+      const matchPrice = 
+        (!priceRange.min || p.price >= parseFloat(priceRange.min)) &&
+        (!priceRange.max || p.price <= parseFloat(priceRange.max));
+      return matchSearch && matchCat && matchStock && matchFeatured && matchPrice;
+    });
+  }, [products, search, filterCat, filterStock, filterFeatured, priceRange]);
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Batch selection helpers
-  const allSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
+  const allSelected = paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.has(p.id));
   const someSelected = selectedIds.size > 0 && !allSelected;
   
   const toggleSelectAll = () => {
     if (allSelected) {
-      setSelectedIds(new Set());
+      const newSet = new Set(selectedIds);
+      paginatedProducts.forEach((p) => newSet.delete(p.id));
+      setSelectedIds(newSet);
     } else {
-      setSelectedIds(new Set(filtered.map(p => p.id)));
+      const newSet = new Set(selectedIds);
+      paginatedProducts.forEach((p) => newSet.add(p.id));
+      setSelectedIds(newSet);
     }
   };
   
@@ -736,9 +943,34 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const openAdd = () => { setEditTarget(null); setFormOpen(true); };
   const openEdit = (p: Product) => { setEditTarget(p); setFormOpen(true); };
+  
+  const handleDuplicate = (p: Product) => {
+    const duplicated: Product = {
+      ...p,
+      id: '', // Will be assigned by server
+      slug: `${p.slug}-copy`,
+      name: `${p.name} (Copy)`,
+    };
+    setEditTarget(duplicated);
+    setFormOpen(true);
+  };
+
+  const exportProducts = () => {
+    const exportData = filtered.length > 0 ? filtered : products;
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cansan-products-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${exportData.length} products`);
+  };
 
   const saveProduct = async (form: typeof EMPTY_FORM) => {
-    // Parse specs from "Key: Value" lines
     const specs: Record<string, string> = {};
     if (form.specsText.trim()) {
       for (const line of form.specsText.split('\n')) {
@@ -765,8 +997,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       reviewCount: form.reviewCount ? parseInt(String(form.reviewCount), 10) : undefined,
       dealLabel: form.dealLabel.trim() || undefined,
       specs: Object.keys(specs).length > 0 ? specs : undefined,
+      // Use first image as main image for backward compatibility
+      image: form.images[0] || '',
     };
-    if (editTarget) {
+    
+    if (editTarget && editTarget.id) {
       return fetch(`/api/admin/products/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -787,7 +1022,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     if (res.ok) {
       setFormOpen(false);
       fetchProducts();
-      showToast(editTarget ? 'Product updated' : 'Product added');
+      showToast(editTarget?.id ? 'Product updated' : 'Product added');
     } else {
       const err = await res.json().catch(() => ({ error: 'Failed' }));
       showToast(err.error || err.message || 'Failed to save');
@@ -800,7 +1035,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setSaving(false);
     if (res.ok) {
       setEditTarget(null);
-      // Re-mount form with fresh state by toggling
       setFormOpen(false);
       setTimeout(() => setFormOpen(true), 0);
       fetchProducts();
@@ -842,9 +1076,26 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleLogout = async () => {
-    await fetch('/api/admin/auth', { method: 'DELETE' });
-    onLogout();
+  const handleBulkEdit = async (changes: Partial<Product>) => {
+    if (selectedIds.size === 0) return;
+    
+    setBulkEditing(true);
+    const res = await fetch('/api/admin/products/bulk-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(selectedIds), changes }),
+    });
+    setBulkEditing(false);
+    
+    if (res.ok) {
+      const result = await res.json();
+      setSelectedIds(new Set());
+      setBulkEditOpen(false);
+      fetchProducts();
+      showToast(`${result.updated} products updated`);
+    } else {
+      showToast('Bulk update failed');
+    }
   };
 
   const handleImport = async () => {
@@ -883,47 +1134,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   const inStockCount = products.filter((p) => p.inStock).length;
+  const featuredCount = products.filter((p) => p.featured).length;
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white">
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
-              </svg>
-            </div>
-            <div>
-              <span className="font-heading text-sm font-bold text-zinc-900">Cansan Admin</span>
-              <span className="ml-2 text-xs text-zinc-400">Product Manager</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href="/" target="_blank" className="text-xs text-zinc-400 hover:text-zinc-700 transition">
-              View site ↗
-            </a>
-            <button
-              onClick={handleLogout}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+    <AdminLayout onLogout={onLogout}>
+      <main className="p-6">
+        {/* Header Stats */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 mb-6">
           {[
             { label: 'Total Products', value: products.length, color: 'text-zinc-900' },
             { label: 'In Stock', value: inStockCount, color: 'text-green-600' },
             { label: 'Out of Stock', value: products.length - inStockCount, color: 'text-red-500' },
+            { label: 'Featured', value: featuredCount, color: 'text-red-600' },
             { label: 'Categories', value: new Set(products.map((p) => p.category)).size, color: 'text-blue-600' },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
+            <div key={stat.label} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
               <p className="text-xs text-zinc-400">{stat.label}</p>
               <p className={`font-heading text-2xl font-bold mt-0.5 ${stat.color}`}>{stat.value}</p>
             </div>
@@ -943,6 +1168,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
             />
           </div>
+          
+          {/* Filters */}
           <select
             value={filterCat}
             onChange={(e) => setFilterCat(e.target.value)}
@@ -951,6 +1178,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <option value="">All categories</option>
             {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
+          
           <select
             value={filterStock}
             onChange={(e) => setFilterStock(e.target.value as 'all' | 'in' | 'out')}
@@ -960,18 +1188,58 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <option value="in">In stock</option>
             <option value="out">Out of stock</option>
           </select>
+
+          <select
+            value={filterFeatured}
+            onChange={(e) => setFilterFeatured(e.target.value as 'all' | 'yes' | 'no')}
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
+          >
+            <option value="all">All items</option>
+            <option value="yes">Featured only</option>
+            <option value="no">Not featured</option>
+          </select>
+
+          {/* Price Range */}
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              placeholder="Min $"
+              value={priceRange.min}
+              onChange={(e) => setPriceRange((r) => ({ ...r, min: e.target.value }))}
+              className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
+            />
+            <span className="text-zinc-400">-</span>
+            <input
+              type="number"
+              placeholder="Max $"
+              value={priceRange.max}
+              onChange={(e) => setPriceRange((r) => ({ ...r, max: e.target.value }))}
+              className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
+            />
+          </div>
           
-          {/* Batch delete button */}
+          {/* Batch actions */}
           {selectedIds.size > 0 && (
-            <button
-              onClick={() => setBatchDeleteOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-              </svg>
-              Delete {selectedIds.size} selected
-            </button>
+            <>
+              <button
+                onClick={() => setBulkEditOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                </svg>
+                Edit {selectedIds.size}
+              </button>
+              <button
+                onClick={() => setBatchDeleteOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+                Delete {selectedIds.size}
+              </button>
+            </>
           )}
 
           <button
@@ -981,7 +1249,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
             </svg>
-            Import Products JSON
+            Import
+          </button>
+
+          <button
+            onClick={exportProducts}
+            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Export
           </button>
           
           <button
@@ -995,15 +1273,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </button>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm">
-          <span className="font-medium text-zinc-900">Need to load your catalog?</span>
-          <span>Use the import button to paste a JSON array or upload a `.json` file.</span>
-          <button
-            onClick={() => setImportOpen(true)}
-            className="ml-auto rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Open Import
-          </button>
+        {/* Results count */}
+        <div className="mb-4 flex items-center justify-between text-sm text-zinc-500">
+          <span>Showing {filtered.length} products</span>
+          {selectedIds.size > 0 && <span>{selectedIds.size} selected</span>}
         </div>
 
         {/* Products table */}
@@ -1012,7 +1285,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
           </div>
         ) : (
-          <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500">
@@ -1021,8 +1294,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-base font-semibold text-zinc-900">No products yet</p>
-                  <p className="mt-1 text-sm text-zinc-500">Import your catalog JSON or add items one by one.</p>
+                  <p className="text-base font-semibold text-zinc-900">No products found</p>
+                  <p className="mt-1 text-sm text-zinc-500">Try adjusting your filters or import your catalog.</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
@@ -1040,99 +1313,165 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      <th className="px-4 py-3 w-10">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          ref={el => { if (el) el.indeterminate = someSelected; }}
-                          onChange={toggleSelectAll}
-                          className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
-                        />
-                      </th>
-                      <th className="px-4 py-3">Product</th>
-                      <th className="px-4 py-3 hidden sm:table-cell">Category</th>
-                      <th className="px-4 py-3 hidden lg:table-cell">Type</th>
-                      <th className="px-4 py-3">Price</th>
-                      <th className="px-4 py-3 hidden md:table-cell">Status</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((p) => (
-                      <tr key={p.id} className={`border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors ${selectedIds.has(p.id) ? 'bg-red-50/30' : ''}`}>
-                        <td className="px-4 py-3">
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                        <th className="px-4 py-3 w-10">
                           <input
                             type="checkbox"
-                            checked={selectedIds.has(p.id)}
-                            onChange={() => toggleSelect(p.id)}
+                            checked={allSelected}
+                            ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                            onChange={toggleSelectAll}
                             className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
                           />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 shrink-0 rounded-lg border border-zinc-100 bg-zinc-50 overflow-hidden">
-                              <img src={p.image} alt={p.name} className="h-full w-full object-contain p-1" />
+                        </th>
+                        <th className="px-4 py-3">Product</th>
+                        <th className="px-4 py-3 hidden sm:table-cell">Category</th>
+                        <th className="px-4 py-3 hidden lg:table-cell">Type</th>
+                        <th className="px-4 py-3">Price</th>
+                        <th className="px-4 py-3 hidden md:table-cell">Status</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedProducts.map((p) => (
+                        <tr key={p.id} className={`border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors ${selectedIds.has(p.id) ? 'bg-red-50/30' : ''}`}>
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(p.id)}
+                              onChange={() => toggleSelect(p.id)}
+                              className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 shrink-0 rounded-lg border border-zinc-100 bg-zinc-50 overflow-hidden">
+                                <img 
+                                  src={p.image || '/images/products/placeholder.svg'} 
+                                  alt={p.name} 
+                                  className="h-full w-full object-contain p-1" 
+                                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/products/placeholder.svg'; }}
+                                />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-zinc-900 line-clamp-1">{p.name}</p>
+                                <p className="text-[11px] text-zinc-400 font-mono">{p.slug}</p>
+                                {isBundleProduct(p) && p.bundleItems.length > 0 && (
+                                  <p className="text-[11px] text-zinc-500 line-clamp-1">
+                                    {p.bundleItems.length} bundled item{p.bundleItems.length === 1 ? '' : 's'}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-zinc-900 line-clamp-1">{p.name}</p>
-                              <p className="text-[11px] text-zinc-400 font-mono">{p.slug}</p>
-                              {isBundleProduct(p) && p.bundleItems.length > 0 && (
-                                <p className="text-[11px] text-zinc-500 line-clamp-1">
-                                  {p.bundleItems.length} bundled item{p.bundleItems.length === 1 ? '' : 's'}
-                                </p>
+                          </td>
+                          <td className="px-4 py-3 hidden sm:table-cell">
+                            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-600 capitalize">
+                              {getCategoryLabel(p.category)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 hidden lg:table-cell">
+                            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${isBundleProduct(p) ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                              {isBundleProduct(p) ? 'Bundle' : 'Single'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-zinc-900">
+                            ${p.price.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${p.inStock ? 'bg-green-500' : 'bg-red-400'}`} />
+                              <span className={`text-xs font-medium ${p.inStock ? 'text-green-600' : 'text-red-500'}`}>
+                                {p.inStock ? 'In Stock' : 'Out of Stock'}
+                              </span>
+                              {p.featured && (
+                                <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">Hot</span>
                               )}
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-600 capitalize">
-                            {getCategoryLabel(p.category)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${isBundleProduct(p) ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                            {isBundleProduct(p) ? 'Bundle' : 'Single'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-zinc-900">
-                          ${p.price.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${p.inStock ? 'bg-green-500' : 'bg-red-400'}`} />
-                            <span className={`text-xs font-medium ${p.inStock ? 'text-green-600' : 'text-red-500'}`}>
-                              {p.inStock ? 'In Stock' : 'Out of Stock'}
-                            </span>
-                            {p.featured && (
-                              <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">Hot</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => openEdit(p)}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => setDeleteId(p.id)}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleDuplicate(p)}
+                                className="rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 transition"
+                                title="Duplicate"
+                              >
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => openEdit(p)}
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setDeleteId(p.id)}
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-3">
+                    <p className="text-xs text-zinc-500">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                              currentPage === pageNum
+                                ? 'bg-red-600 text-white'
+                                : 'border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -1158,6 +1497,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   specsText: editTarget.specs
                     ? Object.entries(editTarget.specs).map(([k, v]) => `${k}: ${v}`).join('\n')
                     : '',
+                  images: editTarget.image ? [editTarget.image] : [],
                 }
               : EMPTY_FORM
           }
@@ -1177,6 +1517,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           onModeChange={setImportMode}
           onImport={handleImport}
           onClose={() => setImportOpen(false)}
+        />
+      )}
+
+      {bulkEditOpen && (
+        <BulkEditModal
+          selectedCount={selectedIds.size}
+          onClose={() => setBulkEditOpen(false)}
+          onApply={handleBulkEdit}
+          loading={bulkEditing}
         />
       )}
 
@@ -1239,11 +1588,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
           {toast}
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
 

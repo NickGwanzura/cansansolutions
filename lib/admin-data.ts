@@ -268,3 +268,23 @@ export async function seedCategories() {
 }
 
 export { getCategories };
+
+
+export async function updateProducts(ids: string[], changes: Partial<Record<string, unknown>>): Promise<number> {
+  const products = await readProducts();
+  let updated = 0;
+  
+  const updatedProducts = products.map((p) => {
+    if (ids.includes(p.id)) {
+      updated++;
+      return { ...p, ...changes } as Product;
+    }
+    return p;
+  });
+  
+  if (updated > 0) {
+    await replaceProducts(updatedProducts);
+  }
+  
+  return updated;
+}
