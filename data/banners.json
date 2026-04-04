@@ -1,0 +1,15 @@
+[
+  {
+    "id": "hero-banner-1",
+    "name": "Homepage Hero Banner",
+    "image": "/images/products/promo-collection.jpg",
+    "title": "Premium Tech Collection",
+    "subtitle": "Discover our latest range of laptops, tablets, keyboards, and accessories. Quality tech for work, study, and play.",
+    "badge": "New Arrivals",
+    "buttonText": "Shop Collection",
+    "buttonLink": "/products",
+    "active": true,
+    "position": "homepage-hero",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]

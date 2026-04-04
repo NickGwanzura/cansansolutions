@@ -5,6 +5,8 @@ import { readProducts } from '@/lib/admin-data';
 import type { ReactElement } from 'react';
 import { CATALOG_CATEGORIES } from '@/lib/catalog';
 import { ProductCard } from '@/components/ProductCard';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -88,7 +90,6 @@ const categoryIcons: Record<string, ReactElement> = {
   ),
 };
 
-// Category color themes for the tiles
 const categoryColors: Record<string, { bg: string; icon: string; border: string }> = {
   laptops: { bg: 'from-blue-50 to-blue-100', icon: 'text-blue-600', border: 'border-blue-100' },
   printing: { bg: 'from-purple-50 to-purple-100', icon: 'text-purple-600', border: 'border-purple-100' },
@@ -104,16 +105,28 @@ const categoryColors: Record<string, { bg: string; icon: string; border: string 
   bundles: { bg: 'from-red-50 to-red-100', icon: 'text-red-600', border: 'border-red-100' },
 };
 
+// Fetch banners from API
+async function getBanners(): Promise<any[]> {
+  try {
+    const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+    const BANNERS_FILE = path.join(DATA_DIR, 'banners.json');
+    const data = await fs.readFile(BANNERS_FILE, 'utf-8');
+    const banners = JSON.parse(data);
+    return banners.filter((b: any) => b.active !== false);
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
   const products = await readProducts();
+  const banners = await getBanners();
   const dealProducts = products.filter((p) => p.dealLabel === 'Top Laptop Deals').slice(0, 6);
 
   return (
     <div className="overflow-x-hidden">
-
       {/* Hero */}
       <section className="relative overflow-hidden bg-zinc-950 px-6 py-24 text-white sm:py-32">
-        {/* Circuit board background */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat opacity-100" />
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-red-600/20 blur-[120px]" />
@@ -158,7 +171,6 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              {/* Mini trust badges */}
               <div className="mt-10 flex flex-wrap items-center gap-6 text-xs text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <svg className="text-green-500" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -181,7 +193,6 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Right side — promo grid */}
             <div className="relative hidden lg:block">
               <div className="grid grid-cols-2 gap-3">
                 {CATALOG_CATEGORIES.slice(0, 6).map((cat) => {
@@ -242,44 +253,47 @@ export default async function HomePage() {
 
       <BrandsStrip />
 
-      {/* Featured Promo Banner */}
-      <section className="bg-white px-6 py-8">
-        <div className="mx-auto max-w-7xl">
-          <Link href="/products" className="group relative block overflow-hidden rounded-3xl bg-zinc-100">
-            {/* Large Banner Image */}
-            <div className="relative aspect-[21/9] w-full overflow-hidden">
-              <img
-                src="/images/products/promo-collection.jpg"
-                alt="Premium Tech Collection - Laptops, Tablets, Keyboards & More"
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
-              
-              {/* Content Overlay */}
-              <div className="absolute inset-0 flex flex-col justify-center p-8 sm:p-12 lg:p-16">
-                <div className="max-w-lg">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white mb-4">
-                    New Arrivals
-                  </span>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight mb-3">
-                    Premium Tech Collection
-                  </h2>
-                  <p className="text-sm sm:text-base text-zinc-300 mb-6 max-w-md">
-                    Discover our latest range of laptops, tablets, keyboards, and accessories. Quality tech for work, study, and play.
-                  </p>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition group-hover:bg-zinc-100">
-                    Shop Collection
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  </span>
+      {/* Dynamic Banners - Managed via Admin */}
+      {banners.map((banner) => (
+        <section key={banner.id} className="bg-white px-6 py-8">
+          <div className="mx-auto max-w-7xl">
+            <Link href={banner.buttonLink || '/products'} className="group relative block overflow-hidden rounded-3xl bg-zinc-100">
+              <div className="relative aspect-[21/9] w-full overflow-hidden">
+                <img
+                  src={banner.image}
+                  alt={banner.name}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
+                
+                <div className="absolute inset-0 flex flex-col justify-center p-8 sm:p-12 lg:p-16">
+                  <div className="max-w-lg">
+                    {banner.badge && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white mb-4">
+                        {banner.badge}
+                      </span>
+                    )}
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight mb-3">
+                      {banner.title}
+                    </h2>
+                    {banner.subtitle && (
+                      <p className="text-sm sm:text-base text-zinc-300 mb-6 max-w-md">
+                        {banner.subtitle}
+                      </p>
+                    )}
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition group-hover:bg-zinc-100">
+                      {banner.buttonText || 'Shop Now'}
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        </div>
-      </section>
+            </Link>
+          </div>
+        </section>
+      ))}
 
       {/* Top Laptop Deals */}
       {dealProducts.length > 0 && (
