@@ -1,20 +1,19 @@
 # Nixpacks configuration for Dokploy
-# Auto-detects Next.js and handles build/start
-
-[phases.build]
-# Build commands run during image creation
-cmds = [
-  "mkdir -p data && if [ ! -f data/products.json ]; then echo '[]' > data/products.json; fi",
-  "npm run build"
-]
+# Preserves uploaded products data
 
 [phases.setup]
-# Setup node version
 nixPkgs = ["nodejs_22", "curl"]
 
+[phases.build]
+# Copy data with products to build output
+cmds = [
+  "npm run build",
+  "cp -r data .next/standalone/ 2>/dev/null || mkdir -p .next/standalone/data && cp data/products.json .next/standalone/data/ 2>/dev/null; echo 'Data copied'"
+]
+
 [start]
-# Start command for runtime
-cmd = "mkdir -p /app/data && if [ ! -f /app/data/products.json ]; then echo '[]' > /app/data/products.json; fi && npm start"
+# Ensure data directory exists with products
+cmd = "mkdir -p /app/data && if [ ! -f /app/data/products.json ]; then cp -r /app/.next/standalone/data/* /app/data/ 2>/dev/null || echo '[]' > /app/data/products.json; fi && npm start"
 
 [env]
 NODE_ENV = "production"
