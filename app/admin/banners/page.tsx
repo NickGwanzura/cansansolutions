@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface Banner {
@@ -28,6 +28,103 @@ const EMPTY_BANNER = {
   active: true,
   position: 'homepage-hero',
 };
+
+// Image Upload Component
+function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreview(value);
+  }, [value]);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    
+    setUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        onChange(data.url);
+        setPreview(data.url);
+      } else {
+        alert('Upload failed');
+      }
+    } catch {
+      alert('Upload error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-semibold text-zinc-500 mb-1">Banner Image</label>
+      
+      {preview ? (
+        <div className="relative rounded-lg border border-zinc-200 overflow-hidden">
+          <img src={preview} alt="Preview" className="w-full h-32 object-cover" />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition"
+          >
+            Change Image
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="w-full h-32 rounded-lg border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center gap-2 text-zinc-500 hover:border-red-300 hover:text-red-600 transition disabled:opacity-50"
+        >
+          {uploading ? (
+            <>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
+              <span className="text-xs">Uploading...</span>
+            </>
+          ) : (
+            <>
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+              </svg>
+              <span className="text-xs font-medium">Click to upload image</span>
+            </>
+          )}
+        </button>
+      )}
+      
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+      
+      {value && (
+        <p className="text-[10px] text-zinc-400 truncate">{value}</p>
+      )}
+    </div>
+  );
+}
 
 export default function BannersAdmin() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -57,7 +154,7 @@ export default function BannersAdmin() {
   const saveBanner = async (banner: Banner) => {
     setSaving(true);
     try {
-      const isNew = !banner.id;
+      const isNew = !banner.id || !banners.find(b => b.id === banner.id);
       const res = await fetch('/api/admin/banners', {
         method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -199,7 +296,7 @@ export default function BannersAdmin() {
             <div className="w-full max-w-md bg-white flex flex-col shadow-2xl">
               <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
                 <h2 className="font-heading text-sm font-bold text-zinc-900">
-                  {editing.id ? 'Edit Banner' : 'New Banner'}
+                  {editing.id && banners.find(b => b.id === editing.id) ? 'Edit Banner' : 'New Banner'}
                 </h2>
                 <button onClick={() => setEditing(null)} className="text-zinc-400 hover:text-zinc-600">✕</button>
               </div>
@@ -222,17 +319,11 @@ export default function BannersAdmin() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Image URL</label>
-                  <input
-                    value={editing.image}
-                    onChange={(e) => setEditing({ ...editing, image: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                    placeholder="/images/banners/hero.jpg"
-                    required
-                  />
-                  <p className="mt-1 text-[10px] text-zinc-400">Upload images via Admin → Upload, then paste the URL here</p>
-                </div>
+                {/* Image Upload with auto-fill */}
+                <ImageUpload 
+                  value={editing.image} 
+                  onChange={(url) => setEditing({ ...editing, image: url })} 
+                />
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Badge Text</label>
