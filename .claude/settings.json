@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/itai/Desktop/SYS/cansan -type f -name *product* -o -name *admin* -o -name prisma*)"
+    ]
+  }
+}
