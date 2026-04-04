@@ -12,10 +12,6 @@ services:
       - PORT=3000
       - DATA_DIR=/app/data
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
-    volumes:
-      # PERSIST YOUR PRODUCTS - never overwritten
-      - cansan_data:/app/data
-      - cansan_uploads:/app/uploads/products
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
@@ -23,8 +19,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-volumes:
-  cansan_data:
-    # Named volume persists across deployments
-  cansan_uploads:
