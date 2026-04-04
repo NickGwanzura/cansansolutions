@@ -10,9 +10,13 @@ RUN npm ci
 COPY . .
 RUN rm -f .env .env.local .env.development .env.production
 
+# Create required directories
+RUN mkdir -p /app/data /app/uploads/products
+
+# Build
 RUN npm run build
 
 EXPOSE 3000
 
-# Use sh to catch errors
-CMD ["sh", "-c", "npm start 2>&1 || echo 'Exit code:' $?"]
+# Test that node works, then start
+CMD ["sh", "-c", "echo 'Node version:' && node --version && echo 'Starting app...' && exec npm start"]
