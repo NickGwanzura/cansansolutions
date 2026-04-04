@@ -14,8 +14,7 @@ RUN rm -f .env .env.local .env.development .env.production
 # Build the app
 RUN npm run build
 
-# Create data directory
-RUN mkdir -p /app/data && echo '[]' > /app/data/products.json
+# Create uploads directory only (don't overwrite your products.json)
 RUN mkdir -p /app/uploads/products
 
 EXPOSE 3000
