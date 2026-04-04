@@ -8,9 +8,6 @@ const REDIS_URL = process.env.REDIS_URL;
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'products.json');
 
-// Lazy initialization flag
-let initialized = false;
-
 // Try Redis, but fallback to file if not available
 let redis: Redis | null = null;
 
@@ -37,46 +34,27 @@ const KEYS = {
   CATEGORIES: 'categories:',
 };
 
-// Ensure data directory and file exist
-async function ensureDataFile(): Promise<void> {
-  if (initialized) return;
-  
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    
-    try {
-      await fs.access(DATA_FILE);
-    } catch {
-      // File doesn't exist, create it
-      await fs.writeFile(DATA_FILE, '[]', 'utf-8');
-      console.log(`[DB] Created empty products.json at ${DATA_FILE}`);
-    }
-    
-    initialized = true;
-  } catch (err: any) {
-    console.error(`[DB] Failed to initialize data file: ${err.message}`);
-    // Don't throw - let the app continue
-  }
-}
-
-// File-based storage
+// File-based storage - NEVER creates file, only reads existing
 async function readDataFile(): Promise<any[]> {
-  await ensureDataFile();
-  
   try {
     const data = await fs.readFile(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(data);
     return Array.isArray(parsed) ? parsed : [];
   } catch (err: any) {
-    console.error(`[DB] Read error: ${err.message}`);
+    // File doesn't exist or unreadable - return empty, DON'T CREATE
+    if (err.code === 'ENOENT') {
+      console.log(`[DB] No products.json found at ${DATA_FILE}, returning empty`);
+    } else {
+      console.error(`[DB] Read error: ${err.message}`);
+    }
     return [];
   }
 }
 
+// Write only when explicitly saving products
 async function writeDataFile(products: any[]): Promise<void> {
-  await ensureDataFile();
-  
   try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.writeFile(DATA_FILE, JSON.stringify(products, null, 2));
   } catch (err: any) {
     console.error(`[DB] Write failed: ${err.message}`);
