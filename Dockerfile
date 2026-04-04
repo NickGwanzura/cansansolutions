@@ -21,20 +21,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV DATA_DIR=/app/data
 
+# Install curl for healthcheck
 RUN apk add --no-cache curl
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone/ ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Create required directories
-RUN mkdir -p /app/data /app/uploads/products
+# Create data directory and seed with empty array
+RUN mkdir -p /app/data && echo '[]' > /app/data/products.json
 
-# Seed initial data if not present
-RUN if [ ! -f /app/data/products.json ]; then echo '[]' > /app/data/products.json; fi
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+# Create uploads directory
+RUN mkdir -p /app/uploads/products
 
 EXPOSE 3000
 
