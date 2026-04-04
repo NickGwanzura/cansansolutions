@@ -21,14 +21,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV DATA_DIR=/app/data
 
-# Install curl for healthcheck
 RUN apk add --no-cache curl
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone/ ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Create data directory and seed with empty array
+# Create data directory with initial products.json
 RUN mkdir -p /app/data && echo '[]' > /app/data/products.json
 
 # Create uploads directory
@@ -36,4 +35,5 @@ RUN mkdir -p /app/uploads/products
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Use shell form to ensure proper startup
+CMD node server.js
