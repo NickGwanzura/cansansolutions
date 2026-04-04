@@ -2,8 +2,8 @@
 const nextConfig = {
   images: { unoptimized: true },
   reactStrictMode: false,
+  output: 'standalone',
   distDir: '.next',
-  // output: 'standalone',
 };
 
 module.exports = nextConfig;
