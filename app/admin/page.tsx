@@ -38,7 +38,6 @@ const IMPORT_PLACEHOLDER = `[
     "price": 199,
     "currency": "USD",
     "description": "Short product description.",
-    "image": "/images/products/your-image.jpg",
     "inStock": true,
     "featured": false,
     "tags": ["tag one", "tag two"]
@@ -51,7 +50,6 @@ const IMPORT_PLACEHOLDER = `[
     "price": 499,
     "currency": "USD",
     "description": "Bundle deal for a small shop or home setup.",
-    "image": "/images/products/your-bundle.jpg",
     "inStock": true,
     "featured": true,
     "tags": ["bundle", "cctv"],

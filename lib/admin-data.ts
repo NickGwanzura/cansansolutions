@@ -105,7 +105,7 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
     if (!data.category) throw new Error('category required');
     if (data.price == null) throw new Error('price required');
     if (!data.description) throw new Error('description required');
-    if (!data.image) throw new Error('image required');
+    // Image is optional - can be added later via admin panel
     if (productType === 'bundle' && bundleItems.length === 0) throw new Error('bundle items required');
     
     const product = {
@@ -195,7 +195,7 @@ function sanitizeImportedProduct(data: ProductRecord, fallbackId: string, existi
   if (!category) throw new Error(`Product "${name}" needs a category`);
   if (!Number.isFinite(price)) throw new Error(`Product "${name}" needs a valid price`);
   if (!description) throw new Error(`Product "${name}" needs a description`);
-  if (!image) throw new Error(`Product "${name}" needs an image path`);
+  // Image is optional during import - can be added later
   if (productType === 'bundle' && bundleItems.length === 0) {
     throw new Error(`Bundle "${name}" needs at least one bundled item`);
   }
