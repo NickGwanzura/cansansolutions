@@ -4,19 +4,11 @@ import path from 'path';
 
 const REDIS_URL = process.env.REDIS_URL;
 
-// DEBUG: Log environment on startup
-console.log('[DB] Environment check:');
-console.log('[DB]   DATA_DIR env:', process.env.DATA_DIR);
-console.log('[DB]   process.cwd():', process.cwd());
-
 // Data file path: use env var or fallback to project-relative path
 // In Docker: DATA_DIR=/app/data
 // Local dev: defaults to ./data relative to project root
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'products.json');
-
-console.log('[DB]   DATA_DIR resolved:', DATA_DIR);
-console.log('[DB]   DATA_FILE resolved:', DATA_FILE);
 
 // Try Redis, but fallback to file if not available
 let redis: Redis | null = null;
