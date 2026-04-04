@@ -11,16 +11,16 @@ RUN npm ci
 COPY . .
 RUN rm -f .env .env.local .env.development .env.production
 
-# Create data directory before build
-RUN mkdir -p /app/data
-
 # Build the app
 RUN npm run build
 
-# Create uploads directory
-RUN mkdir -p /app/uploads/products
+# Create directories
+RUN mkdir -p /app/data /app/uploads/products
+
+# Copy and set up start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 EXPOSE 3000
 
-# Start with explicit host binding
-CMD ["sh", "-c", "echo 'Starting server on port 3000' && npm start"]
+CMD ["/app/start.sh"]
