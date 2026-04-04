@@ -242,6 +242,45 @@ export default async function HomePage() {
 
       <BrandsStrip />
 
+      {/* Featured Promo Banner */}
+      <section className="bg-white px-6 py-8">
+        <div className="mx-auto max-w-7xl">
+          <Link href="/products" className="group relative block overflow-hidden rounded-3xl bg-zinc-100">
+            {/* Large Banner Image */}
+            <div className="relative aspect-[21/9] w-full overflow-hidden">
+              <img
+                src="/images/products/promo-collection.jpg"
+                alt="Premium Tech Collection - Laptops, Tablets, Keyboards & More"
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
+              
+              {/* Content Overlay */}
+              <div className="absolute inset-0 flex flex-col justify-center p-8 sm:p-12 lg:p-16">
+                <div className="max-w-lg">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white mb-4">
+                    New Arrivals
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight mb-3">
+                    Premium Tech Collection
+                  </h2>
+                  <p className="text-sm sm:text-base text-zinc-300 mb-6 max-w-md">
+                    Discover our latest range of laptops, tablets, keyboards, and accessories. Quality tech for work, study, and play.
+                  </p>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition group-hover:bg-zinc-100">
+                    Shop Collection
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* Top Laptop Deals */}
       {dealProducts.length > 0 && (
         <section className="bg-zinc-50 px-6 py-14">
