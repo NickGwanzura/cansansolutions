@@ -12,6 +12,9 @@ COPY . .
 RUN rm -f .env .env.local .env.development .env.production
 RUN npm run build
 
+# Check what was built
+RUN ls -la .next/standalone/ && ls -la .next/standalone/server.js
+
 # Production stage
 FROM node:22-alpine
 WORKDIR /app
@@ -22,11 +25,11 @@ ENV PORT=3000
 
 RUN apk add --no-cache curl
 
-COPY --from=builder /app/.next/standalone ./
+# Copy standalone output
+COPY --from=builder /app/.next/standalone/ ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/data ./data
 
+# Ensure directories exist
 RUN mkdir -p /app/uploads/products
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
