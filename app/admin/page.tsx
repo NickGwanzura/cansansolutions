@@ -235,6 +235,33 @@ function ProductForm({
   const [error, setError] = useState('');
   const [addAnother, setAddAnother] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'variants'>('basic');
+  const [enhancing, setEnhancing] = useState(false);
+
+  const enhanceDescription = async () => {
+    if (!form.name.trim()) { setError('Enter a product name first'); return; }
+    setEnhancing(true);
+    try {
+      const res = await fetch('/api/admin/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          category: form.category,
+          price: form.price,
+          tags: form.tags,
+          condition: form.condition,
+          currentDescription: form.description,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) set('description', data.description);
+      else setError(data.error || 'AI enhance failed');
+    } catch {
+      setError('AI enhance failed');
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   const set = (k: keyof FormData, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -394,11 +421,36 @@ function ProductForm({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Description *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-zinc-500">Description *</label>
+                  <button
+                    type="button"
+                    onClick={enhanceDescription}
+                    disabled={enhancing}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-50 hover:bg-violet-100 disabled:opacity-50 text-violet-700 text-xs font-medium transition"
+                  >
+                    {enhancing ? (
+                      <>
+                        <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        Enhancing…
+                      </>
+                    ) : (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                        </svg>
+                        Enhance with AI
+                      </>
+                    )}
+                  </button>
+                </div>
                 <RichTextEditor
                   value={form.description}
                   onChange={(v) => set('description', v)}
-                  placeholder="Describe your product..."
+                  placeholder="Describe your product…"
                 />
               </div>
 
