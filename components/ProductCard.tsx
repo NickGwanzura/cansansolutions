@@ -193,9 +193,10 @@ export function ProductCard({
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-            {product.description}
-          </p>
+          <div
+            className="text-xs text-zinc-400 line-clamp-2 leading-relaxed prose prose-xs max-w-none prose-p:my-0 prose-ul:my-0"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
         )}
 
         {isBundle && product.bundleItems.length > 0 && (
