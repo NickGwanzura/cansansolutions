@@ -144,6 +144,14 @@ export default function ProductPage({ params }: Props) {
             ))}
           </div>
 
+          {/* Description */}
+          {product.description && (
+            <div
+              className="text-sm leading-relaxed text-zinc-600 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          )}
+
           {/* Separator */}
           <div className="h-px bg-zinc-200 my-2" />
           

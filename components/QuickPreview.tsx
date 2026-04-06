@@ -124,9 +124,10 @@ export function QuickPreview({ product, onClose }: Props) {
                   </h2>
                 </div>
 
-                <p className="text-sm leading-relaxed text-zinc-500 line-clamp-3">
-                  {product.description}
-                </p>
+                <div
+                  className="text-sm leading-relaxed text-zinc-500 line-clamp-3 prose prose-sm max-w-none prose-p:my-0 prose-ul:my-0"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
 
                 {isBundle && product.bundleItems.length > 0 && (
                   <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
