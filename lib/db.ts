@@ -1,12 +1,17 @@
-import { neon } from '@neondatabase/serverless';
+import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy-initialize so the module can be imported during build without DATABASE_URL
+let _sql: NeonQueryFunction<false, false> | null = null;
+function sql(): NeonQueryFunction<false, false> {
+  if (!_sql) _sql = neon(process.env.DATABASE_URL!);
+  return _sql;
+}
 
 let schemaReady = false;
 
 async function ensureSchema(): Promise<void> {
   if (schemaReady) return;
-  await sql`
+  await sql()`
     CREATE TABLE IF NOT EXISTS products (
       id            TEXT PRIMARY KEY,
       slug          TEXT UNIQUE NOT NULL,
@@ -64,22 +69,22 @@ function rowToProduct(row: Record<string, unknown>) {
 
 export async function getProducts(): Promise<ReturnType<typeof rowToProduct>[]> {
   await ensureSchema();
-  const rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
+  const rows = await sql()`SELECT * FROM products ORDER BY created_at DESC`;
   return rows.map(rowToProduct);
 }
 
 export async function getProduct(id: string): Promise<ReturnType<typeof rowToProduct> | null> {
   await ensureSchema();
-  const rows = await sql`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+  const rows = await sql()`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
   return rows.length > 0 ? rowToProduct(rows[0]) : null;
 }
 
 export async function saveProduct(product: Record<string, unknown>): Promise<void> {
   await ensureSchema();
-  const id   = (product.id as string) || String(Date.now());
-  const now  = new Date();
+  const id  = (product.id as string) || String(Date.now());
+  const now = new Date();
 
-  await sql`
+  await sql()`
     INSERT INTO products (
       id, slug, name, category, product_type, bundle_items, condition,
       price, currency, description, image, in_stock, featured, tags,
@@ -135,12 +140,12 @@ export async function saveProduct(product: Record<string, unknown>): Promise<voi
 
 export async function deleteProduct(id: string): Promise<void> {
   await ensureSchema();
-  await sql`DELETE FROM products WHERE id = ${id}`;
+  await sql()`DELETE FROM products WHERE id = ${id}`;
 }
 
 export async function replaceProducts(products: Record<string, unknown>[]): Promise<void> {
   await ensureSchema();
-  await sql`TRUNCATE TABLE products`;
+  await sql()`TRUNCATE TABLE products`;
   for (const product of products) {
     await saveProduct(product);
   }
