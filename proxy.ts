@@ -15,7 +15,7 @@ const ALLOWED_PATHS = [
   '/_next/',
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Check if maintenance mode is enabled (read at runtime)
   const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
   const bypassPassword = process.env.MAINTENANCE_PASSWORD || 'cansan2024';
