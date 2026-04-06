@@ -22,8 +22,9 @@ export default function ComingSoonPage() {
       });
 
       if (res.ok) {
-        router.push('/');
-        router.refresh();
+        // Use replace + full page reload so the cookie is committed before
+        // the middleware evaluates the next request — avoids redirect loop.
+        window.location.replace('/');
       } else {
         setError('Invalid password');
       }
