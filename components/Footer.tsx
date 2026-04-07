@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BrandLogo } from './BrandLogo';
-import { CATALOG_CATEGORIES } from '@/lib/catalog';
+import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
 
 const WA_NUMBER = '263773754747';
 const WA_DISPLAY = '+263 77 375 4747';
@@ -9,13 +9,30 @@ const DEV_WA_NUMBER = '263777816368';
 const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'All Products' },
+  { href: '/brands', label: 'Brands' },
+  { href: '/solutions', label: 'Solutions' },
   { href: '/services', label: 'Services' },
+  { href: '/insights', label: 'Insights' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact' },
 ];
 
+const buyingInfoLinks = [
+  { href: '/warranty', label: 'Warranty Info' },
+  { href: '/delivery', label: 'Delivery Info' },
+  { href: '/payments', label: 'Payment Options' },
+  { href: '/bulk-orders', label: 'Bulk Orders' },
+];
+
+const solutionLinks = [
+  { href: '/solutions/office-laptops', label: 'Office Laptops' },
+  { href: '/solutions/cctv-packages', label: 'CCTV Packages' },
+  { href: '/solutions/home-wifi-setup', label: 'Home Wi-Fi Setup' },
+  { href: '/solutions/load-shedding-backup', label: 'Load-Shedding Backup' },
+];
+
 const categories = CATALOG_CATEGORIES.map((category) => ({
-  href: `/products?category=${category.slug}`,
+  href: getCategoryHref(category.slug),
   label: category.label,
 }));
 
@@ -141,6 +158,34 @@ export function Footer() {
                   <span className="text-red-500/70">Closed</span>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="mb-4 font-heading text-xs font-bold uppercase tracking-widest text-zinc-200">Buying Info</h3>
+              <ul className="space-y-3">
+                {buyingInfoLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200 inline-flex items-center gap-1.5 group">
+                      <span className="h-px w-3 bg-zinc-700 transition group-hover:w-4 group-hover:bg-red-500" />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="mb-4 font-heading text-xs font-bold uppercase tracking-widest text-zinc-200">Popular Solutions</h3>
+              <ul className="space-y-3">
+                {solutionLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200 inline-flex items-center gap-1.5 group">
+                      <span className="h-px w-3 bg-zinc-700 transition group-hover:w-4 group-hover:bg-red-500" />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 

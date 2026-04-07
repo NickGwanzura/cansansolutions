@@ -1,14 +1,26 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import Image from 'next/image';
 import { BrandsStrip } from '@/components/BrandsStrip';
+import { InsightCard } from '@/components/InsightCard';
 import { FeaturedSection } from './FeaturedSection';
 import { readProducts } from '@/lib/admin-data';
 import type { ReactElement } from 'react';
-import { CATALOG_CATEGORIES } from '@/lib/catalog';
+import { getFeaturedInsights } from '@/lib/articles';
+import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
 import { ProductCard } from '@/components/ProductCard';
 import { getActiveBanners } from '@/lib/db';
+import { buildAbsoluteMetadata } from '@/lib/seo';
+import { getFeaturedSolutions, getSolutionHref } from '@/lib/solutions';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300;
+
+export const metadata: Metadata = buildAbsoluteMetadata({
+  title: 'Buy Laptops, Phones & CCTV in Harare',
+  description:
+    'Buy laptops, phones, networking gear, CCTV, printers, and accessories in Harare. Order via WhatsApp with fast delivery and expert support.',
+  path: '/',
+});
 
 const categoryIcons: Record<string, ReactElement> = {
   smartphone: (
@@ -108,6 +120,8 @@ export default async function HomePage() {
   const products = await readProducts();
   const banners = await getActiveBanners();
   const dealProducts = products.filter((p) => p.dealLabel === 'Top Laptop Deals').slice(0, 6);
+  const featuredInsights = getFeaturedInsights(3);
+  const featuredSolutions = getFeaturedSolutions(4);
 
   return (
     <div className="overflow-x-hidden">
@@ -128,10 +142,10 @@ export default async function HomePage() {
                 <span className="text-xs font-medium tracking-wide">Open today until 6pm</span>
               </div>
               <h1 className="font-heading text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-                Tech that works for you.
+                Harare&apos;s tech store for laptops, phones, and CCTV.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-zinc-300 sm:text-lg">
-                Laptops, desktops, networking, CCTV, audio, and more. Ordered in seconds via WhatsApp.
+                Buy laptops, desktops, networking gear, CCTV, printers, and accessories with fast WhatsApp ordering, expert advice, and Harare delivery support.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -185,7 +199,7 @@ export default async function HomePage() {
                   return (
                     <Link
                       key={cat.id}
-                      href={`/products?category=${cat.slug}`}
+                      href={getCategoryHref(cat.slug)}
                       className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
                     >
                       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white/90 transition group-hover:scale-110 group-hover:bg-red-600">
@@ -222,7 +236,7 @@ export default async function HomePage() {
               return (
                 <Link
                   key={cat.id}
-                  href={`/products?category=${cat.slug}`}
+                  href={getCategoryHref(cat.slug)}
                   className={`group flex flex-col items-center gap-3 rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 text-center transition hover:-translate-y-1 hover:shadow-md`}
                 >
                   <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-white shadow-sm ${colors.icon} transition group-hover:scale-110`}>
@@ -244,10 +258,12 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl">
             <Link href={banner.buttonLink || '/products'} className="group relative block overflow-hidden rounded-3xl bg-zinc-100">
               <div className="relative aspect-[21/9] w-full overflow-hidden">
-                <img
+                <Image
                   src={banner.image}
                   alt={banner.name}
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 1280px"
+                  className="object-cover transition duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
                 
@@ -289,7 +305,7 @@ export default async function HomePage() {
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Savings</p>
                 <h2 className="mt-1 text-2xl font-bold text-zinc-900">Our Top Laptop Deals</h2>
               </div>
-              <Link href="/products?category=laptops" className="text-sm font-medium text-red-600 hover:text-red-700 underline underline-offset-2">
+              <Link href={getCategoryHref('laptops')} className="text-sm font-medium text-red-600 hover:text-red-700 underline underline-offset-2">
                 View all
               </Link>
             </div>
@@ -319,8 +335,8 @@ export default async function HomePage() {
             {[
               { title: 'Networking & Wi-Fi Setup', desc: 'Home or office. We supply and install routers, access points, and structured cabling.', href: '/services' },
               { title: 'WhatsApp Ordering', desc: 'No account needed. Add to cart, send a message, and we handle the rest.', href: '/products' },
-              { title: 'Same-Day Delivery', desc: 'Harare orders delivered today. Nationwide courier available.', href: '/contact' },
-              { title: 'After-Sales Support', desc: 'Setup help, warranty claims, and troubleshooting. We do not disappear.', href: '/contact' },
+              { title: 'Same-Day Delivery', desc: 'Harare orders delivered today. Nationwide courier available.', href: '/delivery' },
+              { title: 'After-Sales Support', desc: 'Setup help, warranty claims, and troubleshooting. We do not disappear.', href: '/warranty' },
             ].map((item) => (
               <Link
                 key={item.title}
@@ -336,6 +352,84 @@ export default async function HomePage() {
                   </svg>
                 </span>
               </Link>
+            ))}
+          </div>
+
+          <div className="mt-10 grid gap-4 rounded-3xl border border-zinc-200 bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Warranty Info', href: '/warranty', text: 'Know how product support and claims work before you buy.' },
+              { label: 'Delivery Info', href: '/delivery', text: 'See how Harare delivery, courier, and collection are handled.' },
+              { label: 'Payment Options', href: '/payments', text: 'Understand indicative pricing and the accepted payment routes.' },
+              { label: 'Bulk Orders', href: '/bulk-orders', text: 'Get quotes for office, school, and organisational purchases.' },
+            ].map((item) => (
+              <Link key={item.href} href={item.href} className="group rounded-2xl border border-zinc-100 bg-zinc-50 p-4 transition hover:border-zinc-200 hover:bg-zinc-100">
+                <p className="text-sm font-semibold text-zinc-900">{item.label}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{item.text}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-red-600 group-hover:underline">
+                  View details
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Solutions */}
+      <section className="bg-zinc-950 px-6 py-16 text-white">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-red-400">Solutions</p>
+              <h2 className="mt-2 text-2xl font-bold">High-intent landing pages for buyers ready to solve a problem</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
+                These pages target commercial searches like office laptops, CCTV packages, home Wi-Fi setup, and load-shedding backup instead of forcing every visitor into the same catalog.
+              </p>
+            </div>
+            <Link href="/solutions" className="text-sm font-medium text-red-300 hover:text-white">
+              View all solutions
+            </Link>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {featuredSolutions.map((solution) => (
+              <Link
+                key={solution.slug}
+                href={getSolutionHref(solution.slug)}
+                className="group rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-red-300">{solution.eyebrow}</p>
+                <h3 className="mt-3 text-lg font-semibold leading-tight text-white group-hover:text-red-200">
+                  {solution.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-300">{solution.shortDescription}</p>
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-red-300 group-hover:underline">
+                  Open solution page
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Insights */}
+      <section className="bg-white px-6 py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Insights</p>
+              <h2 className="mt-2 text-2xl font-bold text-zinc-900">Commercial buying guides for Zimbabwean customers</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
+                These guides target the questions buyers ask before they spend, then point them to the right products, services, and quote paths.
+              </p>
+            </div>
+            <Link href="/insights" className="text-sm font-medium text-red-600 hover:text-red-700">
+              View all insights
+            </Link>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {featuredInsights.map((article) => (
+              <InsightCard key={article.slug} article={article} />
             ))}
           </div>
         </div>
@@ -378,9 +472,11 @@ export default async function HomePage() {
                   </div>
 
                   <div className="flex flex-1 items-center justify-center py-6">
-                    <img
+                    <Image
                       src="/images/products/laptop-new.svg"
                       alt="Laptop product showcase"
+                      width={640}
+                      height={420}
                       className="h-full max-h-64 w-full max-w-md object-contain drop-shadow-[0_24px_30px_rgba(24,24,27,0.16)]"
                     />
                   </div>
@@ -391,7 +487,7 @@ export default async function HomePage() {
                       <p className="text-xs text-zinc-500">Reliable devices sourced for performance and value.</p>
                     </div>
                     <Link
-                      href="/products?category=laptops"
+                      href={getCategoryHref('laptops')}
                       className="shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800"
                     >
                       Browse

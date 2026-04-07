@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
+import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Contact Us — Cansan Solutions',
-  description: 'Get in touch with Cansan Solutions via WhatsApp, phone, or visit us in Harare, Zimbabwe.',
+  ...buildAbsoluteMetadata({
+    title: 'Contact Cansan Solutions | Harare Computer Shop & WhatsApp Orders',
+    description:
+      'Contact Cansan Solutions in Harare by WhatsApp, phone, email, or in-store visit for quotes, stock checks, and tech support.',
+    path: '/contact',
+  }),
 };
 
 const WA_NUMBER = '263773754747';
@@ -85,7 +90,7 @@ const faqs = [
   },
   {
     q: 'Do you offer delivery?',
-    a: 'Yes. We deliver across Harare and can arrange nationwide courier. Delivery fees vary by location; confirm with us on WhatsApp.'
+    a: 'Yes. We deliver across Harare and can arrange nationwide courier. Delivery fees vary by location; confirm with us on WhatsApp or read our delivery information page.'
   },
   {
     q: 'Are prices negotiable?',
@@ -97,7 +102,7 @@ const faqs = [
   },
   {
     q: 'Do products come with a warranty?',
-    a: 'All products come with the manufacturer\'s standard warranty. Contact us if you encounter any issues and we\'ll help facilitate a claim.',
+    a: 'Products come with the applicable manufacturer or supplier warranty where available. Contact us if you encounter any issues and we\'ll help facilitate a claim.',
   },
 ];
 
@@ -175,6 +180,26 @@ export default function ContactPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-12 max-w-5xl rounded-3xl border border-zinc-200 bg-white p-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Helpful Before You Message</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { href: '/warranty', label: 'Warranty Info' },
+              { href: '/delivery', label: 'Delivery Info' },
+              { href: '/payments', label: 'Payment Options' },
+              { href: '/bulk-orders', label: 'Bulk Orders' },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:border-red-300 hover:text-red-600"
+              >
+                {item.label}
+              </a>
+            ))}
           </div>
         </div>
       </section>

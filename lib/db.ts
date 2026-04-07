@@ -153,7 +153,7 @@ async function ensureSchema(): Promise<void> {
   `;
   await sql()`
     INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'www.cansansolutions.co.zw', '', '/images/brand/cansan-logo.png')
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
   `;
   await sql()`
@@ -841,7 +841,7 @@ export async function getCompanyProfile(): Promise<CompanyProfile> {
   // Seed default if missing
   const inserted = await sql()`
     INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'www.cansansolutions.co.zw', '/images/brand/cansan-logo.png')
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
     RETURNING *
   `;

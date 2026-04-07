@@ -1,42 +1,51 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
 import { QuickPreview } from '@/components/QuickPreview';
 import { EmptyState } from '@/components/EmptyState';
-import { ProductSkeleton } from '@/components/ProductSkeleton';
 import type { Product, Category } from '@/lib/types';
-import { isBundleProduct } from '@/lib/catalog';
+import { getCategoryHref, isBundleProduct } from '@/lib/catalog';
 
 interface ProductsClientProps {
   initialProducts: Product[];
   categories: Category[];
+  activeCategory: string;
+  heading: string;
+  description: string;
+  initialType?: string;
+  initialCondition?: string;
+  initialSearchQuery?: string;
+  initialSortBy?: string;
 }
 
-export function ProductsClient({ initialProducts, categories }: ProductsClientProps) {
-  const searchParams = useSearchParams();
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [activeType, setActiveType] = useState<'all' | 'single' | 'bundle'>('all');
-  const [activeCondition, setActiveCondition] = useState<'all' | 'new' | 'pre-owned'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high' | 'name'>('default');
+export function ProductsClient({
+  initialProducts,
+  categories,
+  activeCategory,
+  heading,
+  description,
+  initialType,
+  initialCondition,
+  initialSearchQuery,
+  initialSortBy,
+}: ProductsClientProps) {
+  const [activeType, setActiveType] = useState<'all' | 'single' | 'bundle'>(
+    initialType === 'single' || initialType === 'bundle' ? initialType : 'all'
+  );
+  const [activeCondition, setActiveCondition] = useState<'all' | 'new' | 'pre-owned'>(
+    initialCondition === 'new' || initialCondition === 'pre-owned' ? initialCondition : 'all'
+  );
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery ?? '');
+  const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high' | 'name'>(
+    initialSortBy === 'price-low' || initialSortBy === 'price-high' || initialSortBy === 'name'
+      ? initialSortBy
+      : 'default'
+  );
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const products = initialProducts;
-
-  useEffect(() => {
-    const cat = searchParams.get('category');
-    const type = searchParams.get('type');
-    const cond = searchParams.get('condition') as typeof activeCondition | null;
-    queueMicrotask(() => {
-      setActiveCategory(cat ?? 'all');
-      setActiveType(type === 'single' || type === 'bundle' ? type : 'all');
-      setActiveCondition(cond && ['new', 'pre-owned'].includes(cond) ? cond : 'all');
-      // Simulate loading for skeleton demonstration
-      setTimeout(() => setIsLoading(false), 300);
-    });
-  }, [searchParams]);
+  const currentCategory = activeCategory === 'all' ? null : categories.find((category) => category.slug === activeCategory);
 
   const filtered = useMemo(() => {
     let result = products.filter((p) => {
@@ -88,26 +97,13 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
   };
 
   const clearAllFilters = () => {
-    setActiveCategory('all');
     setActiveType('all');
     setActiveCondition('all');
     setSearchQuery('');
     setSortBy('default');
   };
 
-  const hasActiveFilters = activeCategory !== 'all' || activeType !== 'all' || activeCondition !== 'all' || searchQuery !== '';
-
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="mb-8">
-          <div className="h-8 w-48 animate-pulse rounded bg-zinc-100" />
-          <div className="mt-2 h-4 w-72 animate-pulse rounded bg-zinc-100" />
-        </div>
-        <ProductSkeleton count={8} />
-      </div>
-    );
-  }
+  const hasActiveFilters = activeType !== 'all' || activeCondition !== 'all' || searchQuery !== '' || sortBy !== 'default';
 
   return (
     <>
@@ -115,10 +111,26 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
         {/* Page title */}
         <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">All Products</h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              Brand new and quality pre-owned tech. All tested and ready.
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+              {currentCategory ? currentCategory.label : 'Shop Cansan'}
             </p>
+            <h1 className="mt-1 text-2xl font-bold text-zinc-900">{heading}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{description}</p>
+          </div>
+        </div>
+
+        <div className="mb-8 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-5 text-sm text-zinc-600 sm:grid-cols-3">
+          <div>
+            <p className="font-semibold text-zinc-900">WhatsApp-first ordering</p>
+            <p className="mt-1">Confirm stock, get pricing help, and close orders without waiting on a form.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-zinc-900">Harare delivery support</p>
+            <p className="mt-1">Same-day delivery options and nationwide courier coordination for stocked items.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-zinc-900">Bulk and business quotes</p>
+            <p className="mt-1">Need multiple units? Use category pages to shortlist products, then request a quote fast.</p>
           </div>
         </div>
 
@@ -233,8 +245,8 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
 
         {/* Category filter */}
         <div className="mb-6 flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveCategory('all')}
+          <Link
+            href="/products"
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
               activeCategory === 'all'
                 ? 'bg-red-600 text-white'
@@ -242,11 +254,11 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
             }`}
           >
             All Categories
-          </button>
+          </Link>
           {categories.map((cat) => (
-            <button
+            <Link
               key={cat.id}
-              onClick={() => setActiveCategory(cat.slug)}
+              href={getCategoryHref(cat.slug)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                 activeCategory === cat.slug
                   ? 'bg-red-600 text-white'
@@ -254,7 +266,7 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
               }`}
             >
               {cat.label}
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -263,7 +275,7 @@ export function ProductsClient({ initialProducts, categories }: ProductsClientPr
           <p className="text-sm text-zinc-500">
             {filtered.length} {filtered.length === 1 ? 'product' : 'products'}
             {searchQuery && ` matching "${searchQuery}"`}
-            {activeCategory !== 'all' && ` in ${categories.find((c) => c.slug === activeCategory)?.label ?? activeCategory}`}
+            {activeCategory !== 'all' && ` in ${currentCategory?.label ?? activeCategory}`}
             {activeType !== 'all' && ` · ${activeType === 'bundle' ? 'Bundles' : 'Single products'}`}
             {activeCondition !== 'all' && ` · ${activeCondition === 'new' ? 'Brand New' : 'Pre-owned'}`}
           </p>

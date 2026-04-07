@@ -5,6 +5,7 @@ import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/JsonLd";
 import { DM_Sans, Sora } from "next/font/google";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -19,9 +20,31 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "Cansan Solutions — Tech & Electronics",
-  description:
-    "Shop mobiles, laptops, networking gear, power solutions, audio, and more. Order via WhatsApp for fast delivery.",
+  metadataBase: new URL(SITE_URL),
+  title: `Buy Laptops, Phones & CCTV in Harare | ${SITE_NAME}`,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `Buy Laptops, Phones & CCTV in Harare | ${SITE_NAME}`,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/favicon.svg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Buy Laptops, Phones & CCTV in Harare | ${SITE_NAME}`,
+    description: SITE_DESCRIPTION,
+    images: ["/favicon.svg"],
+  },
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },

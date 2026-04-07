@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'About Us — Cansan Solutions',
-  description: 'Learn about Cansan Solutions — your trusted tech and electronics partner in Zimbabwe.',
+  ...buildAbsoluteMetadata({
+    title: 'About Cansan Solutions | Trusted Tech Store in Harare',
+    description:
+      'Learn about Cansan Solutions, a Harare-based tech retailer focused on genuine products, honest advice, and fast WhatsApp ordering.',
+    path: '/about',
+  }),
 };
 
 const values = [

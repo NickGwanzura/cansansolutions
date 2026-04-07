@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Services — Cansan Solutions',
-  description: 'Tech retail, networking setup, IT consultation, and more — Cansan Solutions has you covered.',
+  ...buildAbsoluteMetadata({
+    title: 'IT Support, WiFi & CCTV Installation in Harare',
+    description:
+      'Get WiFi setup, CCTV supply, tech sourcing, IT consultation, and bulk business support in Harare from Cansan Solutions.',
+    path: '/services',
+  }),
 };
 
 const services = [
@@ -27,7 +32,7 @@ const services = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
       </svg>
     ),
-    cta: { label: 'Enquire', href: '/contact' },
+    cta: { label: 'View Wi-Fi Solution', href: '/solutions/home-wifi-setup' },
   },
   {
     title: 'Power & Backup Solutions',
@@ -38,7 +43,7 @@ const services = [
         <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
       </svg>
     ),
-    cta: { label: 'View Power Products', href: '/products?category=power' },
+    cta: { label: 'View Backup Solution', href: '/solutions/load-shedding-backup' },
   },
   {
     title: 'IT Consultation',
@@ -71,7 +76,7 @@ const services = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
       </svg>
     ),
-    cta: { label: 'Request a Quote', href: '/contact' },
+    cta: { label: 'View Office Laptop Solution', href: '/solutions/office-laptops' },
   },
 ];
 
@@ -110,6 +115,60 @@ export default function ServicesPage() {
               </Link>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="bg-zinc-50 px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Popular Solutions</p>
+              <h2 className="mt-2 text-2xl font-bold text-zinc-900">Commercial landing pages for high-intent buyers</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
+                Some buyers are not looking for a generic service overview. They are searching for a concrete business or home solution. These pages give them a clearer path.
+              </p>
+            </div>
+            <Link href="/solutions" className="text-sm font-medium text-red-600 hover:text-red-700">
+              View all solutions
+            </Link>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {[
+              {
+                title: 'Office Laptops',
+                body: 'For teams, SMEs, schools, and repeat business procurement with quote-first buying support.',
+                href: '/solutions/office-laptops',
+              },
+              {
+                title: 'CCTV Packages',
+                body: 'For homes, shops, and offices that need package-style security quotes and installation discussions.',
+                href: '/solutions/cctv-packages',
+              },
+              {
+                title: 'Home Wi-Fi Setup',
+                body: 'For coverage problems, router upgrades, and practical networking support in Harare homes.',
+                href: '/solutions/home-wifi-setup',
+              },
+              {
+                title: 'Load-Shedding Backup',
+                body: 'For router uptime, workstation continuity, and UPS planning during power cuts.',
+                href: '/solutions/load-shedding-backup',
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-red-600">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-600">{item.body}</p>
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-red-600 group-hover:underline">
+                  Open solution page
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 

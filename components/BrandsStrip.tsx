@@ -1,7 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import type { Brand } from '@/lib/types';
+import { getBrandHref } from '@/lib/brands';
 
 function AppleLogo() {
   return (
@@ -176,6 +179,14 @@ const brands = [
   { key: 'asus', Logo: AsusLogo },
 ];
 
+const brandHrefMap: Record<string, string> = {
+  samsung: getBrandHref('samsung'),
+  hp: getBrandHref('hp'),
+  dell: getBrandHref('dell'),
+  lenovo: getBrandHref('lenovo'),
+  tplink: getBrandHref('tp-link'),
+};
+
 const allBrands = [...brands, ...brands, ...brands];
 
 export function BrandsStrip() {
@@ -215,6 +226,11 @@ export function BrandsStrip() {
         <h3 className="mt-2 text-2xl font-light text-zinc-800">
           Trusted <span className="font-semibold text-red-600">Brands</span> We Carry
         </h3>
+        <div className="mt-3">
+          <Link href="/brands" className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
+            Browse brand collections
+          </Link>
+        </div>
       </div>
 
       <div className="relative">
@@ -226,13 +242,18 @@ export function BrandsStrip() {
             {dbBrands.length > 0
               ? repeatedDbBrands.map((brand, i) => (
                   <div key={`${brand.id}-${i}`} className="logo-item">
-                    <img src={brand.logoUrl} alt={brand.name} className="brand-image" />
+                    <Image src={brand.logoUrl} alt={brand.name} width={180} height={48} className="brand-image" />
                   </div>
                 ))
               : allBrands.map(({ key, Logo }, i) => (
-                  <div key={`${key}-${i}`} className="logo-item">
+                  <Link
+                    key={`${key}-${i}`}
+                    href={brandHrefMap[key] ?? '/brands'}
+                    className="logo-item"
+                    aria-label={`Browse ${key} products`}
+                  >
                     <Logo />
-                  </div>
+                  </Link>
                 ))}
           </div>
         </div>
