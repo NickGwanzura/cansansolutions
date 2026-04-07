@@ -5,8 +5,7 @@ import { readProducts } from '@/lib/admin-data';
 import type { ReactElement } from 'react';
 import { CATALOG_CATEGORIES } from '@/lib/catalog';
 import { ProductCard } from '@/components/ProductCard';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { getActiveBanners } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -105,22 +104,9 @@ const categoryColors: Record<string, { bg: string; icon: string; border: string 
   bundles: { bg: 'from-red-50 to-red-100', icon: 'text-red-600', border: 'border-red-100' },
 };
 
-// Fetch banners from API
-async function getBanners(): Promise<any[]> {
-  try {
-    const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
-    const BANNERS_FILE = path.join(DATA_DIR, 'banners.json');
-    const data = await fs.readFile(BANNERS_FILE, 'utf-8');
-    const banners = JSON.parse(data);
-    return banners.filter((b: any) => b.active !== false);
-  } catch {
-    return [];
-  }
-}
-
 export default async function HomePage() {
   const products = await readProducts();
-  const banners = await getBanners();
+  const banners = await getActiveBanners();
   const dealProducts = products.filter((p) => p.dealLabel === 'Top Laptop Deals').slice(0, 6);
 
   return (
@@ -196,7 +182,6 @@ export default async function HomePage() {
             <div className="relative hidden lg:block">
               <div className="grid grid-cols-2 gap-3">
                 {CATALOG_CATEGORIES.slice(0, 6).map((cat) => {
-                  const colors = categoryColors[cat.id] ?? categoryColors.laptops;
                   return (
                     <Link
                       key={cat.id}

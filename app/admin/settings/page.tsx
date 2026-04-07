@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 
 export default function SettingsPage() {
@@ -208,6 +209,22 @@ export default function SettingsPage() {
                 Save Settings
               </button>
             </form>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 className="font-semibold text-zinc-900 mb-2">Homepage Banner</h3>
+            <p className="text-sm text-zinc-500">
+              The &quot;Premium Tech Collection&quot; banner image is managed from the Banners screen, not this settings page.
+            </p>
+            <Link
+              href="/admin/banners"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              Open Banners
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
           </div>
 
           {/* About */}

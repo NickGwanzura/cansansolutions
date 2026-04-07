@@ -1,22 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import type { Banner } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
-interface Banner {
-  id: string;
-  name: string;
-  image: string;
-  title: string;
-  subtitle: string;
-  badge: string;
-  buttonText: string;
-  buttonLink: string;
-  active: boolean;
-  position: string;
-}
-
-const EMPTY_BANNER = {
+const EMPTY_BANNER: Banner = {
   id: '',
   name: '',
   image: '',
@@ -27,6 +15,7 @@ const EMPTY_BANNER = {
   buttonLink: '/products',
   active: true,
   position: 'homepage-hero',
+  createdAt: undefined,
 };
 
 // Image Upload Component
@@ -49,7 +38,7 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
     
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('image', file);
       
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
@@ -144,7 +133,7 @@ export default function BannersAdmin() {
         const data = await res.json();
         setBanners(data);
       }
-    } catch (err) {
+    } catch {
       console.error('Failed to fetch banners');
     } finally {
       setLoading(false);

@@ -1,9 +1,20 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import { promises as fs } from 'fs';
+import path from 'path';
+import type { Banner, Brand, Invoice, Quote, Receipt } from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
 let _sql: NeonQueryFunction<false, false> | null = null;
+
+function hasDatabase(): boolean {
+  return Boolean(process.env.DATABASE_URL);
+}
+
 function sql(): NeonQueryFunction<false, false> {
-  if (!_sql) _sql = neon(process.env.DATABASE_URL!);
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not configured');
+  }
+  if (!_sql) _sql = neon(process.env.DATABASE_URL);
   return _sql;
 }
 
@@ -37,6 +48,93 @@ async function ensureSchema(): Promise<void> {
       updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS banners (
+      id           TEXT PRIMARY KEY,
+      name         TEXT NOT NULL,
+      image        TEXT NOT NULL DEFAULT '',
+      title        TEXT NOT NULL DEFAULT '',
+      subtitle     TEXT NOT NULL DEFAULT '',
+      badge        TEXT NOT NULL DEFAULT '',
+      button_text  TEXT NOT NULL DEFAULT 'Shop Now',
+      button_link  TEXT NOT NULL DEFAULT '/products',
+      active       BOOLEAN NOT NULL DEFAULT true,
+      position     TEXT NOT NULL DEFAULT 'homepage-hero',
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS brands (
+      id          TEXT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      logo_url    TEXT NOT NULL DEFAULT '',
+      active      BOOLEAN NOT NULL DEFAULT true,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id           TEXT PRIMARY KEY,
+      number       TEXT UNIQUE NOT NULL,
+      status       TEXT NOT NULL DEFAULT 'draft',
+      customer     JSONB NOT NULL DEFAULT '{}',
+      line_items   JSONB NOT NULL DEFAULT '[]',
+      subtotal     NUMERIC(12,2) NOT NULL DEFAULT 0,
+      tax_rate     NUMERIC(5,2) NOT NULL DEFAULT 0,
+      tax_amount   NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount     NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total        NUMERIC(12,2) NOT NULL DEFAULT 0,
+      currency     TEXT NOT NULL DEFAULT 'USD',
+      notes        TEXT,
+      issue_date   DATE NOT NULL,
+      due_date     DATE NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS quotes (
+      id           TEXT PRIMARY KEY,
+      number       TEXT UNIQUE NOT NULL,
+      status       TEXT NOT NULL DEFAULT 'draft',
+      customer     JSONB NOT NULL DEFAULT '{}',
+      line_items   JSONB NOT NULL DEFAULT '[]',
+      subtotal     NUMERIC(12,2) NOT NULL DEFAULT 0,
+      tax_rate     NUMERIC(5,2) NOT NULL DEFAULT 0,
+      tax_amount   NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount     NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total        NUMERIC(12,2) NOT NULL DEFAULT 0,
+      currency     TEXT NOT NULL DEFAULT 'USD',
+      notes        TEXT,
+      issue_date   DATE NOT NULL,
+      valid_until  DATE NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS receipts (
+      id             TEXT PRIMARY KEY,
+      number         TEXT UNIQUE NOT NULL,
+      invoice_id     TEXT,
+      customer       JSONB NOT NULL DEFAULT '{}',
+      line_items     JSONB NOT NULL DEFAULT '[]',
+      subtotal       NUMERIC(12,2) NOT NULL DEFAULT 0,
+      tax_rate       NUMERIC(5,2) NOT NULL DEFAULT 0,
+      tax_amount     NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount       NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total          NUMERIC(12,2) NOT NULL DEFAULT 0,
+      currency       TEXT NOT NULL DEFAULT 'USD',
+      payment_method TEXT NOT NULL DEFAULT 'cash',
+      notes          TEXT,
+      paid_at        DATE NOT NULL,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await seedBannersFromFile();
   schemaReady = true;
 }
 
@@ -67,10 +165,211 @@ function rowToProduct(row: Record<string, unknown>) {
   };
 }
 
+function toIsoString(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const parsed = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+function rowToBanner(row: Record<string, unknown>): Banner {
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    image: String(row.image ?? ''),
+    title: String(row.title ?? ''),
+    subtitle: String(row.subtitle ?? ''),
+    badge: String(row.badge ?? ''),
+    buttonText: String(row.button_text ?? 'Shop Now'),
+    buttonLink: String(row.button_link ?? '/products'),
+    active: Boolean(row.active ?? true),
+    position: String(row.position ?? 'homepage-hero'),
+    createdAt: toIsoString(row.created_at),
+  };
+}
+
+function rowToBrand(row: Record<string, unknown>): Brand {
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    logoUrl: String(row.logo_url ?? ''),
+    active: Boolean(row.active ?? true),
+    sortOrder: Number(row.sort_order ?? 0),
+    createdAt: toIsoString(row.created_at),
+  };
+}
+
+async function seedBannersFromFile(): Promise<void> {
+  const rows = await sql()`SELECT COUNT(*)::int AS count FROM banners`;
+  const count = Number(rows[0]?.count ?? 0);
+  if (count > 0) return;
+
+  const seedPath = path.join(process.cwd(), 'data', 'banners.json');
+
+  try {
+    const raw = await fs.readFile(seedPath, 'utf-8');
+    const banners = JSON.parse(raw) as Banner[];
+
+    for (const banner of banners) {
+      const now = new Date();
+      const createdAt = toIsoString(banner.createdAt) ?? now.toISOString();
+
+      await sql()`
+        INSERT INTO banners (
+          id, name, image, title, subtitle, badge, button_text, button_link,
+          active, position, created_at, updated_at
+        ) VALUES (
+          ${banner.id || `banner-${Date.now()}`},
+          ${banner.name || 'Homepage Banner'},
+          ${banner.image || ''},
+          ${banner.title || ''},
+          ${banner.subtitle || ''},
+          ${banner.badge || ''},
+          ${banner.buttonText || 'Shop Now'},
+          ${banner.buttonLink || '/products'},
+          ${banner.active ?? true},
+          ${banner.position || 'homepage-hero'},
+          ${new Date(createdAt)},
+          ${now}
+        )
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  } catch (error) {
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+    if (code !== 'ENOENT') {
+      console.error('[db] Failed to seed banners from file:', error);
+    }
+  }
+}
+
 export async function getProducts(): Promise<ReturnType<typeof rowToProduct>[]> {
+  if (!hasDatabase()) return [];
   await ensureSchema();
   const rows = await sql()`SELECT * FROM products ORDER BY created_at DESC`;
   return rows.map(rowToProduct);
+}
+
+export async function getBanners(): Promise<Banner[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM banners ORDER BY created_at DESC`;
+  return rows.map(rowToBanner);
+}
+
+export async function getActiveBanners(): Promise<Banner[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM banners WHERE active = true ORDER BY created_at DESC`;
+  return rows.map(rowToBanner);
+}
+
+export async function getBanner(id: string): Promise<Banner | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM banners WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToBanner(rows[0]) : null;
+}
+
+export async function saveBanner(banner: Banner): Promise<Banner> {
+  await ensureSchema();
+  const now = new Date();
+  const createdAt = toIsoString(banner.createdAt) ?? now.toISOString();
+
+  const rows = await sql()`
+    INSERT INTO banners (
+      id, name, image, title, subtitle, badge, button_text, button_link,
+      active, position, created_at, updated_at
+    ) VALUES (
+      ${banner.id || `banner-${Date.now()}`},
+      ${banner.name || 'Homepage Banner'},
+      ${banner.image || ''},
+      ${banner.title || ''},
+      ${banner.subtitle || ''},
+      ${banner.badge || ''},
+      ${banner.buttonText || 'Shop Now'},
+      ${banner.buttonLink || '/products'},
+      ${banner.active ?? true},
+      ${banner.position || 'homepage-hero'},
+      ${new Date(createdAt)},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name        = EXCLUDED.name,
+      image       = EXCLUDED.image,
+      title       = EXCLUDED.title,
+      subtitle    = EXCLUDED.subtitle,
+      badge       = EXCLUDED.badge,
+      button_text = EXCLUDED.button_text,
+      button_link = EXCLUDED.button_link,
+      active      = EXCLUDED.active,
+      position    = EXCLUDED.position,
+      updated_at  = ${now}
+    RETURNING *
+  `;
+
+  return rowToBanner(rows[0]);
+}
+
+export async function deleteBanner(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM banners WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function getBrands(): Promise<Brand[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM brands ORDER BY sort_order ASC, created_at ASC`;
+  return rows.map(rowToBrand);
+}
+
+export async function getActiveBrands(): Promise<Brand[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM brands WHERE active = true ORDER BY sort_order ASC, created_at ASC`;
+  return rows.map(rowToBrand);
+}
+
+export async function getBrand(id: string): Promise<Brand | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM brands WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToBrand(rows[0]) : null;
+}
+
+export async function saveBrand(brand: Brand): Promise<Brand> {
+  await ensureSchema();
+  const now = new Date();
+  const createdAt = toIsoString(brand.createdAt) ?? now.toISOString();
+
+  const rows = await sql()`
+    INSERT INTO brands (
+      id, name, logo_url, active, sort_order, created_at, updated_at
+    ) VALUES (
+      ${brand.id || `brand-${Date.now()}`},
+      ${brand.name || 'Brand'},
+      ${brand.logoUrl || ''},
+      ${brand.active ?? true},
+      ${brand.sortOrder ?? 0},
+      ${new Date(createdAt)},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name       = EXCLUDED.name,
+      logo_url   = EXCLUDED.logo_url,
+      active     = EXCLUDED.active,
+      sort_order = EXCLUDED.sort_order,
+      updated_at = ${now}
+    RETURNING *
+  `;
+
+  return rowToBrand(rows[0]);
+}
+
+export async function deleteBrand(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM brands WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
 }
 
 export async function getProduct(id: string): Promise<ReturnType<typeof rowToProduct> | null> {
@@ -171,4 +470,297 @@ function defaultCategories(): Category[] {
     { id: 'printing',     label: 'Printing & Office',       icon: 'printer',       slug: 'printing' },
     { id: 'bundles',      label: 'Bundles & Deals',         icon: 'bundle',        slug: 'bundles' },
   ];
+}
+
+// ─── Invoices ───
+
+function parseJsonb<T>(value: unknown): T {
+  if (typeof value === 'string') return JSON.parse(value) as T;
+  return value as T;
+}
+
+function rowToInvoice(row: Record<string, unknown>): Invoice {
+  return {
+    id: String(row.id ?? ''),
+    number: String(row.number ?? ''),
+    status: String(row.status ?? 'draft') as Invoice['status'],
+    customer: parseJsonb(row.customer),
+    lineItems: parseJsonb(row.line_items),
+    subtotal: parseFloat(String(row.subtotal ?? '0')),
+    taxRate: parseFloat(String(row.tax_rate ?? '0')),
+    taxAmount: parseFloat(String(row.tax_amount ?? '0')),
+    discount: parseFloat(String(row.discount ?? '0')),
+    total: parseFloat(String(row.total ?? '0')),
+    currency: String(row.currency ?? 'USD'),
+    notes: row.notes ? String(row.notes) : undefined,
+    issueDate: String(row.issue_date ?? ''),
+    dueDate: String(row.due_date ?? ''),
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+export async function getInvoices(): Promise<Invoice[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM invoices ORDER BY created_at DESC`;
+  return rows.map(rowToInvoice);
+}
+
+export async function getInvoice(id: string): Promise<Invoice | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM invoices WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToInvoice(rows[0]) : null;
+}
+
+export async function saveInvoice(invoice: Invoice): Promise<Invoice> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO invoices (
+      id, number, status, customer, line_items, subtotal, tax_rate, tax_amount,
+      discount, total, currency, notes, issue_date, due_date, created_at, updated_at
+    ) VALUES (
+      ${invoice.id},
+      ${invoice.number},
+      ${invoice.status},
+      ${JSON.stringify(invoice.customer)},
+      ${JSON.stringify(invoice.lineItems)},
+      ${invoice.subtotal},
+      ${invoice.taxRate},
+      ${invoice.taxAmount},
+      ${invoice.discount},
+      ${invoice.total},
+      ${invoice.currency},
+      ${invoice.notes ?? null},
+      ${invoice.issueDate},
+      ${invoice.dueDate},
+      ${invoice.createdAt ? new Date(invoice.createdAt) : now},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      number     = EXCLUDED.number,
+      status     = EXCLUDED.status,
+      customer   = EXCLUDED.customer,
+      line_items = EXCLUDED.line_items,
+      subtotal   = EXCLUDED.subtotal,
+      tax_rate   = EXCLUDED.tax_rate,
+      tax_amount = EXCLUDED.tax_amount,
+      discount   = EXCLUDED.discount,
+      total      = EXCLUDED.total,
+      currency   = EXCLUDED.currency,
+      notes      = EXCLUDED.notes,
+      issue_date = EXCLUDED.issue_date,
+      due_date   = EXCLUDED.due_date,
+      updated_at = ${now}
+    RETURNING *
+  `;
+  return rowToInvoice(rows[0]);
+}
+
+export async function deleteInvoice(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM invoices WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function getNextInvoiceNumber(): Promise<string> {
+  await ensureSchema();
+  const rows = await sql()`SELECT number FROM invoices ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return 'INV-0001';
+  const last = String(rows[0].number ?? 'INV-0000');
+  const num = parseInt(last.replace('INV-', ''), 10) || 0;
+  return `INV-${String(num + 1).padStart(4, '0')}`;
+}
+
+// ─── Quotes ───
+
+function rowToQuote(row: Record<string, unknown>): Quote {
+  return {
+    id: String(row.id ?? ''),
+    number: String(row.number ?? ''),
+    status: String(row.status ?? 'draft') as Quote['status'],
+    customer: parseJsonb(row.customer),
+    lineItems: parseJsonb(row.line_items),
+    subtotal: parseFloat(String(row.subtotal ?? '0')),
+    taxRate: parseFloat(String(row.tax_rate ?? '0')),
+    taxAmount: parseFloat(String(row.tax_amount ?? '0')),
+    discount: parseFloat(String(row.discount ?? '0')),
+    total: parseFloat(String(row.total ?? '0')),
+    currency: String(row.currency ?? 'USD'),
+    notes: row.notes ? String(row.notes) : undefined,
+    validUntil: String(row.valid_until ?? ''),
+    issueDate: String(row.issue_date ?? ''),
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+export async function getQuotes(): Promise<Quote[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM quotes ORDER BY created_at DESC`;
+  return rows.map(rowToQuote);
+}
+
+export async function getQuote(id: string): Promise<Quote | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM quotes WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToQuote(rows[0]) : null;
+}
+
+export async function saveQuote(quote: Quote): Promise<Quote> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO quotes (
+      id, number, status, customer, line_items, subtotal, tax_rate, tax_amount,
+      discount, total, currency, notes, issue_date, valid_until, created_at, updated_at
+    ) VALUES (
+      ${quote.id},
+      ${quote.number},
+      ${quote.status},
+      ${JSON.stringify(quote.customer)},
+      ${JSON.stringify(quote.lineItems)},
+      ${quote.subtotal},
+      ${quote.taxRate},
+      ${quote.taxAmount},
+      ${quote.discount},
+      ${quote.total},
+      ${quote.currency},
+      ${quote.notes ?? null},
+      ${quote.issueDate},
+      ${quote.validUntil},
+      ${quote.createdAt ? new Date(quote.createdAt) : now},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      number      = EXCLUDED.number,
+      status      = EXCLUDED.status,
+      customer    = EXCLUDED.customer,
+      line_items  = EXCLUDED.line_items,
+      subtotal    = EXCLUDED.subtotal,
+      tax_rate    = EXCLUDED.tax_rate,
+      tax_amount  = EXCLUDED.tax_amount,
+      discount    = EXCLUDED.discount,
+      total       = EXCLUDED.total,
+      currency    = EXCLUDED.currency,
+      notes       = EXCLUDED.notes,
+      issue_date  = EXCLUDED.issue_date,
+      valid_until = EXCLUDED.valid_until,
+      updated_at  = ${now}
+    RETURNING *
+  `;
+  return rowToQuote(rows[0]);
+}
+
+export async function deleteQuote(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM quotes WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function getNextQuoteNumber(): Promise<string> {
+  await ensureSchema();
+  const rows = await sql()`SELECT number FROM quotes ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return 'QUO-0001';
+  const last = String(rows[0].number ?? 'QUO-0000');
+  const num = parseInt(last.replace('QUO-', ''), 10) || 0;
+  return `QUO-${String(num + 1).padStart(4, '0')}`;
+}
+
+// ─── Receipts ───
+
+function rowToReceipt(row: Record<string, unknown>): Receipt {
+  return {
+    id: String(row.id ?? ''),
+    number: String(row.number ?? ''),
+    invoiceId: row.invoice_id ? String(row.invoice_id) : undefined,
+    customer: parseJsonb(row.customer),
+    lineItems: parseJsonb(row.line_items),
+    subtotal: parseFloat(String(row.subtotal ?? '0')),
+    taxRate: parseFloat(String(row.tax_rate ?? '0')),
+    taxAmount: parseFloat(String(row.tax_amount ?? '0')),
+    discount: parseFloat(String(row.discount ?? '0')),
+    total: parseFloat(String(row.total ?? '0')),
+    currency: String(row.currency ?? 'USD'),
+    paymentMethod: String(row.payment_method ?? 'cash') as Receipt['paymentMethod'],
+    notes: row.notes ? String(row.notes) : undefined,
+    paidAt: String(row.paid_at ?? ''),
+    createdAt: toIsoString(row.created_at),
+  };
+}
+
+export async function getReceipts(): Promise<Receipt[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM receipts ORDER BY created_at DESC`;
+  return rows.map(rowToReceipt);
+}
+
+export async function getReceipt(id: string): Promise<Receipt | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM receipts WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToReceipt(rows[0]) : null;
+}
+
+export async function saveReceipt(receipt: Receipt): Promise<Receipt> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO receipts (
+      id, number, invoice_id, customer, line_items, subtotal, tax_rate, tax_amount,
+      discount, total, currency, payment_method, notes, paid_at, created_at
+    ) VALUES (
+      ${receipt.id},
+      ${receipt.number},
+      ${receipt.invoiceId ?? null},
+      ${JSON.stringify(receipt.customer)},
+      ${JSON.stringify(receipt.lineItems)},
+      ${receipt.subtotal},
+      ${receipt.taxRate},
+      ${receipt.taxAmount},
+      ${receipt.discount},
+      ${receipt.total},
+      ${receipt.currency},
+      ${receipt.paymentMethod},
+      ${receipt.notes ?? null},
+      ${receipt.paidAt},
+      ${receipt.createdAt ? new Date(receipt.createdAt) : now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      number         = EXCLUDED.number,
+      invoice_id     = EXCLUDED.invoice_id,
+      customer       = EXCLUDED.customer,
+      line_items     = EXCLUDED.line_items,
+      subtotal       = EXCLUDED.subtotal,
+      tax_rate       = EXCLUDED.tax_rate,
+      tax_amount     = EXCLUDED.tax_amount,
+      discount       = EXCLUDED.discount,
+      total          = EXCLUDED.total,
+      currency       = EXCLUDED.currency,
+      payment_method = EXCLUDED.payment_method,
+      notes          = EXCLUDED.notes,
+      paid_at        = EXCLUDED.paid_at
+    RETURNING *
+  `;
+  return rowToReceipt(rows[0]);
+}
+
+export async function deleteReceipt(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM receipts WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function getNextReceiptNumber(): Promise<string> {
+  await ensureSchema();
+  const rows = await sql()`SELECT number FROM receipts ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return 'REC-0001';
+  const last = String(rows[0].number ?? 'REC-0000');
+  const num = parseInt(last.replace('REC-', ''), 10) || 0;
+  return `REC-${String(num + 1).padStart(4, '0')}`;
 }

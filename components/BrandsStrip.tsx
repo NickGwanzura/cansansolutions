@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import type { Brand } from '@/lib/types';
+
 function AppleLogo() {
   return (
     <svg role="img" viewBox="0 0 814 1000" height="32" fill="#1d1d1f" aria-label="Apple">
@@ -176,6 +179,33 @@ const brands = [
 const allBrands = [...brands, ...brands, ...brands];
 
 export function BrandsStrip() {
+  const [dbBrands, setDbBrands] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBrands = async () => {
+      try {
+        const res = await fetch('/api/brands', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json() as Brand[];
+        if (!cancelled) {
+          setDbBrands(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('[BrandsStrip] Failed to load brands from database:', error);
+      }
+    };
+
+    loadBrands();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const repeatedDbBrands = [...dbBrands, ...dbBrands, ...dbBrands];
+
   return (
     <section className="overflow-hidden bg-gradient-to-b from-white to-zinc-50 py-14">
       <div className="mb-8 text-center">
@@ -193,11 +223,17 @@ export function BrandsStrip() {
 
         <div className="logo-scroll-container">
           <div className="logo-scroll-track">
-            {allBrands.map(({ key, Logo }, i) => (
-              <div key={`${key}-${i}`} className="logo-item">
-                <Logo />
-              </div>
-            ))}
+            {dbBrands.length > 0
+              ? repeatedDbBrands.map((brand, i) => (
+                  <div key={`${brand.id}-${i}`} className="logo-item">
+                    <img src={brand.logoUrl} alt={brand.name} className="brand-image" />
+                  </div>
+                ))
+              : allBrands.map(({ key, Logo }, i) => (
+                  <div key={`${key}-${i}`} className="logo-item">
+                    <Logo />
+                  </div>
+                ))}
           </div>
         </div>
       </div>
@@ -228,6 +264,12 @@ export function BrandsStrip() {
         .logo-item:hover {
           transform: translateY(-4px);
           box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .brand-image {
+          max-width: 100%;
+          max-height: 42px;
+          width: 100%;
+          object-fit: contain;
         }
         @keyframes scroll {
           0% { transform: translateX(0); }

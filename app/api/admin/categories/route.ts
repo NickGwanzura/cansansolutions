@@ -3,7 +3,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { checkAdminAuth } from '@/lib/check-admin-auth';
 
-const CATEGORIES_FILE = path.join(process.cwd(), 'data', 'categories.json');
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 
 interface Category {
   id: string;
@@ -22,7 +23,7 @@ async function readCategories(): Promise<Category[]> {
 }
 
 async function writeCategories(categories: Category[]): Promise<void> {
-  await fs.mkdir(path.dirname(CATEGORIES_FILE), { recursive: true });
+  await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
 }
 

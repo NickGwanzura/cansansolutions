@@ -33,6 +33,29 @@ export type Category = {
   slug: string;
 };
 
+export type Banner = {
+  id: string;
+  name: string;
+  image: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  buttonText: string;
+  buttonLink: string;
+  active: boolean;
+  position: string;
+  createdAt?: string;
+};
+
+export type Brand = {
+  id: string;
+  name: string;
+  logoUrl: string;
+  active: boolean;
+  sortOrder: number;
+  createdAt?: string;
+};
+
 export type CartItem = {
   id: string;
   slug: string;
@@ -41,4 +64,80 @@ export type CartItem = {
   currency: string;
   image: string;
   qty: number;
+};
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'mobile_money' | 'other';
+
+export type LineItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+};
+
+export type CustomerInfo = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  company?: string;
+};
+
+export type Invoice = {
+  id: string;
+  number: string;
+  status: InvoiceStatus;
+  customer: CustomerInfo;
+  lineItems: LineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  currency: string;
+  notes?: string;
+  issueDate: string;
+  dueDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type Quote = {
+  id: string;
+  number: string;
+  status: QuoteStatus;
+  customer: CustomerInfo;
+  lineItems: LineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  currency: string;
+  notes?: string;
+  validUntil: string;
+  issueDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type Receipt = {
+  id: string;
+  number: string;
+  invoiceId?: string;
+  customer: CustomerInfo;
+  lineItems: LineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  currency: string;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  paidAt: string;
+  createdAt?: string;
 };

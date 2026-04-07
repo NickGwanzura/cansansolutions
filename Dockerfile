@@ -1,4 +1,4 @@
-# Production Dockerfile - Your Products Only
+# Production Dockerfile
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -28,13 +28,14 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy YOUR 342-line products file
-COPY --from=builder /app/data/products.json /app/data.seed/products.json
+# Seed runtime-managed JSON data for first boot
+COPY --from=builder /app/data /app/data.seed
+COPY --from=builder /app/scripts/start-production.sh /app/scripts/start-production.sh
 
-# Create directories
-RUN mkdir -p /app/data /app/uploads/products
+# Create directories and mark startup script executable
+RUN mkdir -p /app/data /app/uploads/products /app/scripts \
+  && chmod +x /app/scripts/start-production.sh
 
 EXPOSE 3000
 
-# ALWAYS use your products on startup (overwrites any demo data)
-CMD ["sh", "-c", "echo '[PROD] Loading your products...' && mkdir -p /app/data && cp /app/data.seed/products.json /app/data/products.json && exec node server.js"]
+CMD ["/app/scripts/start-production.sh"]
