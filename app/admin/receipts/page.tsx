@@ -413,14 +413,29 @@ export default function ReceiptsAdmin() {
               </div>
 
               <div className="p-8 print:p-0" id="receipt-print">
+                {/* Header bar */}
+                <div className="h-2 bg-red-600 rounded-t-sm mb-8 -mx-8 -mt-8 print:rounded-none" />
+
                 <div className="flex justify-between items-start mb-8">
+                  {/* Company info */}
                   <div>
-                    <h1 className="text-3xl font-bold text-zinc-900">CANSAN</h1>
-                    <p className="text-sm text-zinc-500 mt-1">Technology Solutions</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/brand/cansan-logo.png"
+                      alt="Cansan Solutions"
+                      className="h-12 w-auto mb-3"
+                    />
+                    <p className="text-xs text-zinc-500 leading-5">Shop 7, ZB House, Corner Speke &amp; 1st Street</p>
+                    <p className="text-xs text-zinc-500 leading-5">Harare, Zimbabwe</p>
+                    <p className="text-xs text-zinc-500 leading-5">+263 77 375 4747</p>
+                    <p className="text-xs text-zinc-500 leading-5">info@cansansolutions.co.zw</p>
+                    <p className="text-xs text-zinc-500 leading-5">www.cansansolutions.co.zw</p>
                   </div>
+                  {/* Document title */}
                   <div className="text-right">
-                    <h2 className="text-2xl font-bold text-zinc-900">RECEIPT</h2>
-                    <p className="text-lg font-semibold text-red-600">{printing.number}</p>
+                    <h2 className="text-3xl font-extrabold text-zinc-900 tracking-tight">RECEIPT</h2>
+                    <p className="text-xl font-bold text-red-600 mt-1">{printing.number}</p>
+                    <span className="mt-2 inline-block rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide bg-green-100 text-green-700">Paid</span>
                   </div>
                 </div>
 
@@ -479,6 +494,12 @@ export default function ReceiptsAdmin() {
                     <p className="text-sm text-zinc-600 whitespace-pre-wrap">{printing.notes}</p>
                   </div>
                 )}
+
+                {/* Print footer */}
+                <div className="mt-12 pt-4 border-t border-zinc-200 flex justify-between items-center text-xs text-zinc-400">
+                  <span>Cansan Solutions · Shop 7, ZB House, Harare, Zimbabwe</span>
+                  <span>info@cansansolutions.co.zw · +263 77 375 4747</span>
+                </div>
               </div>
             </div>
           </div>
