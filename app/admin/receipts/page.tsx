@@ -333,7 +333,7 @@ export default function ReceiptsAdmin() {
         {editing && (
           <div className="fixed inset-0 z-50 flex">
             <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setEditing(null)} />
-            <div className="w-full max-w-2xl bg-white flex flex-col shadow-2xl overflow-hidden">
+            <div className="w-full max-w-2xl bg-white flex flex-col shadow-2xl">
               <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
                 <h2 className="font-heading text-sm font-bold text-zinc-900">
                   {receipts.find((r) => r.id === editing.id) ? 'Edit Receipt' : 'New Receipt'}
@@ -382,67 +382,69 @@ export default function ReceiptsAdmin() {
                   <legend className="text-xs font-bold text-zinc-500 uppercase tracking-wide">Line Items</legend>
                   <div className="space-y-2">
                     {editing.lineItems.map((li, idx) => (
-                      <div key={li.id} className="flex gap-2 items-end">
-                        <div className="relative flex-1">
-                          {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Description</label>}
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setShowProductPicker(showProductPicker === idx ? null : idx)}
-                              className="shrink-0 rounded-lg border border-zinc-200 px-2 py-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50"
-                              title="Search products"
-                            >
-                              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                            </button>
-                            <input value={li.description} onChange={(e) => updateLineItem(idx, 'description', e.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="Item description" required />
-                          </div>
-                          {showProductPicker === idx && (
-                            <div className="absolute left-0 top-full z-50 mt-1 w-full bg-white border border-zinc-200 rounded-lg shadow-lg p-2">
-                              <input
-                                autoFocus
-                                value={productSearch[idx] || ''}
-                                onChange={(e) => setProductSearch({ ...productSearch, [idx]: e.target.value })}
-                                className="w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm mb-1"
-                                placeholder="Search products..."
-                                onKeyDown={(e) => { if (e.key === 'Escape') setShowProductPicker(null); }}
-                              />
-                              <div className="max-h-40 overflow-y-auto">
-                                {products
-                                  .filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase()))
-                                  .slice(0, 6)
-                                  .map((p) => (
-                                    <button
-                                      key={p.id}
-                                      type="button"
-                                      className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50"
-                                      onClick={() => pickProduct(idx, p)}
-                                    >
-                                      <span className="text-zinc-900 truncate">{p.name}</span>
-                                      <span className="text-xs text-zinc-500 ml-2 shrink-0">{fmtCurrency(p.price, p.currency)}</span>
-                                    </button>
-                                  ))}
-                                {products.filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase())).length === 0 && (
-                                  <p className="text-xs text-zinc-400 p-2">No products found</p>
-                                )}
-                              </div>
+                      <div key={li.id} className="space-y-1">
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Description</label>}
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => { setShowProductPicker(showProductPicker === idx ? null : idx); setProductSearch({}); }}
+                                className={`shrink-0 rounded-lg border px-2 py-2 transition ${showProductPicker === idx ? 'border-red-400 bg-red-50 text-red-600' : 'border-zinc-200 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50'}`}
+                                title="Pick from product catalog"
+                              >
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                              </button>
+                              <input value={li.description} onChange={(e) => updateLineItem(idx, 'description', e.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="Item description" required />
                             </div>
-                          )}
+                          </div>
+                          <div className="w-20">
+                            {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Qty</label>}
+                            <input type="number" min="1" value={li.quantity} onChange={(e) => updateLineItem(idx, 'quantity', parseFloat(e.target.value) || 0)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                          </div>
+                          <div className="w-28">
+                            {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Unit Price</label>}
+                            <input type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateLineItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                          </div>
+                          <div className="w-24 text-right">
+                            {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Total</label>}
+                            <p className="py-2 text-sm font-medium text-zinc-700">{fmtCurrency(li.quantity * li.unitPrice, editing.currency)}</p>
+                          </div>
+                          <button type="button" onClick={() => removeLineItem(idx)} className="pb-2 text-zinc-400 hover:text-red-500" title="Remove">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
                         </div>
-                        <div className="w-20">
-                          {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Qty</label>}
-                          <input type="number" min="1" value={li.quantity} onChange={(e) => updateLineItem(idx, 'quantity', parseFloat(e.target.value) || 0)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
-                        </div>
-                        <div className="w-28">
-                          {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Unit Price</label>}
-                          <input type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateLineItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
-                        </div>
-                        <div className="w-24 text-right">
-                          {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Total</label>}
-                          <p className="py-2 text-sm font-medium text-zinc-700">{fmtCurrency(li.quantity * li.unitPrice, editing.currency)}</p>
-                        </div>
-                        <button type="button" onClick={() => removeLineItem(idx)} className="pb-2 text-zinc-400 hover:text-red-500" title="Remove">
-                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+                        {showProductPicker === idx && (
+                          <div className="rounded-lg border border-red-200 bg-red-50 p-2">
+                            <input
+                              autoFocus
+                              value={productSearch[idx] || ''}
+                              onChange={(e) => setProductSearch({ ...productSearch, [idx]: e.target.value })}
+                              className="w-full rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                              placeholder="Type to search products..."
+                              onKeyDown={(e) => { if (e.key === 'Escape') setShowProductPicker(null); }}
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {products
+                                .filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase()))
+                                .slice(0, 8)
+                                .map((p) => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2 text-sm hover:bg-red-600 hover:text-white group transition"
+                                    onClick={() => pickProduct(idx, p)}
+                                  >
+                                    <span className="truncate text-left font-medium">{p.name}</span>
+                                    <span className="ml-3 shrink-0 text-xs text-zinc-500 group-hover:text-red-100">{fmtCurrency(p.price, p.currency)}</span>
+                                  </button>
+                                ))}
+                              {products.filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase())).length === 0 && (
+                                <p className="px-3 py-2 text-xs text-zinc-400">No products found</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -528,95 +530,99 @@ export default function ReceiptsAdmin() {
                 </div>
               </div>
 
-              <div className="p-8 print:p-0" id="receipt-print">
-                {/* Header bar */}
-                <div className="h-2 bg-red-600 rounded-t-sm mb-8 -mx-8 -mt-8 print:rounded-none" />
-
-                <div className="flex justify-between items-start mb-8">
-                  {/* Company info */}
+              <div className="p-10 print:p-0" id="receipt-print">
+                <div className="h-1.5 bg-green-600 -mx-10 -mt-10 mb-8 print:mx-0 print:mt-0" />
+                <div className="flex justify-between items-start mb-10">
                   <div>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={company?.logoUrl || '/images/brand/cansan-logo.png'}
-                      alt={company?.name || 'Cansan Solutions'}
-                      className="h-12 w-auto mb-3"
-                    />
-                    {company?.addressLine1 && <p className="text-xs text-zinc-500 leading-5">{company.addressLine1}</p>}
-                    {company?.addressLine2 && <p className="text-xs text-zinc-500 leading-5">{company.addressLine2}</p>}
-                    {(company?.city || company?.country) && <p className="text-xs text-zinc-500 leading-5">{[company?.city, company?.country].filter(Boolean).join(', ')}</p>}
-                    {company?.phone && <p className="text-xs text-zinc-500 leading-5">{company.phone}</p>}
-                    {company?.email && <p className="text-xs text-zinc-500 leading-5">{company.email}</p>}
-                    {company?.website && <p className="text-xs text-zinc-500 leading-5">{company.website}</p>}
-                    {company?.vatNumber && <p className="text-xs text-zinc-500 leading-5">VAT: {company.vatNumber}</p>}
+                    <img src={company?.logoUrl || '/images/brand/cansan-logo.png'} alt={company?.name || 'Cansan Solutions'} className="h-14 w-auto mb-3 object-contain" />
+                    <p className="text-[11px] text-zinc-400">{company?.tagline || 'Technology Solutions'}</p>
                   </div>
-                  {/* Document title */}
                   <div className="text-right">
-                    <h2 className="text-3xl font-extrabold text-zinc-900 tracking-tight">RECEIPT</h2>
-                    <p className="text-xl font-bold text-red-600 mt-1">{printing.number}</p>
-                    <span className="mt-2 inline-block rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide bg-green-100 text-green-700">Paid</span>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Receipt</p>
+                    <p className="text-3xl font-black text-zinc-900 tracking-tight">{printing.number}</p>
+                    <span className="mt-2 inline-block rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700">Paid</span>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-3 gap-6 mb-8 pb-8 border-b border-zinc-200">
                   <div>
-                    <p className="text-xs font-bold text-zinc-400 uppercase mb-2">Received From</p>
-                    <p className="font-semibold text-zinc-900">{printing.customer.name}</p>
-                    {printing.customer.company && <p className="text-sm text-zinc-600">{printing.customer.company}</p>}
-                    <p className="text-sm text-zinc-600">{printing.customer.email}</p>
-                    <p className="text-sm text-zinc-600">{printing.customer.phone}</p>
-                    <p className="text-sm text-zinc-600">{printing.customer.address}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">From</p>
+                    <p className="text-sm font-semibold text-zinc-900">{company?.name || 'Cansan Solutions'}</p>
+                    {company?.addressLine1 && <p className="text-xs text-zinc-500 mt-0.5">{company.addressLine1}</p>}
+                    {company?.addressLine2 && <p className="text-xs text-zinc-500">{company.addressLine2}</p>}
+                    {(company?.city || company?.country) && <p className="text-xs text-zinc-500">{[company?.city, company?.country].filter(Boolean).join(', ')}</p>}
+                    {company?.phone && <p className="text-xs text-zinc-500 mt-1">{company.phone}</p>}
+                    {company?.email && <p className="text-xs text-zinc-500">{company.email}</p>}
+                    {company?.vatNumber && <p className="text-xs text-zinc-400 mt-1">VAT: {company.vatNumber}</p>}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Received From</p>
+                    <p className="text-sm font-semibold text-zinc-900">{printing.customer.name}</p>
+                    {printing.customer.company && <p className="text-xs text-zinc-500 mt-0.5">{printing.customer.company}</p>}
+                    {printing.customer.email && <p className="text-xs text-zinc-500">{printing.customer.email}</p>}
+                    {printing.customer.phone && <p className="text-xs text-zinc-500">{printing.customer.phone}</p>}
+                    {printing.customer.address && <p className="text-xs text-zinc-500 mt-1 whitespace-pre-line">{printing.customer.address}</p>}
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-zinc-400 uppercase mb-2">Details</p>
-                    <p className="text-sm text-zinc-600">Payment Date: <span className="font-medium text-zinc-900">{fmtDate(printing.paidAt)}</span></p>
-                    <p className="text-sm text-zinc-600">Payment Method: <span className="font-medium text-zinc-900">{paymentLabel(printing.paymentMethod)}</span></p>
-                    <p className="text-sm text-zinc-600">Currency: <span className="font-medium text-zinc-900">{printing.currency}</span></p>
-                    {printing.invoiceId && <p className="text-sm text-zinc-600">Invoice Ref: <span className="font-medium text-zinc-900">{printing.invoiceId}</span></p>}
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Details</p>
+                    <div className="space-y-1">
+                      <p className="text-xs text-zinc-500">Payment Date</p>
+                      <p className="text-sm font-semibold text-zinc-900">{fmtDate(printing.paidAt)}</p>
+                      <p className="text-xs text-zinc-500 mt-2">Payment Method</p>
+                      <p className="text-sm font-semibold text-zinc-900">{paymentLabel(printing.paymentMethod)}</p>
+                      {printing.invoiceId && <><p className="text-xs text-zinc-500 mt-2">Invoice Ref</p><p className="text-sm font-semibold text-zinc-900">{printing.invoiceId}</p></>}
+                      <p className="text-xs text-zinc-500 mt-2">Currency</p>
+                      <p className="text-sm font-semibold text-zinc-900">{printing.currency}</p>
+                    </div>
                   </div>
                 </div>
-
-                <table className="w-full mb-8">
+                <table className="w-full mb-6 text-sm">
                   <thead>
-                    <tr className="border-b-2 border-zinc-900">
-                      <th className="text-left py-2 text-xs font-bold text-zinc-500 uppercase">Description</th>
-                      <th className="text-right py-2 text-xs font-bold text-zinc-500 uppercase">Qty</th>
-                      <th className="text-right py-2 text-xs font-bold text-zinc-500 uppercase">Unit Price</th>
-                      <th className="text-right py-2 text-xs font-bold text-zinc-500 uppercase">Total</th>
+                    <tr className="bg-zinc-900 text-white">
+                      <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-l">Description</th>
+                      <th className="text-center px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider w-16">Qty</th>
+                      <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider w-28">Unit Price</th>
+                      <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider w-28 rounded-r">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {printing.lineItems.map((li) => (
-                      <tr key={li.id} className="border-b border-zinc-100">
-                        <td className="py-2.5 text-sm text-zinc-900">{li.description}</td>
-                        <td className="py-2.5 text-sm text-zinc-600 text-right">{li.quantity}</td>
-                        <td className="py-2.5 text-sm text-zinc-600 text-right">{fmtCurrency(li.unitPrice, printing.currency)}</td>
-                        <td className="py-2.5 text-sm font-medium text-zinc-900 text-right">{fmtCurrency(li.total, printing.currency)}</td>
+                    {printing.lineItems.map((li, i) => (
+                      <tr key={li.id} className={i % 2 === 0 ? 'bg-white' : 'bg-zinc-50'}>
+                        <td className="px-4 py-3 text-zinc-800">{li.description}</td>
+                        <td className="px-4 py-3 text-center text-zinc-600">{li.quantity}</td>
+                        <td className="px-4 py-3 text-right text-zinc-600">{fmtCurrency(li.unitPrice, printing.currency)}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-zinc-900">{fmtCurrency(li.total, printing.currency)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-1">
-                    <div className="flex justify-between text-sm"><span className="text-zinc-500">Subtotal</span><span>{fmtCurrency(printing.subtotal, printing.currency)}</span></div>
-                    {printing.taxRate > 0 && <div className="flex justify-between text-sm"><span className="text-zinc-500">Tax ({printing.taxRate}%)</span><span>{fmtCurrency(printing.taxAmount, printing.currency)}</span></div>}
-                    {printing.discount > 0 && <div className="flex justify-between text-sm"><span className="text-zinc-500">Discount</span><span>-{fmtCurrency(printing.discount, printing.currency)}</span></div>}
-                    <hr className="border-zinc-300" />
-                    <div className="flex justify-between text-lg font-bold"><span>Total Paid</span><span>{fmtCurrency(printing.total, printing.currency)}</span></div>
+                <div className="flex justify-end mb-8">
+                  <div className="w-72">
+                    <div className="flex justify-between py-1.5 text-sm border-t border-zinc-100"><span className="text-zinc-500">Subtotal</span><span className="text-zinc-800">{fmtCurrency(printing.subtotal, printing.currency)}</span></div>
+                    {printing.taxRate > 0 && <div className="flex justify-between py-1.5 text-sm border-t border-zinc-100"><span className="text-zinc-500">Tax ({printing.taxRate}%)</span><span className="text-zinc-800">{fmtCurrency(printing.taxAmount, printing.currency)}</span></div>}
+                    {printing.discount > 0 && <div className="flex justify-between py-1.5 text-sm border-t border-zinc-100"><span className="text-zinc-500">Discount</span><span className="text-green-600">-{fmtCurrency(printing.discount, printing.currency)}</span></div>}
+                    <div className="flex justify-between items-center mt-1 bg-green-700 text-white px-4 py-3 rounded">
+                      <span className="text-sm font-bold uppercase tracking-wide">Total Paid</span>
+                      <span className="text-xl font-black">{fmtCurrency(printing.total, printing.currency)}</span>
+                    </div>
                   </div>
                 </div>
-
                 {printing.notes && (
-                  <div className="mt-8 pt-4 border-t border-zinc-200">
-                    <p className="text-xs font-bold text-zinc-400 uppercase mb-1">Notes</p>
+                  <div className="mb-8 rounded-lg bg-zinc-50 border border-zinc-200 px-4 py-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Notes</p>
                     <p className="text-sm text-zinc-600 whitespace-pre-wrap">{printing.notes}</p>
                   </div>
                 )}
-
-                {/* Print footer */}
-                <div className="mt-12 pt-4 border-t border-zinc-200 flex justify-between items-center text-xs text-zinc-400">
-                  <span>{company?.name || 'Cansan Solutions'} · {company?.addressLine1 || 'Shop 7, ZB House'}, {company?.city || 'Harare'}, {company?.country || 'Zimbabwe'}</span>
-                  <span>{company?.email || 'info@cansansolutions.co.zw'} · {company?.phone || '+263 77 375 4747'}</span>
+                <div className="border-t-2 border-zinc-900 pt-4 flex justify-between items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-zinc-700">{company?.name || 'Cansan Solutions'}</p>
+                    <p className="text-[11px] text-zinc-400">{[company?.addressLine1, company?.city, company?.country].filter(Boolean).join(', ')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] text-zinc-500">{company?.email || 'info@cansansolutions.co.zw'}</p>
+                    <p className="text-[11px] text-zinc-500">{company?.phone || '+263 77 375 4747'}</p>
+                    {company?.website && <p className="text-[11px] text-zinc-400">{company.website}</p>}
+                  </div>
                 </div>
               </div>
             </div>
