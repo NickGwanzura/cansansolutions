@@ -59,6 +59,7 @@ export default function InvoicesAdmin() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [printing, setPrinting] = useState<Invoice | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState<Record<number, string>>({});
@@ -220,6 +221,24 @@ export default function InvoicesAdmin() {
     setEditing(recalc({ ...editing, lineItems: items }));
     setShowProductPicker(null);
     setProductSearch({});
+  };
+
+  const downloadPdf = async (elementId: string, filename: string) => {
+    setDownloading(true);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      await html2pdf().set({
+        margin: [10, 10, 10, 10],
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(el).save();
+    } finally {
+      setDownloading(false);
+    }
   };
 
   // Stats
@@ -527,6 +546,14 @@ export default function InvoicesAdmin() {
               <div className="flex justify-between items-center p-4 border-b border-zinc-100 print:hidden">
                 <h3 className="font-semibold text-zinc-900">Invoice Preview</h3>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => downloadPdf('invoice-print', `${printing.number}.pdf`)}
+                    disabled={downloading}
+                    className="flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:opacity-60"
+                  >
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    {downloading ? 'Generating…' : 'Download PDF'}
+                  </button>
                   <button onClick={() => window.print()} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Print</button>
                   <button onClick={() => setPrinting(null)} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Close</button>
                 </div>
