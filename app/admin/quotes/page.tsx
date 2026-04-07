@@ -212,6 +212,16 @@ export default function QuotesAdmin() {
     setEditing(recalc({ ...editing, lineItems: items }));
   };
 
+  const pickProduct = (index: number, product: Product) => {
+    if (!editing) return;
+    const items = editing.lineItems.map((li, i) =>
+      i === index ? { ...li, description: product.name, unitPrice: product.price, total: li.quantity * product.price } : li
+    );
+    setEditing(recalc({ ...editing, lineItems: items }));
+    setShowProductPicker(null);
+    setProductSearch({});
+  };
+
   const totalCount = quotes.length;
   const acceptedCount = quotes.filter((q) => q.status === 'accepted').length;
   const acceptedAmount = quotes.filter((q) => q.status === 'accepted').reduce((s, q) => s + q.total, 0);
@@ -404,12 +414,7 @@ export default function QuotesAdmin() {
                                       key={p.id}
                                       type="button"
                                       className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50"
-                                      onClick={() => {
-                                        updateLineItem(idx, 'description', p.name);
-                                        updateLineItem(idx, 'unitPrice', p.price);
-                                        setShowProductPicker(null);
-                                        setProductSearch({ ...productSearch, [idx]: '' });
-                                      }}
+                                      onClick={() => pickProduct(idx, p)}
                                     >
                                       <span className="text-zinc-900 truncate">{p.name}</span>
                                       <span className="text-xs text-zinc-500 ml-2 shrink-0">{fmtCurrency(p.price, p.currency)}</span>
