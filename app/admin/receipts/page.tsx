@@ -717,10 +717,12 @@ export default function ReceiptsAdmin() {
       </main>
 
       <style jsx global>{`
+        @page { size: A4 portrait; margin: 1.2cm; }
         @media print {
-          body * { visibility: hidden; }
-          #receipt-print, #receipt-print * { visibility: visible; }
-          #receipt-print { position: absolute; left: 0; top: 0; width: 100%; padding: 2rem; }
+          html, body { height: auto !important; overflow: visible !important; }
+          body * { visibility: hidden !important; }
+          #receipt-print, #receipt-print * { visibility: visible !important; }
+          #receipt-print { position: fixed !important; inset: 0 !important; width: 100% !important; padding: 1.5cm !important; box-sizing: border-box !important; }
         }
       `}</style>
     </AdminLayout>
