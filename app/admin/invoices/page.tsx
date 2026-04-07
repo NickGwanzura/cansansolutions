@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Invoice, InvoiceStatus, LineItem, CustomerInfo } from '@/lib/types';
+import type { Invoice, InvoiceStatus, LineItem, CustomerInfo, CompanyProfile, Product } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
 const CURRENCIES = ['USD', 'KES', 'ZAR'];
@@ -59,9 +59,15 @@ export default function InvoicesAdmin() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [printing, setPrinting] = useState<Invoice | null>(null);
+  const [company, setCompany] = useState<CompanyProfile | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productSearch, setProductSearch] = useState<Record<number, string>>({});
+  const [showProductPicker, setShowProductPicker] = useState<number | null>(null);
 
   useEffect(() => {
     fetchInvoices();
+    fetch('/api/admin/company').then(r => r.ok ? r.json() : null).then(d => { if (d) setCompany(d); }).catch(() => {});
+    fetch('/api/products').then(r => r.ok ? r.json() : []).then(setProducts).catch(() => {});
   }, []);
 
   const fetchInvoices = async () => {
@@ -309,9 +315,55 @@ export default function InvoicesAdmin() {
                   <div className="space-y-2">
                     {editing.lineItems.map((li, idx) => (
                       <div key={li.id} className="flex gap-2 items-end">
-                        <div className="flex-1">
+                        <div className="relative flex-1">
                           {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Description</label>}
-                          <input value={li.description} onChange={(e) => updateLineItem(idx, 'description', e.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="Item description" required />
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowProductPicker(showProductPicker === idx ? null : idx)}
+                              className="shrink-0 rounded-lg border border-zinc-200 px-2 py-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50"
+                              title="Search products"
+                            >
+                              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                            </button>
+                            <input value={li.description} onChange={(e) => updateLineItem(idx, 'description', e.target.value)} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="Item description" required />
+                          </div>
+                          {showProductPicker === idx && (
+                            <div className="absolute left-0 top-full z-50 mt-1 w-full bg-white border border-zinc-200 rounded-lg shadow-lg p-2">
+                              <input
+                                autoFocus
+                                value={productSearch[idx] || ''}
+                                onChange={(e) => setProductSearch({ ...productSearch, [idx]: e.target.value })}
+                                className="w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm mb-1"
+                                placeholder="Search products..."
+                                onKeyDown={(e) => { if (e.key === 'Escape') setShowProductPicker(null); }}
+                              />
+                              <div className="max-h-40 overflow-y-auto">
+                                {products
+                                  .filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase()))
+                                  .slice(0, 6)
+                                  .map((p) => (
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50"
+                                      onClick={() => {
+                                        updateLineItem(idx, 'description', p.name);
+                                        updateLineItem(idx, 'unitPrice', p.price);
+                                        setShowProductPicker(null);
+                                        setProductSearch({ ...productSearch, [idx]: '' });
+                                      }}
+                                    >
+                                      <span className="text-zinc-900 truncate">{p.name}</span>
+                                      <span className="text-xs text-zinc-500 ml-2 shrink-0">{fmtCurrency(p.price, p.currency)}</span>
+                                    </button>
+                                  ))}
+                                {products.filter((p) => !productSearch[idx] || p.name.toLowerCase().includes((productSearch[idx] || '').toLowerCase())).length === 0 && (
+                                  <p className="text-xs text-zinc-400 p-2">No products found</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div className="w-20">
                           {idx === 0 && <label className="block text-xs text-zinc-400 mb-1">Qty</label>}
@@ -424,15 +476,17 @@ export default function InvoicesAdmin() {
                   <div>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/images/brand/cansan-logo.png"
-                      alt="Cansan Solutions"
+                      src={company?.logoUrl || '/images/brand/cansan-logo.png'}
+                      alt={company?.name || 'Cansan Solutions'}
                       className="h-12 w-auto mb-3"
                     />
-                    <p className="text-xs text-zinc-500 leading-5">Shop 7, ZB House, Corner Speke &amp; 1st Street</p>
-                    <p className="text-xs text-zinc-500 leading-5">Harare, Zimbabwe</p>
-                    <p className="text-xs text-zinc-500 leading-5">+263 77 375 4747</p>
-                    <p className="text-xs text-zinc-500 leading-5">info@cansansolutions.co.zw</p>
-                    <p className="text-xs text-zinc-500 leading-5">www.cansansolutions.co.zw</p>
+                    {company?.addressLine1 && <p className="text-xs text-zinc-500 leading-5">{company.addressLine1}</p>}
+                    {company?.addressLine2 && <p className="text-xs text-zinc-500 leading-5">{company.addressLine2}</p>}
+                    {(company?.city || company?.country) && <p className="text-xs text-zinc-500 leading-5">{[company?.city, company?.country].filter(Boolean).join(', ')}</p>}
+                    {company?.phone && <p className="text-xs text-zinc-500 leading-5">{company.phone}</p>}
+                    {company?.email && <p className="text-xs text-zinc-500 leading-5">{company.email}</p>}
+                    {company?.website && <p className="text-xs text-zinc-500 leading-5">{company.website}</p>}
+                    {company?.vatNumber && <p className="text-xs text-zinc-500 leading-5">VAT: {company.vatNumber}</p>}
                   </div>
                   {/* Document title */}
                   <div className="text-right">
@@ -505,8 +559,8 @@ export default function InvoicesAdmin() {
 
                 {/* Print footer */}
                 <div className="mt-12 pt-4 border-t border-zinc-200 flex justify-between items-center text-xs text-zinc-400">
-                  <span>Cansan Solutions · Shop 7, ZB House, Harare, Zimbabwe</span>
-                  <span>info@cansansolutions.co.zw · +263 77 375 4747</span>
+                  <span>{company?.name || 'Cansan Solutions'} · {company?.addressLine1 || 'Shop 7, ZB House'}, {company?.city || 'Harare'}, {company?.country || 'Zimbabwe'}</span>
+                  <span>{company?.email || 'info@cansansolutions.co.zw'} · {company?.phone || '+263 77 375 4747'}</span>
                 </div>
               </div>
             </div>

@@ -2,27 +2,68 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import type { CompanyProfile } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
 export default function SettingsPage() {
   const [authed, setAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  
+
   // Password change form
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   // Site settings
   const [currency, setCurrency] = useState('USD');
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [itemsPerPage, setItemsPerPage] = useState('20');
 
+  // Company profile
+  const [company, setCompany] = useState<CompanyProfile>({
+    id: 'default', name: '', tagline: '', addressLine1: '', addressLine2: '',
+    city: '', country: '', phone: '', email: '', website: '', vatNumber: '',
+    logoUrl: '/images/brand/cansan-logo.png',
+  });
+  const [savingCompany, setSavingCompany] = useState(false);
+
   useEffect(() => {
     checkAuth();
+    fetchCompanyProfile();
   }, []);
+
+  const fetchCompanyProfile = async () => {
+    try {
+      const res = await fetch('/api/admin/company');
+      if (res.ok) setCompany(await res.json());
+    } catch { /* ignore */ }
+  };
+
+  const saveCompanyProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCompany(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/company', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(company),
+      });
+      if (res.ok) {
+        setCompany(await res.json());
+        setMessage('Company profile saved successfully');
+      } else {
+        const err = await res.json();
+        setMessage(err.error || 'Failed to save company profile');
+      }
+    } catch {
+      setMessage('Error saving company profile');
+    } finally {
+      setSavingCompany(false);
+    }
+  };
 
   const checkAuth = async () => {
     const res = await fetch('/api/admin/products');
@@ -116,6 +157,83 @@ export default function SettingsPage() {
         )}
 
         <div className="space-y-6">
+          {/* Company Profile */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 className="font-semibold text-zinc-900 mb-4">Company Profile</h3>
+            <form onSubmit={saveCompanyProfile} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Logo URL</label>
+                  <input
+                    value={company.logoUrl}
+                    onChange={(e) => setCompany({ ...company, logoUrl: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    placeholder="/images/brand/cansan-logo.png"
+                  />
+                </div>
+                {company.logoUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={company.logoUrl} alt="Logo preview" className="h-10 w-auto rounded border border-zinc-200" />
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Company Name</label>
+                  <input value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Tagline</label>
+                  <input value={company.tagline} onChange={(e) => setCompany({ ...company, tagline: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Address Line 1</label>
+                <input value={company.addressLine1} onChange={(e) => setCompany({ ...company, addressLine1: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">Address Line 2</label>
+                <input value={company.addressLine2} onChange={(e) => setCompany({ ...company, addressLine2: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">City</label>
+                  <input value={company.city} onChange={(e) => setCompany({ ...company, city: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Country</label>
+                  <input value={company.country} onChange={(e) => setCompany({ ...company, country: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Phone</label>
+                  <input value={company.phone} onChange={(e) => setCompany({ ...company, phone: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Email</label>
+                  <input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Website</label>
+                  <input value={company.website} onChange={(e) => setCompany({ ...company, website: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">VAT / Tax Number</label>
+                  <input value={company.vatNumber} onChange={(e) => setCompany({ ...company, vatNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="Optional" />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={savingCompany}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {savingCompany ? 'Saving...' : 'Save Company Profile'}
+              </button>
+            </form>
+          </div>
+
           {/* Change Password */}
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
             <h3 className="font-semibold text-zinc-900 mb-4">Change Admin Password</h3>

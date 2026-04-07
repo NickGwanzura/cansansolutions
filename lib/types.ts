@@ -141,3 +141,35 @@ export type Receipt = {
   paidAt: string;
   createdAt?: string;
 };
+
+export type CompanyProfile = {
+  id: string;
+  name: string;
+  tagline: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  country: string;
+  phone: string;
+  email: string;
+  website: string;
+  vatNumber: string;
+  logoUrl: string;
+  updatedAt?: string;
+};
+
+export type ExpenseCategory =
+  | 'rent' | 'utilities' | 'salaries' | 'inventory' | 'marketing'
+  | 'transport' | 'equipment' | 'maintenance' | 'taxes' | 'other';
+
+export type Expense = {
+  id: string;
+  date: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  currency: string;
+  vendor: string;
+  notes?: string;
+  createdAt?: string;
+};

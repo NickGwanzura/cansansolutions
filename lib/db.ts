@@ -1,7 +1,7 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Banner, Brand, Invoice, Quote, Receipt } from './types';
+import type { Banner, Brand, CompanyProfile, Expense, Invoice, Quote, Receipt } from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
 let _sql: NeonQueryFunction<false, false> | null = null;
@@ -132,6 +132,42 @@ async function ensureSchema(): Promise<void> {
       notes          TEXT,
       paid_at        DATE NOT NULL,
       created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS company_profile (
+      id            TEXT PRIMARY KEY DEFAULT 'default',
+      name          TEXT NOT NULL DEFAULT 'Cansan Solutions',
+      tagline       TEXT NOT NULL DEFAULT 'Technology Solutions',
+      address_line1 TEXT NOT NULL DEFAULT '',
+      address_line2 TEXT NOT NULL DEFAULT '',
+      city          TEXT NOT NULL DEFAULT '',
+      country       TEXT NOT NULL DEFAULT '',
+      phone         TEXT NOT NULL DEFAULT '',
+      email         TEXT NOT NULL DEFAULT '',
+      website       TEXT NOT NULL DEFAULT '',
+      vat_number    TEXT NOT NULL DEFAULT '',
+      logo_url      TEXT NOT NULL DEFAULT '/images/brand/cansan-logo.png',
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, logo_url)
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'www.cansansolutions.co.zw', '', '/images/brand/cansan-logo.png')
+    ON CONFLICT (id) DO NOTHING
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS expenses (
+      id          TEXT PRIMARY KEY,
+      date        DATE NOT NULL,
+      category    TEXT NOT NULL DEFAULT 'other',
+      description TEXT NOT NULL,
+      amount      NUMERIC(12,2) NOT NULL DEFAULT 0,
+      currency    TEXT NOT NULL DEFAULT 'USD',
+      vendor      TEXT NOT NULL DEFAULT '',
+      notes       TEXT,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
   await seedBannersFromFile();
@@ -763,4 +799,147 @@ export async function getNextReceiptNumber(): Promise<string> {
   const last = String(rows[0].number ?? 'REC-0000');
   const num = parseInt(last.replace('REC-', ''), 10) || 0;
   return `REC-${String(num + 1).padStart(4, '0')}`;
+}
+
+// ─── Company Profile ───
+
+function rowToCompanyProfile(row: Record<string, unknown>): CompanyProfile {
+  return {
+    id: String(row.id ?? 'default'),
+    name: String(row.name ?? ''),
+    tagline: String(row.tagline ?? ''),
+    addressLine1: String(row.address_line1 ?? ''),
+    addressLine2: String(row.address_line2 ?? ''),
+    city: String(row.city ?? ''),
+    country: String(row.country ?? ''),
+    phone: String(row.phone ?? ''),
+    email: String(row.email ?? ''),
+    website: String(row.website ?? ''),
+    vatNumber: String(row.vat_number ?? ''),
+    logoUrl: String(row.logo_url ?? '/images/brand/cansan-logo.png'),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+export async function getCompanyProfile(): Promise<CompanyProfile> {
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM company_profile WHERE id = 'default' LIMIT 1`;
+  if (rows.length > 0) return rowToCompanyProfile(rows[0]);
+  // Seed default if missing
+  const inserted = await sql()`
+    INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, logo_url)
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'www.cansansolutions.co.zw', '/images/brand/cansan-logo.png')
+    ON CONFLICT (id) DO NOTHING
+    RETURNING *
+  `;
+  if (inserted.length > 0) return rowToCompanyProfile(inserted[0]);
+  const refetch = await sql()`SELECT * FROM company_profile WHERE id = 'default' LIMIT 1`;
+  return rowToCompanyProfile(refetch[0]);
+}
+
+export async function saveCompanyProfile(profile: CompanyProfile): Promise<CompanyProfile> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO company_profile (
+      id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, logo_url, updated_at
+    ) VALUES (
+      'default',
+      ${profile.name},
+      ${profile.tagline},
+      ${profile.addressLine1},
+      ${profile.addressLine2},
+      ${profile.city},
+      ${profile.country},
+      ${profile.phone},
+      ${profile.email},
+      ${profile.website},
+      ${profile.vatNumber},
+      ${profile.logoUrl},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name          = EXCLUDED.name,
+      tagline       = EXCLUDED.tagline,
+      address_line1 = EXCLUDED.address_line1,
+      address_line2 = EXCLUDED.address_line2,
+      city          = EXCLUDED.city,
+      country       = EXCLUDED.country,
+      phone         = EXCLUDED.phone,
+      email         = EXCLUDED.email,
+      website       = EXCLUDED.website,
+      vat_number    = EXCLUDED.vat_number,
+      logo_url      = EXCLUDED.logo_url,
+      updated_at    = ${now}
+    RETURNING *
+  `;
+  return rowToCompanyProfile(rows[0]);
+}
+
+// ─── Expenses ───
+
+function rowToExpense(row: Record<string, unknown>): Expense {
+  return {
+    id: String(row.id ?? ''),
+    date: String(row.date ?? ''),
+    category: String(row.category ?? 'other') as Expense['category'],
+    description: String(row.description ?? ''),
+    amount: parseFloat(String(row.amount ?? '0')),
+    currency: String(row.currency ?? 'USD'),
+    vendor: String(row.vendor ?? ''),
+    notes: row.notes ? String(row.notes) : undefined,
+    createdAt: toIsoString(row.created_at),
+  };
+}
+
+export async function getExpenses(): Promise<Expense[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM expenses ORDER BY date DESC, created_at DESC`;
+  return rows.map(rowToExpense);
+}
+
+export async function getExpense(id: string): Promise<Expense | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM expenses WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToExpense(rows[0]) : null;
+}
+
+export async function saveExpense(expense: Expense): Promise<Expense> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO expenses (
+      id, date, category, description, amount, currency, vendor, notes, created_at, updated_at
+    ) VALUES (
+      ${expense.id || `exp-${Date.now()}`},
+      ${expense.date},
+      ${expense.category},
+      ${expense.description},
+      ${expense.amount},
+      ${expense.currency || 'USD'},
+      ${expense.vendor || ''},
+      ${expense.notes ?? null},
+      ${expense.createdAt ? new Date(expense.createdAt) : now},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      date        = EXCLUDED.date,
+      category    = EXCLUDED.category,
+      description = EXCLUDED.description,
+      amount      = EXCLUDED.amount,
+      currency    = EXCLUDED.currency,
+      vendor      = EXCLUDED.vendor,
+      notes       = EXCLUDED.notes,
+      updated_at  = ${now}
+    RETURNING *
+  `;
+  return rowToExpense(rows[0]);
+}
+
+export async function deleteExpense(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM expenses WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
 }
