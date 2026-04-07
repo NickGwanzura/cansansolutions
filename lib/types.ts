@@ -173,3 +173,15 @@ export type Expense = {
   notes?: string;
   createdAt?: string;
 };
+
+export type Client = {
+  id: string;
+  name: string;
+  company?: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};

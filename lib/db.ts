@@ -1,7 +1,7 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Banner, Brand, CompanyProfile, Expense, Invoice, Quote, Receipt } from './types';
+import type { Banner, Brand, Client, CompanyProfile, Expense, Invoice, Quote, Receipt } from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
 let _sql: NeonQueryFunction<false, false> | null = null;
@@ -168,6 +168,19 @@ async function ensureSchema(): Promise<void> {
       notes       TEXT,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS clients (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      company    TEXT NOT NULL DEFAULT '',
+      email      TEXT NOT NULL DEFAULT '',
+      phone      TEXT NOT NULL DEFAULT '',
+      address    TEXT NOT NULL DEFAULT '',
+      notes      TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
   await seedBannersFromFile();
@@ -941,5 +954,71 @@ export async function saveExpense(expense: Expense): Promise<Expense> {
 export async function deleteExpense(id: string): Promise<boolean> {
   await ensureSchema();
   const rows = await sql()`DELETE FROM expenses WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+// ─── Clients ───
+
+function rowToClient(row: Record<string, unknown>): Client {
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    company: row.company ? String(row.company) : undefined,
+    email: String(row.email ?? ''),
+    phone: String(row.phone ?? ''),
+    address: String(row.address ?? ''),
+    notes: row.notes ? String(row.notes) : undefined,
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+export async function getClients(): Promise<Client[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM clients ORDER BY name ASC`;
+  return rows.map(rowToClient);
+}
+
+export async function getClient(id: string): Promise<Client | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM clients WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToClient(rows[0]) : null;
+}
+
+export async function saveClient(client: Client): Promise<Client> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO clients (
+      id, name, company, email, phone, address, notes, created_at, updated_at
+    ) VALUES (
+      ${client.id || `client-${Date.now()}`},
+      ${client.name},
+      ${client.company || ''},
+      ${client.email || ''},
+      ${client.phone || ''},
+      ${client.address || ''},
+      ${client.notes || ''},
+      ${client.createdAt ? new Date(client.createdAt) : now},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name       = EXCLUDED.name,
+      company    = EXCLUDED.company,
+      email      = EXCLUDED.email,
+      phone      = EXCLUDED.phone,
+      address    = EXCLUDED.address,
+      notes      = EXCLUDED.notes,
+      updated_at = ${now}
+    RETURNING *
+  `;
+  return rowToClient(rows[0]);
+}
+
+export async function deleteClient(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM clients WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
 }

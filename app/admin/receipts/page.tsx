@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Receipt, PaymentMethod, LineItem, CustomerInfo, CompanyProfile, Product } from '@/lib/types';
+import type { Receipt, PaymentMethod, LineItem, CustomerInfo, CompanyProfile, Product, Client } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
 const CURRENCIES = ['USD', 'KES', 'ZAR'];
@@ -65,11 +65,18 @@ export default function ReceiptsAdmin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState<Record<number, string>>({});
   const [showProductPicker, setShowProductPicker] = useState<number | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientPicker, setClientPicker] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientCreating, setClientCreating] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', company: '', email: '', phone: '', address: '' });
+  const [clientSaving, setClientSaving] = useState(false);
 
   useEffect(() => {
     fetchReceipts();
     fetch('/api/admin/company').then(r => r.ok ? r.json() : null).then(d => { if (d) setCompany(d); }).catch(() => {});
     fetch('/api/products').then(r => r.ok ? r.json() : []).then(setProducts).catch(() => {});
+    fetch('/api/admin/clients').then(r => r.ok ? r.json() : []).then(setClients).catch(() => {});
   }, []);
 
   const fetchReceipts = async () => {
@@ -138,8 +145,55 @@ export default function ReceiptsAdmin() {
     if (r) {
       setEditing({ ...r });
     } else {
-      setEditing({ ...emptyReceipt(), id: `rec-${Date.now()}` });
+      setClientPicker(true);
+      setClientSearch('');
+      setClientCreating(false);
+      setNewClient({ name: '', company: '', email: '', phone: '', address: '' });
     }
+  };
+
+  const startEditWithClient = (client: Client) => {
+    setEditing({
+      ...emptyReceipt(),
+      id: `rec-${Date.now()}`,
+      customer: { name: client.name, email: client.email, phone: client.phone, address: client.address, company: client.company || '' },
+    });
+    setClientPicker(false);
+  };
+
+  const startEditBlank = () => {
+    setEditing({ ...emptyReceipt(), id: `rec-${Date.now()}` });
+    setClientPicker(false);
+  };
+
+  const handleQuickCreateClient = async () => {
+    if (!newClient.name.trim()) return;
+    setClientSaving(true);
+    try {
+      const res = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClient),
+      });
+      if (res.ok) {
+        const saved = await res.json() as Client;
+        setClients((prev) => [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)));
+        startEditWithClient(saved);
+      }
+    } catch {
+      setMessage('Error creating client');
+    } finally {
+      setClientSaving(false);
+    }
+  };
+
+  const changeClient = (client: Client) => {
+    if (!editing) return;
+    setEditing({
+      ...editing,
+      customer: { name: client.name, email: client.email, phone: client.phone, address: client.address, company: client.company || '' },
+    });
+    setClientPicker(false);
   };
 
   const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
@@ -283,7 +337,12 @@ export default function ReceiptsAdmin() {
               >
                 {/* Customer */}
                 <fieldset className="space-y-3">
-                  <legend className="text-xs font-bold text-zinc-500 uppercase tracking-wide">Customer</legend>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-zinc-400 uppercase">Customer</p>
+                    <button type="button" onClick={() => { setClientPicker(true); setClientSearch(''); setClientCreating(false); }} className="text-xs text-red-500 hover:text-red-400">
+                      Change Client
+                    </button>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-500 mb-1">Name</label>
@@ -555,6 +614,103 @@ export default function ReceiptsAdmin() {
                   <span>{company?.email || 'info@cansansolutions.co.zw'} · {company?.phone || '+263 77 375 4747'}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Client Picker Modal */}
+        {clientPicker && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+                <h3 className="font-heading text-sm font-bold text-zinc-900">Select a Client</h3>
+                <button onClick={() => setClientPicker(false)} className="text-zinc-400 hover:text-zinc-600">&#10005;</button>
+              </div>
+
+              <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+                {!clientCreating && (
+                  <>
+                    <input
+                      autoFocus
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      placeholder="Search clients..."
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+
+                    <div className="space-y-2">
+                      {clients
+                        .filter((c) => {
+                          if (!clientSearch) return true;
+                          const q = clientSearch.toLowerCase();
+                          return c.name.toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
+                        })
+                        .map((c) => {
+                          const colors = ['bg-red-500','bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-teal-500','bg-pink-500','bg-indigo-500'];
+                          let hash = 0;
+                          for (let i = 0; i < c.name.length; i++) hash = c.name.charCodeAt(i) + ((hash << 5) - hash);
+                          const color = colors[Math.abs(hash) % colors.length];
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => editing ? changeClient(c) : startEditWithClient(c)}
+                              className="flex w-full items-start gap-3 rounded-xl border border-zinc-100 p-3 text-left hover:bg-zinc-50 transition"
+                            >
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${color}`}>
+                                {c.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-zinc-900 text-sm">{c.name}</p>
+                                <p className="text-xs text-zinc-500 truncate">
+                                  {[c.company, c.email].filter(Boolean).join(' \u00b7 ')}
+                                </p>
+                                {c.phone && <p className="text-xs text-zinc-400">{c.phone}</p>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      {clients.length === 0 && (
+                        <p className="text-sm text-zinc-400 text-center py-4">No clients yet</p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {clientCreating && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-zinc-500 uppercase">New Client</h4>
+                    <input value={newClient.name} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} placeholder="Name *" className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" required />
+                    <input value={newClient.company} onChange={(e) => setNewClient({ ...newClient, company: e.target.value })} placeholder="Company" className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                    <input value={newClient.email} onChange={(e) => setNewClient({ ...newClient, email: e.target.value })} placeholder="Email" className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                    <input value={newClient.phone} onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })} placeholder="Phone" className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                    <input value={newClient.address} onChange={(e) => setNewClient({ ...newClient, address: e.target.value })} placeholder="Address" className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setClientCreating(false)} className="flex-1 rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-600">Back</button>
+                      <button type="button" onClick={handleQuickCreateClient} disabled={clientSaving || !newClient.name.trim()} className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white disabled:opacity-60">{clientSaving ? 'Saving...' : 'Create & Select'}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!clientCreating && (
+                <div className="border-t border-zinc-100 px-5 py-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => { setClientCreating(true); setNewClient({ name: '', company: '', email: '', phone: '', address: '' }); }}
+                    className="w-full rounded-lg bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                  >
+                    + Create New Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editing ? setClientPicker(false) : startEditBlank()}
+                    className="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 py-1"
+                  >
+                    Continue without selecting a client
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
