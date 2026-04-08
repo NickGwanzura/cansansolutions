@@ -33,7 +33,7 @@ export function Header() {
   return (
     <>
       {/* Top bar */}
-      <div className="bg-zinc-950 text-zinc-400 text-xs">
+      <div className="hidden bg-zinc-950 text-zinc-400 text-xs sm:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="hidden sm:flex items-center gap-6">
@@ -72,7 +72,7 @@ export function Header() {
             : 'bg-white border-b border-zinc-100'
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6">
 
           {/* Logo */}
           <Link href="/" className="group shrink-0" aria-label="Cansan Electronics">
@@ -118,7 +118,7 @@ export function Header() {
             {/* Cart */}
             <button
               onClick={() => setCartOpen(true)}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 transition hover:bg-zinc-200"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 transition hover:bg-zinc-200 sm:h-10 sm:w-10"
               aria-label="Open cart"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -134,7 +134,7 @@ export function Header() {
             {/* Mobile menu */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 transition hover:bg-zinc-200 sm:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 transition hover:bg-zinc-200 sm:hidden"
               aria-label="Toggle menu"
             >
               {menuOpen ? (

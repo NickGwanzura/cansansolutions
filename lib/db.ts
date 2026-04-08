@@ -1,7 +1,7 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Banner, Brand, Client, CompanyProfile, Expense, Invoice, Quote, Receipt } from './types';
+import type { Banner, Brand, Client, CompanyProfile, DeliveryNote, Expense, Invoice, Quote, Receipt } from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
 let _sql: NeonQueryFunction<false, false> | null = null;
@@ -181,6 +181,28 @@ async function ensureSchema(): Promise<void> {
       notes      TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS delivery_notes (
+      id               TEXT PRIMARY KEY,
+      number           TEXT UNIQUE NOT NULL,
+      status           TEXT NOT NULL DEFAULT 'draft',
+      customer         JSONB NOT NULL DEFAULT '{}',
+      delivery_address TEXT,
+      line_items       JSONB NOT NULL DEFAULT '[]',
+      subtotal         NUMERIC(12,2) NOT NULL DEFAULT 0,
+      tax_rate         NUMERIC(5,2) NOT NULL DEFAULT 0,
+      tax_amount       NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount         NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total            NUMERIC(12,2) NOT NULL DEFAULT 0,
+      currency         TEXT NOT NULL DEFAULT 'USD',
+      notes            TEXT,
+      invoice_ref      TEXT,
+      issue_date       DATE NOT NULL,
+      delivery_date    DATE,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
   await seedBannersFromFile();
@@ -1021,4 +1043,108 @@ export async function deleteClient(id: string): Promise<boolean> {
   await ensureSchema();
   const rows = await sql()`DELETE FROM clients WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
+}
+
+// ─── Delivery Notes ───
+
+function rowToDeliveryNote(row: Record<string, unknown>): DeliveryNote {
+  return {
+    id: String(row.id ?? ''),
+    number: String(row.number ?? ''),
+    status: String(row.status ?? 'draft') as DeliveryNote['status'],
+    customer: parseJsonb(row.customer),
+    deliveryAddress: row.delivery_address ? String(row.delivery_address) : undefined,
+    lineItems: parseJsonb(row.line_items),
+    subtotal: parseFloat(String(row.subtotal ?? '0')),
+    taxRate: parseFloat(String(row.tax_rate ?? '0')),
+    taxAmount: parseFloat(String(row.tax_amount ?? '0')),
+    discount: parseFloat(String(row.discount ?? '0')),
+    total: parseFloat(String(row.total ?? '0')),
+    currency: String(row.currency ?? 'USD'),
+    notes: row.notes ? String(row.notes) : undefined,
+    invoiceRef: row.invoice_ref ? String(row.invoice_ref) : undefined,
+    issueDate: String(row.issue_date ?? ''),
+    deliveryDate: row.delivery_date ? String(row.delivery_date) : undefined,
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+  };
+}
+
+export async function getDeliveryNotes(): Promise<DeliveryNote[]> {
+  if (!hasDatabase()) return [];
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM delivery_notes ORDER BY created_at DESC`;
+  return rows.map(rowToDeliveryNote);
+}
+
+export async function getDeliveryNote(id: string): Promise<DeliveryNote | null> {
+  if (!hasDatabase()) return null;
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM delivery_notes WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToDeliveryNote(rows[0]) : null;
+}
+
+export async function saveDeliveryNote(dn: DeliveryNote): Promise<DeliveryNote> {
+  await ensureSchema();
+  const now = new Date();
+  const rows = await sql()`
+    INSERT INTO delivery_notes (
+      id, number, status, customer, delivery_address, line_items, subtotal, tax_rate,
+      tax_amount, discount, total, currency, notes, invoice_ref, issue_date,
+      delivery_date, created_at, updated_at
+    ) VALUES (
+      ${dn.id},
+      ${dn.number},
+      ${dn.status},
+      ${JSON.stringify(dn.customer)},
+      ${dn.deliveryAddress ?? null},
+      ${JSON.stringify(dn.lineItems)},
+      ${dn.subtotal},
+      ${dn.taxRate},
+      ${dn.taxAmount},
+      ${dn.discount},
+      ${dn.total},
+      ${dn.currency},
+      ${dn.notes ?? null},
+      ${dn.invoiceRef ?? null},
+      ${dn.issueDate},
+      ${dn.deliveryDate ?? null},
+      ${dn.createdAt ? new Date(dn.createdAt) : now},
+      ${now}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      number           = EXCLUDED.number,
+      status           = EXCLUDED.status,
+      customer         = EXCLUDED.customer,
+      delivery_address = EXCLUDED.delivery_address,
+      line_items       = EXCLUDED.line_items,
+      subtotal         = EXCLUDED.subtotal,
+      tax_rate         = EXCLUDED.tax_rate,
+      tax_amount       = EXCLUDED.tax_amount,
+      discount         = EXCLUDED.discount,
+      total            = EXCLUDED.total,
+      currency         = EXCLUDED.currency,
+      notes            = EXCLUDED.notes,
+      invoice_ref      = EXCLUDED.invoice_ref,
+      issue_date       = EXCLUDED.issue_date,
+      delivery_date    = EXCLUDED.delivery_date,
+      updated_at       = ${now}
+    RETURNING *
+  `;
+  return rowToDeliveryNote(rows[0]);
+}
+
+export async function deleteDeliveryNote(id: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql()`DELETE FROM delivery_notes WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function getNextDeliveryNoteNumber(): Promise<string> {
+  await ensureSchema();
+  const rows = await sql()`SELECT number FROM delivery_notes ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return 'DN-0001';
+  const last = String(rows[0].number ?? 'DN-0000');
+  const num = parseInt(last.replace('DN-', ''), 10) || 0;
+  return `DN-${String(num + 1).padStart(4, '0')}`;
 }

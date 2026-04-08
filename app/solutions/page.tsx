@@ -27,10 +27,10 @@ export default function SolutionsPage() {
       <div>
         <section className="bg-zinc-950 px-6 py-20 text-white">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Commercial Pages</p>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Solution pages built to convert buying intent</h1>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Popular Buying Paths</p>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Choose the solution that matches what you need</h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400">
-              These pages target specific high-intent buying problems instead of dumping every visitor into a general catalog. They are designed to help buyers move faster toward a quote, a shortlist, or a solution discussion.
+              Some buyers need office laptops. Others need CCTV, stronger home Wi-Fi, or backup during load shedding. These pages help you go straight to the right conversation instead of browsing blindly.
             </p>
           </div>
         </section>
@@ -48,16 +48,8 @@ export default function SolutionsPage() {
                   {solution.title}
                 </h2>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-600">{solution.shortDescription}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-600">
-                    {solution.intent}
-                  </span>
-                  <span className="rounded-full border border-zinc-200 px-3 py-1 text-[11px] text-zinc-500">
-                    {solution.primaryKeyword}
-                  </span>
-                </div>
                 <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-red-600 group-hover:underline">
-                  Open solution page
+                  Explore this solution
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>

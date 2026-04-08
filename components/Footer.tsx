@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BrandLogo } from './BrandLogo';
 import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
+import { SITE_EMAIL } from '@/lib/site';
 
 const WA_NUMBER = '263773754747';
 const WA_DISPLAY = '+263 77 375 4747';
@@ -82,7 +83,7 @@ export function Footer() {
 
       {/* Main grid */}
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 lg:grid-cols-4">
 
           {/* Brand column */}
           <div className="lg:col-span-1">
@@ -106,11 +107,11 @@ export function Footer() {
                 </svg>
                 {WA_DISPLAY}
               </a>
-              <a href="mailto:info@cansansolutions.co.zw" className="flex items-center gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors">
+              <a href={`mailto:${SITE_EMAIL}`} className="flex items-center gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                 </svg>
-                info@cansansolutions.co.zw
+                {SITE_EMAIL}
               </a>
               <a
                 href="https://maps.google.com/?q=Shop+7+ZB+House+Corner+Speke+and+1st+Street+Harare+Zimbabwe"
@@ -127,8 +128,62 @@ export function Footer() {
             </div>
           </div>
 
+          <div className="space-y-3 lg:hidden">
+            <details className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-200">Quick Links</summary>
+              <ul className="mt-3 space-y-3">
+                {quickLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+
+            <details className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-200">Buying Info</summary>
+              <ul className="mt-3 space-y-3">
+                {buyingInfoLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+
+            <details className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-200">Popular Solutions</summary>
+              <ul className="mt-3 space-y-3">
+                {solutionLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+
+            <details className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-200">Shop by Category</summary>
+              <ul className="mt-3 grid grid-cols-2 gap-3">
+                {categories.slice(0, 8).map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-sm text-zinc-500 transition hover:text-zinc-200">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+
           {/* Quick Links */}
-          <div>
+          <div className="hidden lg:block">
             <h3 className="mb-5 font-heading text-xs font-bold uppercase tracking-widest text-zinc-200">Quick Links</h3>
             <ul className="space-y-3">
               {quickLinks.map(({ href, label }) => (
@@ -190,7 +245,7 @@ export function Footer() {
           </div>
 
           {/* Categories */}
-          <div>
+          <div className="hidden lg:block">
             <h3 className="mb-5 font-heading text-xs font-bold uppercase tracking-widest text-zinc-200">Shop by Category</h3>
             <ul className="space-y-3">
               {categories.map(({ href, label }) => (
@@ -205,7 +260,7 @@ export function Footer() {
           </div>
 
           {/* Why us / trust */}
-          <div>
+          <div className="hidden lg:block">
             <h3 className="mb-5 font-heading text-xs font-bold uppercase tracking-widest text-zinc-200">Why Cansan</h3>
             <div className="space-y-4">
               {[
@@ -232,7 +287,7 @@ export function Footer() {
       </div>
 
       {/* Developer Tag */}
-      <div className="border-y border-zinc-800/60 bg-zinc-900/50">
+      <div className="hidden border-y border-zinc-800/60 bg-zinc-900/50 sm:block">
         <div className="mx-auto max-w-7xl px-6 py-3">
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
             <span className="text-zinc-500">Developed by</span>
@@ -259,13 +314,7 @@ export function Footer() {
           <p className="text-xs text-zinc-600">
             © {year} Cansan Solutions. All rights reserved.
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-zinc-600">
-            <span>Made with</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
-              <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-            </svg>
-            <span>in Zimbabwe</span>
-          </div>
+          <p className="text-xs text-zinc-600">Proudly built in Zimbabwe</p>
           <div className="flex items-center gap-4 text-xs text-zinc-600">
             <Link href="/about" className="transition hover:text-zinc-300">About</Link>
             <Link href="/contact" className="transition hover:text-zinc-300">Contact</Link>

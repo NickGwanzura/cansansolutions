@@ -202,6 +202,28 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               Price indicative. Confirm stock, delivery, and final quote on WhatsApp before ordering.
             </p>
 
+            <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-3">
+              {[
+                {
+                  title: 'Stock confirmed fast',
+                  body: 'Send the product on WhatsApp and get a live stock check before you pay.',
+                },
+                {
+                  title: 'Delivery or collection',
+                  body: 'Harare delivery and in-store collection are confirmed with the order.',
+                },
+                {
+                  title: 'Support after purchase',
+                  body: 'Warranty, payment, and next-step guidance stay clear before checkout.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold text-zinc-900">{item.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
             <div className="mt-2 flex flex-col gap-3 sm:flex-row">
               <AddToCartButton product={product} />
               <a

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
+import { stripHtml, truncateText } from '@/lib/seo';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct } from '@/lib/catalog';
@@ -92,7 +93,8 @@ export function ProductCard({
     setTimeout(() => setAdded(false), 1600);
   };
 
-  const specEntries = product.specs ? Object.entries(product.specs).slice(0, 5) : [];
+  const specEntries = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
+  const summary = truncateText(stripHtml(product.description), 72);
 
   return (
     <motion.div
@@ -184,19 +186,18 @@ export function ProductCard({
 
         {/* Specs bullets */}
         {specEntries.length > 0 ? (
-          <ul className="space-y-0.5">
+          <ul className="space-y-1">
             {specEntries.map(([key, val]) => (
               <li key={key} className="flex items-start gap-1.5 text-[11px] text-zinc-600">
                 <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-zinc-400" />
-                <span><span className="font-semibold text-zinc-700">{key}:</span> {val}</span>
+                <span className="line-clamp-1">
+                  <span className="font-semibold text-zinc-700">{key}:</span> {val}
+                </span>
               </li>
             ))}
           </ul>
         ) : (
-          <div
-            className="text-xs text-zinc-400 line-clamp-2 leading-relaxed prose prose-xs max-w-none prose-p:my-0 prose-ul:my-0"
-            dangerouslySetInnerHTML={{ __html: product.description }}
-          />
+          <p className="text-xs leading-relaxed text-zinc-500 line-clamp-2">{summary}</p>
         )}
 
         {isBundle && product.bundleItems.length > 0 && (
@@ -230,7 +231,7 @@ export function ProductCard({
             disabled={!product.inStock}
             onClick={handleAdd}
             whileTap={product.inStock ? { scale: 0.92 } : {}}
-            className={`relative w-full rounded-full px-3.5 py-2 text-xs font-bold shadow-sm transition-all duration-200 overflow-hidden
+            className={`relative min-h-10 w-full rounded-full px-3.5 py-2 text-xs font-bold shadow-sm transition-all duration-200 overflow-hidden
               ${added
                 ? 'bg-green-500 text-white'
                 : 'bg-amber-400 text-zinc-900 hover:bg-amber-300'

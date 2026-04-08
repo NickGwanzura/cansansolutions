@@ -75,10 +75,6 @@ export default async function SolutionPage({ params }: { params: RouteParams }) 
         <section className="bg-zinc-950 px-6 py-20 text-white">
           <div className="mx-auto max-w-4xl">
             <p className="text-xs font-semibold uppercase tracking-widest text-red-400">{solution.eyebrow}</p>
-            <div className="mt-4 flex flex-wrap gap-3 text-xs font-medium text-zinc-400">
-              <span>{solution.intent}</span>
-              <span>{solution.primaryKeyword}</span>
-            </div>
             <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">{solution.title}</h1>
             <p className="mt-5 max-w-3xl text-base leading-relaxed text-zinc-400">{solution.heroBody}</p>
           </div>
@@ -92,7 +88,7 @@ export default async function SolutionPage({ params }: { params: RouteParams }) 
                 <p className="mt-4 text-sm leading-relaxed text-zinc-700">{solution.buyerSummary}</p>
 
                 <div className="mt-6 rounded-2xl bg-zinc-50 p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Commercial proof points</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">What buyers usually need help with</p>
                   <ul className="mt-4 space-y-3">
                     {solution.proofPoints.map((item) => (
                       <li key={item} className="flex items-start gap-3 text-sm leading-relaxed text-zinc-600">
@@ -145,7 +141,7 @@ export default async function SolutionPage({ params }: { params: RouteParams }) 
 
             <aside className="space-y-6">
               <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Why it matters</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Why this works</p>
                 <h2 className="mt-3 text-lg font-semibold text-zinc-900">{solution.fitTitle}</h2>
                 <ul className="mt-4 space-y-3">
                   {solution.fitBullets.map((item) => (

@@ -137,7 +137,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-sm">
+              <div className="mb-4 hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-sm sm:inline-flex">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
                 <span className="text-xs font-medium tracking-wide">Open today until 6pm</span>
               </div>
@@ -250,7 +250,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <BrandsStrip />
+      <div className="hidden sm:block">
+        <BrandsStrip />
+      </div>
 
       {/* Dynamic Banners - Managed via Admin */}
       {banners.map((banner) => (
@@ -355,7 +357,7 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="mt-10 grid gap-4 rounded-3xl border border-zinc-200 bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 hidden gap-4 rounded-3xl border border-zinc-200 bg-white p-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
             {[
               { label: 'Warranty Info', href: '/warranty', text: 'Know how product support and claims work before you buy.' },
               { label: 'Delivery Info', href: '/delivery', text: 'See how Harare delivery, courier, and collection are handled.' },
@@ -380,9 +382,9 @@ export default async function HomePage() {
           <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-red-400">Solutions</p>
-              <h2 className="mt-2 text-2xl font-bold">High-intent landing pages for buyers ready to solve a problem</h2>
+              <h2 className="mt-2 text-2xl font-bold">Start with what you actually need</h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-                These pages target commercial searches like office laptops, CCTV packages, home Wi-Fi setup, and load-shedding backup instead of forcing every visitor into the same catalog.
+                If you already know the problem you need to solve, these pages get you to the right products, advice, and quote path faster.
               </p>
             </div>
             <Link href="/solutions" className="text-sm font-medium text-red-300 hover:text-white">
@@ -403,7 +405,7 @@ export default async function HomePage() {
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-300">{solution.shortDescription}</p>
                 <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-red-300 group-hover:underline">
-                  Open solution page
+                  Explore solution
                 </span>
               </Link>
             ))}

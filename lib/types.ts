@@ -185,3 +185,26 @@ export type Client = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type DeliveryNoteStatus = 'draft' | 'dispatched' | 'delivered' | 'cancelled';
+
+export type DeliveryNote = {
+  id: string;
+  number: string;
+  status: DeliveryNoteStatus;
+  customer: CustomerInfo;
+  deliveryAddress?: string;
+  lineItems: LineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  currency: string;
+  notes?: string;
+  invoiceRef?: string;
+  issueDate: string;
+  deliveryDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};

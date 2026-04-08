@@ -13,9 +13,58 @@ const EMPTY_BRAND: Brand = {
   createdAt: undefined,
 };
 
+const MAX_LOGO_FILE_SIZE = 2.5 * 1024 * 1024;
+const MAX_LOGO_DIMENSION = 2400;
+
+async function getImageDimensions(file: File) {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Could not read image dimensions'));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+async function validateLogoFile(file: File) {
+  if (!['image/svg+xml', 'image/png', 'image/webp'].includes(file.type)) {
+    return 'Upload an SVG, PNG, or WebP logo. JPG screenshots and posters look bad in the homepage strip.';
+  }
+
+  if (file.size > MAX_LOGO_FILE_SIZE) {
+    return 'Logo file is too large. Keep it under 2.5MB.';
+  }
+
+  if (file.type !== 'image/svg+xml') {
+    const { width, height } = await getImageDimensions(file);
+    const longestSide = Math.max(width, height);
+    const ratio = width / height;
+
+    if (longestSide > MAX_LOGO_DIMENSION) {
+      return `This file is ${width}x${height}. Resize or export a trimmed logo under 2400px on the longest side.`;
+    }
+
+    if (ratio > 6 || ratio < 0.45) {
+      return 'This logo shape is too extreme for the homepage strip. Use a cleaner wordmark or badge export.';
+    }
+  }
+
+  return null;
+}
+
 function LogoUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(value);
+  const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -24,7 +73,16 @@ function LogoUpload({ value, onChange }: { value: string; onChange: (url: string
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      setError('Please select an image file');
+      return;
+    }
+
+    setError('');
+
+    const validationError = await validateLogoFile(file);
+    if (validationError) {
+      setPreview(value);
+      setError(validationError);
       return;
     }
 
@@ -43,11 +101,12 @@ function LogoUpload({ value, onChange }: { value: string; onChange: (url: string
         const data = await res.json();
         onChange(data.url);
         setPreview(data.url);
+        setError('');
       } else {
-        alert('Upload failed');
+        setError('Upload failed');
       }
     } catch {
-      alert('Upload error');
+      setError('Upload error');
     } finally {
       setUploading(false);
     }
@@ -56,10 +115,13 @@ function LogoUpload({ value, onChange }: { value: string; onChange: (url: string
   return (
     <div className="space-y-2">
       <label className="block text-xs font-semibold text-zinc-500 mb-1">Brand Logo</label>
+      <p className="text-[11px] leading-relaxed text-zinc-500">
+        Use a transparent SVG, PNG, or WebP logo on a clean background. Avoid screenshots, full posters, or oversized artwork.
+      </p>
 
       {preview ? (
         <div className="relative flex h-32 items-center justify-center rounded-lg border border-zinc-200 bg-white overflow-hidden p-4">
-          <img src={preview} alt="Logo preview" className="max-h-full w-full object-contain" />
+          <img src={preview} alt="Logo preview" className="max-h-full w-auto max-w-full object-contain" />
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -103,6 +165,7 @@ function LogoUpload({ value, onChange }: { value: string; onChange: (url: string
       />
 
       {value ? <p className="text-[10px] text-zinc-400 truncate">{value}</p> : null}
+      {error ? <p className="text-[11px] text-red-600">{error}</p> : null}
     </div>
   );
 }
@@ -214,11 +277,11 @@ export default function BrandsAdminPage() {
           </div>
         ) : null}
 
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-zinc-900">Brands</h1>
-            <p className="text-sm text-zinc-500">Upload and order brand logos for the homepage slider</p>
-          </div>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900">Brands</h1>
+              <p className="text-sm text-zinc-500">Upload and order brand logos for the homepage slider</p>
+            </div>
           <button
             onClick={() => setEditing({ ...EMPTY_BRAND, id: `brand-${Date.now()}`, sortOrder: brands.length })}
             className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
@@ -228,6 +291,10 @@ export default function BrandsAdminPage() {
             </svg>
             Add Brand
           </button>
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Homepage logos must be clean brand marks, not screenshots or promotional artwork. Wide wordmarks and transparent badge exports display best.
         </div>
 
         {loading ? (
@@ -243,7 +310,7 @@ export default function BrandsAdminPage() {
             {brands.map((brand) => (
               <div key={brand.id} className="rounded-2xl border border-zinc-200 bg-white p-4">
                 <div className="flex min-h-28 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-                  <img src={brand.logoUrl} alt={brand.name} className="max-h-16 w-full object-contain" />
+                  <img src={brand.logoUrl} alt={brand.name} className="max-h-16 w-auto max-w-full object-contain" />
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center gap-2">

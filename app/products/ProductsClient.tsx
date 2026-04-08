@@ -44,6 +44,7 @@ export function ProductsClient({
       : 'default'
   );
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const products = initialProducts;
   const currentCategory = activeCategory === 'all' ? null : categories.find((category) => category.slug === activeCategory);
 
@@ -101,6 +102,7 @@ export function ProductsClient({
     setActiveCondition('all');
     setSearchQuery('');
     setSortBy('default');
+    setShowMobileFilters(false);
   };
 
   const hasActiveFilters = activeType !== 'all' || activeCondition !== 'all' || searchQuery !== '' || sortBy !== 'default';
@@ -166,112 +168,123 @@ export function ProductsClient({
           </div>
         </div>
 
-        {/* Filters row */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Type filter */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mr-1">Type:</span>
-            {(
-              [
-                { value: 'all', label: 'Everything' },
-                { value: 'single', label: `Products${typeCounts.single > 0 ? ` (${typeCounts.single})` : ''}` },
-                { value: 'bundle', label: `Bundles${typeCounts.bundle > 0 ? ` (${typeCounts.bundle})` : ''}` },
-              ] as const
-            ).map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => {
-                  setActiveType(value);
-                  if (value === 'bundle') setActiveCondition('all');
-                }}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                  activeType === value
-                    ? value === 'bundle'
-                      ? 'bg-zinc-900 text-white'
-                      : 'bg-red-600 text-white'
-                    : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Sort dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 focus:border-red-300 focus:outline-none"
-            >
-              <option value="default">Default</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="name">Name A-Z</option>
-            </select>
-          </div>
+        <div className="mb-4 flex items-center justify-between gap-3 sm:hidden">
+          <button
+            onClick={() => setShowMobileFilters((value) => !value)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-800"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h18M6.75 12h10.5M10.5 19.5h3" />
+            </svg>
+            {showMobileFilters ? 'Hide filters' : 'Filters & sort'}
+          </button>
+          <p className="text-sm text-zinc-500">{filtered.length} shown</p>
         </div>
 
-        {/* Condition filter */}
-        {activeType !== 'bundle' && (
-          <div className="mb-4 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mr-1">Condition:</span>
-            {(
-              [
-                { value: 'all', label: 'All' },
-                { value: 'new', label: `Brand New${conditionCounts.new > 0 ? ` (${conditionCounts.new})` : ''}` },
-                { value: 'pre-owned', label: `Pre-owned${conditionCounts['pre-owned'] > 0 ? ` (${conditionCounts['pre-owned']})` : ''}` },
-              ] as const
-            ).map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setActiveCondition(value)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                  activeCondition === value
-                    ? value === 'new'
-                      ? 'bg-green-600 text-white'
-                      : value === 'pre-owned'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-zinc-900 text-white'
-                    : 'border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className={`${showMobileFilters ? 'block' : 'hidden'} rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none`}>
+          {/* Filters row */}
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
+              <span className="mr-1 shrink-0 self-center text-xs font-semibold uppercase tracking-wide text-zinc-400">Type:</span>
+              {(
+                [
+                  { value: 'all', label: 'Everything' },
+                  { value: 'single', label: `Products${typeCounts.single > 0 ? ` (${typeCounts.single})` : ''}` },
+                  { value: 'bundle', label: `Bundles${typeCounts.bundle > 0 ? ` (${typeCounts.bundle})` : ''}` },
+                ] as const
+              ).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => {
+                    setActiveType(value);
+                    if (value === 'bundle') setActiveCondition('all');
+                  }}
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    activeType === value
+                      ? value === 'bundle'
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-red-600 text-white'
+                      : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-        {/* Category filter */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Link
-            href="/products"
-            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-              activeCategory === 'all'
-                ? 'bg-red-600 text-white'
-                : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
-            }`}
-          >
-            All Categories
-          </Link>
-          {categories.map((cat) => (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="min-h-10 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-600 focus:border-red-300 focus:outline-none"
+              >
+                <option value="default">Default</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name A-Z</option>
+              </select>
+            </div>
+          </div>
+
+          {activeType !== 'bundle' && (
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
+              <span className="mr-1 shrink-0 self-center text-xs font-semibold uppercase tracking-wide text-zinc-400">Condition:</span>
+              {(
+                [
+                  { value: 'all', label: 'All' },
+                  { value: 'new', label: `Brand New${conditionCounts.new > 0 ? ` (${conditionCounts.new})` : ''}` },
+                  { value: 'pre-owned', label: `Pre-owned${conditionCounts['pre-owned'] > 0 ? ` (${conditionCounts['pre-owned']})` : ''}` },
+                ] as const
+              ).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setActiveCondition(value)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    activeCondition === value
+                      ? value === 'new'
+                        ? 'bg-green-600 text-white'
+                        : value === 'pre-owned'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-zinc-900 text-white'
+                      : 'border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
             <Link
-              key={cat.id}
-              href={getCategoryHref(cat.slug)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                activeCategory === cat.slug
+              href="/products"
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                activeCategory === 'all'
                   ? 'bg-red-600 text-white'
                   : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
               }`}
             >
-              {cat.label}
+              All Categories
             </Link>
-          ))}
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={getCategoryHref(cat.slug)}
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  activeCategory === cat.slug
+                    ? 'bg-red-600 text-white'
+                    : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
+                }`}
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Results info */}
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-zinc-500">
             {filtered.length} {filtered.length === 1 ? 'product' : 'products'}
             {searchQuery && ` matching "${searchQuery}"`}
@@ -283,7 +296,7 @@ export function ProductsClient({
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="text-xs font-medium text-red-500 hover:text-red-700 flex items-center gap-1"
+              className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700"
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

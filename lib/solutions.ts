@@ -47,7 +47,7 @@ const SOLUTIONS: SolutionPage[] = [
     description:
       'Get office laptop recommendations, business quotes, and repeatable procurement support in Harare for SMEs, teams, schools, and organisations.',
     shortDescription:
-      'A commercial landing page for businesses that need office laptops, standardised specs, bulk quotes, and dependable local support.',
+      'For businesses that need office laptops, standardised specs, bulk quotes, and dependable local support.',
     primaryKeyword: 'office laptops harare',
     intent: 'Commercial lead generation',
     heroBody:
@@ -81,11 +81,11 @@ const SOLUTIONS: SolutionPage[] = [
       'Confirm quantities, delivery timing, and any accessories or setup requirements.',
       'Move to a formal quote and place the order once approval is ready.',
     ],
-    fitTitle: 'Why this page matters for revenue',
+    fitTitle: 'Why teams use this page',
     fitBullets: [
-      'It targets buyers who are closer to purchase than general blog readers.',
-      'It gives office buyers a clear path from research to quote request.',
-      'It supports both single-department purchases and repeat business procurement.',
+      'It helps office buyers move from broad requirements to a shortlist quickly.',
+      'It keeps budget, staff roles, and repeat purchases in the same conversation.',
+      'It gives decision-makers a faster route to a proper quote.',
     ],
     faqs: [
       {
@@ -133,7 +133,7 @@ const SOLUTIONS: SolutionPage[] = [
     description:
       'Request CCTV package quotes in Harare for homes, retail spaces, offices, and small businesses, with product and installation support from Cansan.',
     shortDescription:
-      'A commercial landing page for CCTV buyers who need package-style quotes, hardware guidance, and a cleaner path to installation enquiries.',
+      'For CCTV buyers who need package-style quotes, hardware guidance, and a cleaner path to installation enquiries.',
     primaryKeyword: 'cctv packages harare',
     intent: 'Commercial lead generation',
     heroBody:
@@ -167,11 +167,11 @@ const SOLUTIONS: SolutionPage[] = [
       'Review a package recommendation with camera count, recorder fit, and likely installation considerations.',
       'Approve the quote and move into supply or installation scheduling.',
     ],
-    fitTitle: 'Why this page matters for sales',
+    fitTitle: 'Why security buyers use this page',
     fitBullets: [
-      'It captures higher-intent buyers looking for CCTV packages, not vague CCTV information.',
-      'It shortens the path from search query to quote request.',
-      'It supports larger-ticket package sales instead of one-camera purchases only.',
+      'It helps buyers explain the property and coverage need without guessing at parts.',
+      'It makes package discussions easier than buying one camera at a time.',
+      'It creates a clearer handoff into quote and installation planning.',
     ],
     faqs: [
       {
@@ -219,7 +219,7 @@ const SOLUTIONS: SolutionPage[] = [
     description:
       'Get home Wi-Fi setup help in Harare, including router recommendations, access points, mesh planning, and practical networking support.',
     shortDescription:
-      'A commercial landing page for buyers searching for better home Wi-Fi, router advice, and setup support rather than isolated networking products.',
+      'For buyers searching for better home Wi-Fi, router advice, and setup support rather than isolated networking products.',
     primaryKeyword: 'home wifi setup harare',
     intent: 'Commercial lead generation',
     heroBody:
@@ -253,11 +253,11 @@ const SOLUTIONS: SolutionPage[] = [
       'Review the recommended router, access point, or mesh direction.',
       'Place the order or move into setup support if help is needed.',
     ],
-    fitTitle: 'Why this page earns its place',
+    fitTitle: 'Why home users choose this route',
     fitBullets: [
-      'It targets a clear problem buyers search for when they are ready to fix it.',
-      'It connects networking product pages to a more conversion-focused use case.',
-      'It creates a stronger commercial bridge between informational Wi-Fi content and paid hardware enquiries.',
+      'It starts with the coverage problem instead of expecting buyers to guess the hardware.',
+      'It helps remote workers and families narrow the right fix faster.',
+      'It connects product selection with setup support when needed.',
     ],
     faqs: [
       {
@@ -305,7 +305,7 @@ const SOLUTIONS: SolutionPage[] = [
     description:
       'Find load-shedding backup solutions in Harare for routers, laptops, desks, and small offices, with UPS and power planning guidance from Cansan.',
     shortDescription:
-      'A commercial landing page for buyers seeking power backup during load shedding, whether for home internet, individual devices, or office continuity.',
+      'For buyers seeking power backup during load shedding, whether for home internet, individual devices, or office continuity.',
     primaryKeyword: 'load shedding backup harare',
     intent: 'Commercial lead generation',
     heroBody:
@@ -339,11 +339,11 @@ const SOLUTIONS: SolutionPage[] = [
       'Review the practical UPS or backup direction based on that load.',
       'Move into product selection or a business quote depending on the requirement.',
     ],
-    fitTitle: 'Why this page is commercially valuable',
+    fitTitle: 'Why buyers start here for backup',
     fitBullets: [
-      'It targets buyers with a direct operational pain point and strong purchase intent.',
-      'It supports both consumer and SME demand without forcing everyone into the same product page.',
-      'It creates a clearer path for router backup, office continuity, and UPS-focused quotes.',
+      'It helps buyers explain what must stay powered and for how long.',
+      'It works for both home internet backup and small-office continuity needs.',
+      'It turns a stressful power problem into a clearer buying conversation.',
     ],
     faqs: [
       {
