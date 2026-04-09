@@ -1,248 +1,546 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import Image from 'next/image';
-import { BrandsStrip } from '@/components/BrandsStrip';
-import { InsightCard } from '@/components/InsightCard';
-import { FeaturedSection } from './FeaturedSection';
+import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
 import { readProducts } from '@/lib/admin-data';
-import type { ReactElement } from 'react';
-import { getFeaturedInsights } from '@/lib/articles';
 import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
-import { ProductCard } from '@/components/ProductCard';
-import { getActiveBanners } from '@/lib/db';
 import { buildAbsoluteMetadata } from '@/lib/seo';
-import { getFeaturedSolutions, getSolutionHref } from '@/lib/solutions';
+import type { Product } from '@/lib/types';
+import { ProductCard } from '@/components/ProductCard';
+import { formatCurrency } from '@/lib/utils';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = buildAbsoluteMetadata({
-  title: 'Buy Laptops, Phones & CCTV in Harare',
+  title: 'Buy SSDs, Laptops & CCTV in Zimbabwe',
   description:
-    'Buy laptops, phones, networking gear, CCTV, printers, and accessories in Harare. Order via WhatsApp with fast delivery and expert support.',
+    'Shop SSDs, laptops, networking gear, CCTV, and accessories in Zimbabwe with fast delivery, secure payment options, and local support.',
   path: '/',
 });
 
-const categoryIcons: Record<string, ReactElement> = {
-  smartphone: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <rect x="5" y="2" width="14" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <line x1="12" y1="18" x2="12.01" y2="18" strokeLinecap="round" strokeWidth={2}/>
-    </svg>
-  ),
-  laptop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <rect x="2" y="4" width="20" height="13" rx="2" strokeLinecap="round"/>
-      <path d="M1 20h22" strokeLinecap="round"/>
-    </svg>
-  ),
-  desktop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <rect x="2" y="3" width="20" height="13" rx="2" strokeLinecap="round"/>
-      <path d="M8 21h8M12 17v4" strokeLinecap="round"/>
-    </svg>
-  ),
-  monitor: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round"/>
-      <path d="M8 21h8M12 17v4" strokeLinecap="round"/>
-      <circle cx="12" cy="10" r="1" fill="currentColor"/>
-    </svg>
-  ),
-  network: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
-    </svg>
-  ),
-  'shield-camera': (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5.25 12 5.25S20.268 7.943 21.542 12c-1.274 4.057-5.065 6.75-9.542 6.75S3.732 16.057 2.458 12Z" />
-    </svg>
-  ),
-  headphones: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 14.25c0-4.972 4.03-9 9-9s9 4.028 9 9v3.75a2.25 2.25 0 0 1-2.25 2.25H18a2.25 2.25 0 0 1-2.25-2.25v-1.5a2.25 2.25 0 0 1 2.25-2.25h.75V14.25a6.75 6.75 0 0 0-13.5 0v.75H6A2.25 2.25 0 0 1 8.25 17.25v1.5A2.25 2.25 0 0 1 6 21H5.25A2.25 2.25 0 0 1 3 18.75V14.25Z" />
-    </svg>
-  ),
-  plug: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-    </svg>
-  ),
-  printer: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
-    </svg>
-  ),
-  cpu: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <rect x="4" y="4" width="16" height="16" rx="2" strokeLinecap="round"/>
-      <rect x="8" y="8" width="8" height="8" rx="1" strokeLinecap="round"/>
-      <path d="M9 4V2M12 4V2M15 4V2M9 22v-2M12 22v-2M15 22v-2M4 9H2M4 12H2M4 15H2M22 9h-2M22 12h-2M22 15h-2" strokeLinecap="round"/>
-    </svg>
-  ),
-  storage: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <ellipse cx="12" cy="5" rx="9" ry="3" strokeLinecap="round"/>
-      <path d="M21 12c0 1.657-4.029 3-9 3S3 13.657 3 12" strokeLinecap="round"/>
-      <path d="M3 5v14c0 1.657 4.029 3 9 3s9-1.343 9-3V5" strokeLinecap="round"/>
-    </svg>
-  ),
-  bundle: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l.75.75 3.75-4.5m-3.75 9a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" />
-    </svg>
-  ),
-  deals: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
-    </svg>
-  ),
-};
+const KEY_CATEGORY_SLUGS = ['drives', 'sa-imports', 'laptops', 'networking', 'cctv', 'accessories'] as const;
 
-const categoryColors: Record<string, { bg: string; icon: string; border: string }> = {
-  laptops: { bg: 'from-blue-50 to-blue-100', icon: 'text-blue-600', border: 'border-blue-100' },
-  printing: { bg: 'from-purple-50 to-purple-100', icon: 'text-purple-600', border: 'border-purple-100' },
-  networking: { bg: 'from-green-50 to-green-100', icon: 'text-green-600', border: 'border-green-100' },
-  desktops: { bg: 'from-zinc-50 to-zinc-100', icon: 'text-zinc-700', border: 'border-zinc-200' },
-  monitors: { bg: 'from-cyan-50 to-cyan-100', icon: 'text-cyan-600', border: 'border-cyan-100' },
-  accessories: { bg: 'from-amber-50 to-amber-100', icon: 'text-amber-600', border: 'border-amber-100' },
-  audio: { bg: 'from-rose-50 to-rose-100', icon: 'text-rose-600', border: 'border-rose-100' },
-  'pc-parts': { bg: 'from-orange-50 to-orange-100', icon: 'text-orange-600', border: 'border-orange-100' },
-  drives: { bg: 'from-indigo-50 to-indigo-100', icon: 'text-indigo-600', border: 'border-indigo-100' },
-  mobile: { bg: 'from-pink-50 to-pink-100', icon: 'text-pink-600', border: 'border-pink-100' },
-  cctv: { bg: 'from-teal-50 to-teal-100', icon: 'text-teal-600', border: 'border-teal-100' },
-  bundles: { bg: 'from-red-50 to-red-100', icon: 'text-red-600', border: 'border-red-100' },
-};
+const CATEGORY_CONTENT = {
+  drives: {
+    title: 'Storage',
+    description: 'NVMe SSDs, external drives, and backup solutions for speed and reliability.',
+    tone: 'from-red-50 via-white to-rose-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <ellipse cx="12" cy="5" rx="8.5" ry="2.5" />
+        <path d="M20.5 12c0 1.4-3.8 2.5-8.5 2.5S3.5 13.4 3.5 12M3.5 5v14c0 1.4 3.8 2.5 8.5 2.5s8.5-1.1 8.5-2.5V5" />
+      </svg>
+    ),
+  },
+  'sa-imports': {
+    title: 'SA Imports',
+    description: 'Special-order products sourced from South Africa with a clear 5-day delivery lead time.',
+    tone: 'from-rose-50 via-white to-red-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M3.5 7.5h11v8h-11z" />
+        <path d="M14.5 10.5h3.5l2.5 2.5V15.5H14.5z" />
+        <circle cx="7.5" cy="17.5" r="1.5" />
+        <circle cx="17.5" cy="17.5" r="1.5" />
+      </svg>
+    ),
+  },
+  laptops: {
+    title: 'Laptops',
+    description: 'Work, school, and business laptops with local stock confirmation.',
+    tone: 'from-zinc-50 via-white to-red-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="5" width="18" height="11" rx="1.5" />
+        <path d="M2 19h20" />
+      </svg>
+    ),
+  },
+  networking: {
+    title: 'Networking',
+    description: 'Routers, switches, access points, and office-ready connectivity gear.',
+    tone: 'from-orange-50 via-white to-red-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M4 9c4.8-4.7 11.2-4.7 16 0M7.5 12.5c2.9-2.8 6.1-2.8 9 0M11.2 16.2a1.1 1.1 0 1 1 1.6 1.6 1.1 1.1 0 0 1-1.6-1.6Z" />
+      </svg>
+    ),
+  },
+  cctv: {
+    title: 'CCTV',
+    description: 'Security cameras and surveillance kits for homes and businesses.',
+    tone: 'from-red-50 via-white to-zinc-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M2.5 12c1.2-3.6 4.6-6 8.8-6 4.1 0 7.5 2.4 8.7 6-1.2 3.6-4.6 6-8.7 6-4.2 0-7.6-2.4-8.8-6Z" />
+        <circle cx="11.3" cy="12" r="2.7" />
+      </svg>
+    ),
+  },
+  accessories: {
+    title: 'Accessories',
+    description: 'Adapters, keyboards, mice, cables, chargers, and practical add-ons.',
+    tone: 'from-zinc-50 via-white to-red-100',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M8 4.5V7m8-2.5V7M12 7v4.5m0 0a3.5 3.5 0 1 0 3.5 3.5H12V11.5Zm0 0A3.5 3.5 0 1 1 8.5 15H12" />
+      </svg>
+    ),
+  },
+} as const;
+
+const TRUST_BAR_ITEMS = [
+  'Fast Delivery Zimbabwe',
+  'Secure Payments',
+  'Warranty Support',
+  'Trusted Tech Supplier',
+];
+
+const WHY_CANSAN_ITEMS = [
+  {
+    title: 'Local Stock You Can Confirm',
+    description: 'No guesswork. Check current availability before paying or traveling.',
+  },
+  {
+    title: 'Fast Harare and Nationwide Delivery',
+    description: 'Same-day dispatch options in Harare and reliable courier nationwide.',
+  },
+  {
+    title: 'Competitive Pricing That Still Includes Support',
+    description: 'Strong value pricing without disappearing after checkout.',
+  },
+  {
+    title: 'Real Human Help Before and After Purchase',
+    description: 'Get setup guidance, warranty direction, and product advice from a local team.',
+  },
+];
+
+const SERVICE_LINKS = [
+  { label: 'Delivery Information', href: '/delivery' },
+  { label: 'Payment Options', href: '/payments' },
+  { label: 'Warranty Policy', href: '/warranty' },
+  { label: 'Bulk Orders', href: '/bulk-orders' },
+];
+
+const HOMEPAGE_FEATURED_COUNT = 8;
+const HOMEPAGE_LAPTOP_COUNT = 2;
+const HOMEPAGE_SA_IMPORT_COUNT = 3;
+const HARARE_TIME_ZONE = 'Africa/Harare';
+
+function isSaImportProduct(product: Product) {
+  const normalizedTags = product.tags.map((tag) => tag.toLowerCase().trim());
+  return (
+    product.category === 'sa-imports' ||
+    normalizedTags.includes('sa-import') ||
+    normalizedTags.includes('firstshop') ||
+    normalizedTags.includes('delivery-5-days')
+  );
+}
+
+function isLaptopProduct(product: Product) {
+  return product.category.toLowerCase().includes('laptop');
+}
+
+function getHarareDayKey(date: Date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: HARARE_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function rankForDailyRotation(products: Product[], dayKey: string, salt: string) {
+  return [...products].sort((left, right) => {
+    const leftScore = hashString(`${dayKey}:${salt}:${left.id}:${left.slug}`);
+    const rightScore = hashString(`${dayKey}:${salt}:${right.id}:${right.slug}`);
+    if (leftScore !== rightScore) {
+      return leftScore - rightScore;
+    }
+
+    const featuredDelta = Number(right.featured) - Number(left.featured);
+    if (featuredDelta !== 0) {
+      return featuredDelta;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
+function takeFromPool({
+  pool,
+  count,
+  usedIds,
+  dayKey,
+  salt,
+}: {
+  pool: Product[];
+  count: number;
+  usedIds: Set<string>;
+  dayKey: string;
+  salt: string;
+}) {
+  if (count <= 0 || pool.length === 0) {
+    return [] as Product[];
+  }
+
+  const ranked = rankForDailyRotation(pool, dayKey, salt);
+  const picked: Product[] = [];
+
+  for (const product of ranked) {
+    if (usedIds.has(product.id)) {
+      continue;
+    }
+    usedIds.add(product.id);
+    picked.push(product);
+
+    if (picked.length >= count) {
+      break;
+    }
+  }
+
+  return picked;
+}
+
+function takeMixedByCategory({
+  pool,
+  count,
+  usedIds,
+  dayKey,
+  salt,
+}: {
+  pool: Product[];
+  count: number;
+  usedIds: Set<string>;
+  dayKey: string;
+  salt: string;
+}) {
+  if (count <= 0 || pool.length === 0) {
+    return [] as Product[];
+  }
+
+  const ranked = rankForDailyRotation(pool, dayKey, salt);
+  const picks: Product[] = [];
+  const categoryChosen = new Set<string>();
+
+  for (const product of ranked) {
+    if (usedIds.has(product.id) || categoryChosen.has(product.category)) {
+      continue;
+    }
+    usedIds.add(product.id);
+    categoryChosen.add(product.category);
+    picks.push(product);
+
+    if (picks.length >= count) {
+      return picks;
+    }
+  }
+
+  for (const product of ranked) {
+    if (usedIds.has(product.id)) {
+      continue;
+    }
+    usedIds.add(product.id);
+    picks.push(product);
+
+    if (picks.length >= count) {
+      break;
+    }
+  }
+
+  return picks;
+}
+
+function getDailyHomepageProducts(products: Product[]) {
+  const stockAwarePool = products.filter((product) => product.inStock);
+  const sourcePool = stockAwarePool.length > 0 ? stockAwarePool : products;
+  const dayKey = getHarareDayKey();
+  const usedIds = new Set<string>();
+  const selected: Product[] = [];
+  const allLaptops = sourcePool.filter((product) => isLaptopProduct(product));
+  const allSaImports = sourcePool.filter((product) => isSaImportProduct(product));
+
+  selected.push(
+    ...takeFromPool({
+      pool: sourcePool.filter((product) => isLaptopProduct(product)),
+      count: HOMEPAGE_LAPTOP_COUNT,
+      usedIds,
+      dayKey,
+      salt: 'laptops',
+    })
+  );
+
+  const laptopsSelected = selected.filter((product) => isLaptopProduct(product)).length;
+  if (laptopsSelected < HOMEPAGE_LAPTOP_COUNT) {
+    selected.push(
+      ...takeFromPool({
+        pool: allLaptops.filter((product) => !usedIds.has(product.id)),
+        count: HOMEPAGE_LAPTOP_COUNT - laptopsSelected,
+        usedIds,
+        dayKey,
+        salt: 'laptops-fallback',
+      })
+    );
+  }
+
+  selected.push(
+    ...takeFromPool({
+      pool: sourcePool.filter((product) => isSaImportProduct(product)),
+      count: HOMEPAGE_SA_IMPORT_COUNT,
+      usedIds,
+      dayKey,
+      salt: 'sa-imports',
+    })
+  );
+
+  const saSelected = selected.filter((product) => isSaImportProduct(product)).length;
+  if (saSelected < HOMEPAGE_SA_IMPORT_COUNT) {
+    selected.push(
+      ...takeFromPool({
+        pool: allSaImports.filter((product) => !usedIds.has(product.id)),
+        count: HOMEPAGE_SA_IMPORT_COUNT - saSelected,
+        usedIds,
+        dayKey,
+        salt: 'sa-imports-fallback',
+      })
+    );
+  }
+
+  const remainingCount = HOMEPAGE_FEATURED_COUNT - selected.length;
+  if (remainingCount > 0) {
+    selected.push(
+      ...takeMixedByCategory({
+        pool: sourcePool.filter(
+          (product) => !usedIds.has(product.id) && !isLaptopProduct(product) && !isSaImportProduct(product)
+        ),
+        count: remainingCount,
+        usedIds,
+        dayKey,
+        salt: 'mixed-categories',
+      })
+    );
+  }
+
+  if (selected.length < HOMEPAGE_FEATURED_COUNT) {
+    selected.push(
+      ...takeFromPool({
+        pool: sourcePool.filter((product) => !usedIds.has(product.id)),
+        count: HOMEPAGE_FEATURED_COUNT - selected.length,
+        usedIds,
+        dayKey,
+        salt: 'fallback',
+      })
+    );
+  }
+
+  return selected.slice(0, HOMEPAGE_FEATURED_COUNT);
+}
+
+function getHeroSlideProducts(products: Product[], highlighted: Product[]): Product[] {
+  const seen = new Set<string>();
+  const withImages = [...highlighted, ...products]
+    .filter((product) => {
+      const image = (product.image || '').trim();
+      return Boolean(image) && image !== '/images/products/placeholder.svg';
+    })
+    .filter((product) => {
+      if (seen.has(product.id)) return false;
+      seen.add(product.id);
+      return true;
+    });
+
+  return withImages.slice(0, 14);
+}
 
 export default async function HomePage() {
   const products = await readProducts();
-  const banners = await getActiveBanners();
-  const dealProducts = products.filter((p) => p.dealLabel === 'Top Laptop Deals').slice(0, 6);
   const featuredInsights = getFeaturedInsights(3);
-  const featuredSolutions = getFeaturedSolutions(4);
+
+  const homepageProducts = getDailyHomepageProducts(products);
+
+  const discountedProducts = products
+    .filter((product) => product.inStock && product.originalPrice && product.originalPrice > product.price)
+    .slice(0, 4);
+
+  const trendingProducts = products
+    .filter((product) => product.inStock && !discountedProducts.some((deal) => deal.id === product.id))
+    .slice(0, 4);
+
+  const heroProduct = discountedProducts[0] ?? homepageProducts[0];
+  const heroSlideProducts = getHeroSlideProducts(products, homepageProducts);
+
+  const homepageCategories = KEY_CATEGORY_SLUGS.map((slug) =>
+    CATALOG_CATEGORIES.find((category) => category.slug === slug || category.id === slug)
+  ).filter((category): category is (typeof CATALOG_CATEGORIES)[number] => Boolean(category));
 
   return (
-    <div className="overflow-x-hidden">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-zinc-950 px-6 py-24 text-white sm:py-32">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('/circuit-pattern.svg')] bg-repeat opacity-100" />
+    <div className="overflow-x-hidden bg-white text-zinc-900">
+      <section className="relative overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950 px-6 py-18 text-white sm:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-red-600/20 blur-[120px]" />
-          <div className="absolute -bottom-20 left-0 h-[400px] w-[400px] rounded-full bg-red-900/20 blur-[100px]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.6))]" />
+          <div className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-red-500/20 blur-3xl" />
+          <div className="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-orange-300/12 blur-3xl" />
+          {heroSlideProducts.length > 0 ? (
+            <>
+              <div className="absolute -top-2 left-0 flex w-max gap-3 opacity-35 hero-slide-forward">
+                {[...heroSlideProducts, ...heroSlideProducts].map((product, index) => (
+                  <div
+                    key={`hero-slide-a-${product.id}-${index}`}
+                    className="relative h-24 w-24 overflow-hidden rounded-xl border border-white/20 bg-white/95 shadow-lg sm:h-28 sm:w-28"
+                  >
+                    <Image
+                      src={product.image || '/images/products/placeholder.svg'}
+                      alt={product.name}
+                      fill
+                      sizes="96px"
+                      className="object-contain p-2"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="absolute bottom-6 right-0 flex w-max gap-3 opacity-25 hero-slide-reverse">
+                {[...heroSlideProducts.slice().reverse(), ...heroSlideProducts.slice().reverse()].map((product, index) => (
+                  <div
+                    key={`hero-slide-b-${product.id}-${index}`}
+                    className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/20 bg-white/95 shadow-lg sm:h-24 sm:w-24"
+                  >
+                    <Image
+                      src={product.image || '/images/products/placeholder.svg'}
+                      alt={product.name}
+                      fill
+                      sizes="80px"
+                      className="object-contain p-2"
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
-        <div className="relative mx-auto max-w-7xl">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-            <div>
-              <div className="mb-4 hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-sm sm:inline-flex">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                <span className="text-xs font-medium tracking-wide">Open today until 6pm</span>
-              </div>
-              <h1 className="font-heading text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-                Harare&apos;s tech store for laptops, phones, and CCTV.
-              </h1>
-              <p className="mt-5 max-w-lg text-base leading-relaxed text-zinc-300 sm:text-lg">
-                Buy laptops, desktops, networking gear, CCTV, printers, and accessories with fast WhatsApp ordering, expert advice, and Harare delivery support.
-              </p>
+        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+          <div>
+            <p className="inline-flex items-center rounded-full border border-red-300/30 bg-red-200/10 px-3 py-1 text-xs font-semibold tracking-wide text-red-100">
+              Zimbabwe Tech Store
+            </p>
+            <h1 className="mt-4 font-heading text-4xl font-extrabold leading-tight sm:text-5xl">
+              Trusted Zimbabwe Tech Store for SSDs, Laptops, Networking and CCTV
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-red-100 sm:text-lg">
+              Buy genuine devices with fast delivery, secure payment options, and local support that stays available after you order.
+            </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/products"
-                  className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-500"
-                >
-                  Shop Products
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </Link>
-                <a
-                  href="https://wa.me/263773754747?text=Hi%20Cansan%20Solutions%2C%20I'm%20interested%20in%20your%20products."
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/10"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                  </svg>
-                  Chat on WhatsApp
-                </a>
-              </div>
-
-              <div className="mt-10 flex flex-wrap items-center gap-6 text-xs text-zinc-400">
-                <span className="flex items-center gap-1.5">
-                  <svg className="text-green-500" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                  </svg>
-                  Genuine Products
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="text-blue-500" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                  </svg>
-                  Harare Delivery
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="text-amber-500" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.038a5.25 5.25 0 0 0 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
-                  </svg>
-                  Expert Advice
-                </span>
-              </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/products"
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-red-900 transition hover:-translate-y-0.5 hover:bg-red-50"
+              >
+                Shop Now
+              </Link>
+              <Link
+                href="#shop-categories"
+                className="inline-flex items-center justify-center rounded-full border border-red-200/40 bg-red-100/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-100/20"
+              >
+                Browse Categories
+              </Link>
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="grid grid-cols-2 gap-3">
-                {CATALOG_CATEGORIES.slice(0, 6).map((cat) => {
-                  return (
-                    <Link
-                      key={cat.id}
-                      href={getCategoryHref(cat.slug)}
-                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
-                    >
-                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white/90 transition group-hover:scale-110 group-hover:bg-red-600">
-                        {categoryIcons[cat.icon] ? (
-                          <span className="scale-75">{categoryIcons[cat.icon]}</span>
-                        ) : null}
-                      </div>
-                      <p className="text-sm font-semibold text-white/95">{cat.label}</p>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+            <ul className="mt-7 grid max-w-2xl gap-2 text-sm text-red-100 sm:grid-cols-2">
+              <li>Fast Harare delivery and nationwide courier</li>
+              <li>Pay with USD cash, swipe, bank transfer, EcoCash</li>
+              <li>Warranty-backed products and post-sale support</li>
+              <li>Bulk pricing available for offices and institutions</li>
+            </ul>
           </div>
+
+          {heroProduct ? (
+            <Link
+              href={`/products/${heroProduct.slug}`}
+              className="group overflow-hidden rounded-3xl border border-white/20 bg-white/95 p-5 text-zinc-900 shadow-2xl shadow-red-950/30 transition hover:-translate-y-1"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">Featured Product</p>
+              <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-zinc-900">{heroProduct.name}</h2>
+
+              <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-2xl bg-white">
+                <Image
+                  src={heroProduct.image || '/images/products/placeholder.svg'}
+                  alt={heroProduct.name}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 420px"
+                  className="object-contain p-4 transition duration-500 group-hover:scale-105"
+                />
+              </div>
+
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs text-zinc-500">Today&apos;s price</p>
+                  <p className="text-2xl font-extrabold text-zinc-950">
+                    {formatCurrency(heroProduct.price, heroProduct.currency)}
+                  </p>
+                </div>
+                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+                  Fast selling
+                </span>
+              </div>
+            </Link>
+          ) : null}
         </div>
       </section>
 
-      {/* Shop by Category */}
-      <section className="bg-white px-6 py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Browse</p>
-              <h2 className="mt-1 text-2xl font-bold text-zinc-900">Shop by Category</h2>
+      <section className="border-y border-zinc-200 bg-white px-6 py-4">
+        <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {TRUST_BAR_ITEMS.map((item) => (
+            <div key={item} className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                ✓
+              </span>
+              <span>{item}</span>
             </div>
-            <Link href="/products" className="text-sm font-medium text-red-600 hover:text-red-700">
-              View all
+          ))}
+        </div>
+      </section>
+
+      <section id="shop-categories" className="bg-zinc-50 px-6 py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Primary Categories</p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop by Tech Category in Zimbabwe</h2>
+            </div>
+            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+              View all products
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-            {CATALOG_CATEGORIES.map((cat) => {
-              const colors = categoryColors[cat.id] ?? { bg: 'from-zinc-50 to-zinc-100', icon: 'text-zinc-700', border: 'border-zinc-200' };
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {homepageCategories.map((category) => {
+              const content = CATEGORY_CONTENT[category.slug as keyof typeof CATEGORY_CONTENT];
+              if (!content) {
+                return null;
+              }
+
               return (
                 <Link
-                  key={cat.id}
-                  href={getCategoryHref(cat.slug)}
-                  className={`group flex flex-col items-center gap-3 rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 text-center transition hover:-translate-y-1 hover:shadow-md`}
+                  key={category.id}
+                  href={getCategoryHref(category.slug)}
+                  className={`group rounded-2xl border border-zinc-200 bg-gradient-to-br ${content.tone} p-5 transition hover:-translate-y-1 hover:shadow-lg`}
                 >
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-white shadow-sm ${colors.icon} transition group-hover:scale-110`}>
-                    {categoryIcons[cat.icon] ?? categoryIcons.deals}
-                  </div>
-                  <span className="text-xs font-semibold leading-tight text-zinc-800">{cat.label}</span>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-700 shadow-sm">
+                    {content.icon}
+                  </span>
+                  <h3 className="mt-4 text-base font-bold text-zinc-900">{content.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-600">{content.description}</p>
+                  <span className="mt-4 inline-flex text-xs font-semibold text-red-700">Browse {content.title}</span>
                 </Link>
               );
             })}
@@ -250,279 +548,182 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="hidden sm:block">
-        <BrandsStrip />
-      </div>
-
-      {/* Dynamic Banners - Managed via Admin */}
-      {banners.map((banner) => (
-        <section key={banner.id} className="bg-white px-6 py-8">
-          <div className="mx-auto max-w-7xl">
-            <Link href={banner.buttonLink || '/products'} className="group relative block overflow-hidden rounded-3xl bg-zinc-100">
-              <div className="relative aspect-[21/9] w-full overflow-hidden">
-                <Image
-                  src={banner.image}
-                  alt={banner.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 1280px"
-                  className="object-cover transition duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
-                
-                <div className="absolute inset-0 flex flex-col justify-center p-8 sm:p-12 lg:p-16">
-                  <div className="max-w-lg">
-                    {banner.badge && (
-                      <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white mb-4">
-                        {banner.badge}
-                      </span>
-                    )}
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight mb-3">
-                      {banner.title}
-                    </h2>
-                    {banner.subtitle && (
-                      <p className="text-sm sm:text-base text-zinc-300 mb-6 max-w-md">
-                        {banner.subtitle}
-                      </p>
-                    )}
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition group-hover:bg-zinc-100">
-                      {banner.buttonText || 'Shop Now'}
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
+      <section id="featured-products" className="bg-white px-6 py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Featured Products</p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Top SSD, Laptop, Networking and CCTV Picks</h2>
+              <p className="mt-2 text-sm text-zinc-600">
+                Daily-rotating mix: 2 laptops, 3 SA imports, plus 3 products from other categories for faster comparison.
+              </p>
+            </div>
+            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+              Browse full catalog
             </Link>
           </div>
-        </section>
-      ))}
 
-      {/* Top Laptop Deals */}
-      {dealProducts.length > 0 && (
-        <section className="bg-zinc-50 px-6 py-14">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-6 flex items-end justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Savings</p>
-                <h2 className="mt-1 text-2xl font-bold text-zinc-900">Our Top Laptop Deals</h2>
-              </div>
-              <Link href={getCategoryHref('laptops')} className="text-sm font-medium text-red-600 hover:text-red-700 underline underline-offset-2">
-                View all
-              </Link>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {dealProducts.map((product) => (
-                <div key={product.id} className="w-[260px] shrink-0 snap-start">
-                  <ProductCard product={product} />
-                </div>
+          {homepageProducts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {homepageProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center text-zinc-500">
+              Featured products will appear here as soon as inventory is loaded.
+            </div>
+          )}
+        </div>
+      </section>
 
-      {/* Featured Products */}
-      <FeaturedSection products={products} />
-
-      {/* Why shop with us */}
       <section className="bg-zinc-50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-bold text-zinc-900">Why shop with Cansan?</h2>
-            <p className="mt-2 text-sm text-zinc-500">Genuine products, simple ordering, and reliable support.</p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { title: 'Networking & Wi-Fi Setup', desc: 'Home or office. We supply and install routers, access points, and structured cabling.', href: '/services' },
-              { title: 'WhatsApp Ordering', desc: 'No account needed. Add to cart, send a message, and we handle the rest.', href: '/products' },
-              { title: 'Same-Day Delivery', desc: 'Harare orders delivered today. Nationwide courier available.', href: '/delivery' },
-              { title: 'After-Sales Support', desc: 'Setup help, warranty claims, and troubleshooting. We do not disappear.', href: '/warranty' },
-            ].map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <h3 className="text-sm font-semibold text-zinc-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{item.desc}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-red-600 group-hover:underline">
-                  Learn more
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </span>
-              </Link>
-            ))}
+          <div className="mb-8 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Why Choose Cansan</p>
+            <h2 className="mt-2 text-3xl font-bold text-zinc-900">Built for Zimbabwe Buyers Who Need Speed and Certainty</h2>
           </div>
 
-          <div className="mt-10 hidden gap-4 rounded-3xl border border-zinc-200 bg-white p-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: 'Warranty Info', href: '/warranty', text: 'Know how product support and claims work before you buy.' },
-              { label: 'Delivery Info', href: '/delivery', text: 'See how Harare delivery, courier, and collection are handled.' },
-              { label: 'Payment Options', href: '/payments', text: 'Understand indicative pricing and the accepted payment routes.' },
-              { label: 'Bulk Orders', href: '/bulk-orders', text: 'Get quotes for office, school, and organisational purchases.' },
-            ].map((item) => (
-              <Link key={item.href} href={item.href} className="group rounded-2xl border border-zinc-100 bg-zinc-50 p-4 transition hover:border-zinc-200 hover:bg-zinc-100">
-                <p className="text-sm font-semibold text-zinc-900">{item.label}</p>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{item.text}</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-red-600 group-hover:underline">
-                  View details
-                </span>
-              </Link>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {WHY_CANSAN_ITEMS.map((item) => (
+              <article key={item.title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-zinc-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-600">{item.description}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Solutions */}
-      <section className="bg-zinc-950 px-6 py-16 text-white">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-red-400">Solutions</p>
-              <h2 className="mt-2 text-2xl font-bold">Start with what you actually need</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-                If you already know the problem you need to solve, these pages get you to the right products, advice, and quote path faster.
-              </p>
-            </div>
-            <Link href="/solutions" className="text-sm font-medium text-red-300 hover:text-white">
-              View all solutions
-            </Link>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {featuredSolutions.map((solution) => (
-              <Link
-                key={solution.slug}
-                href={getSolutionHref(solution.slug)}
-                className="group rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/10"
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-red-300">{solution.eyebrow}</p>
-                <h3 className="mt-3 text-lg font-semibold leading-tight text-white group-hover:text-red-200">
-                  {solution.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-zinc-300">{solution.shortDescription}</p>
-                <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-red-300 group-hover:underline">
-                  Explore solution
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Insights */}
       <section className="bg-white px-6 py-16">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Insights</p>
-              <h2 className="mt-2 text-2xl font-bold text-zinc-900">Commercial buying guides for Zimbabwean customers</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600">
-                These guides target the questions buyers ask before they spend, then point them to the right products, services, and quote paths.
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Best Deals and Trending</p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Limited Offers and Fast-Selling Products</h2>
             </div>
-            <Link href="/insights" className="text-sm font-medium text-red-600 hover:text-red-700">
-              View all insights
+            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+              See all live offers
             </Link>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 xl:grid-cols-2">
+            <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h3 className="text-xl font-bold text-zinc-900">Best Deals</h3>
+                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">Discounted now</span>
+              </div>
+
+              {discountedProducts.length > 0 ? (
+                <ul className="space-y-3">
+                  {discountedProducts.map((product) => {
+                    const discount = product.originalPrice
+                      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                      : 0;
+
+                    return (
+                      <li key={product.id}>
+                        <Link
+                          href={`/products/${product.slug}`}
+                          className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <p className="line-clamp-1 text-sm font-semibold text-zinc-900">{product.name}</p>
+                            <p className="mt-1 text-xs text-zinc-500">
+                              {product.inStock ? 'In stock and fast moving' : 'Stock updates available'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</p>
+                            <p className="text-xs font-semibold text-red-700">Save {discount}%</p>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+                  New deal products will appear here automatically once promotional pricing is added.
+                </p>
+              )}
+            </article>
+
+            <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h3 className="text-xl font-bold text-zinc-900">Trending This Week</h3>
+                <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">Fast selling</span>
+              </div>
+
+              {trendingProducts.length > 0 ? (
+                <ul className="space-y-3">
+                  {trendingProducts.map((product) => (
+                    <li key={product.id}>
+                      <Link
+                        href={`/products/${product.slug}`}
+                        className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <p className="line-clamp-1 text-sm font-semibold text-zinc-900">{product.name}</p>
+                          <p className="mt-1 text-xs text-zinc-500">Popular with home and business buyers</p>
+                        </div>
+                        <p className="text-sm font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+                  Trending products will show here after your first in-stock listings are published.
+                </p>
+              )}
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-zinc-50 px-6 py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Buying Guides</p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">SEO Content That Captures Ready-to-Buy Traffic</h2>
+              <p className="mt-2 max-w-3xl text-sm text-zinc-600">
+                Educational content answers buyer questions early and routes high-intent visitors directly to relevant categories.
+              </p>
+            </div>
+            <Link href="/insights" className="text-sm font-semibold text-red-700 hover:text-red-800">
+              Read all guides
+            </Link>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
             {featuredInsights.map((article) => (
-              <InsightCard key={article.slug} article={article} />
+              <article key={article.slug} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700">{article.categoryLabel}</p>
+                <h3 className="mt-2 line-clamp-2 text-lg font-bold text-zinc-900">{article.title}</h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600">{article.excerpt}</p>
+                <p className="mt-4 text-xs text-zinc-500">{formatInsightDate(article.publishedAt)}</p>
+                <Link href={getInsightHref(article.slug)} className="mt-4 inline-flex text-sm font-semibold text-red-700 hover:text-red-800">
+                  Read guide
+                </Link>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About teaser */}
-      <section className="px-6 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">About Cansan</p>
-              <h2 className="mt-2 text-2xl font-bold text-zinc-900">Your trusted tech partner in Zimbabwe</h2>
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                We started small, helping friends and family source the right devices, and grew into a full-service tech retailer. Today we carry 200+ products backed by personal support and honest advice.
-              </p>
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                Whether you are upgrading your laptop, setting up a home network, or kitting out your office, we are here to help you make the right choice.
-              </p>
-              <div className="mt-6">
-                <Link
-                  href="/about"
-                  className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                >
-                  Read our story
-                </Link>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-zinc-100 shadow-sm">
-                <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(239,68,68,0.10),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(24,24,27,0.08),transparent_40%)]" />
-                <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.28em] text-zinc-400">Business Ready</p>
-                      <p className="mt-2 text-sm font-medium text-zinc-500">Laptops, accessories, and support for work, school, and everyday use.</p>
-                    </div>
-                    <span className="rounded-full bg-red-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm">
-                      In Stock
-                    </span>
-                  </div>
-
-                  <div className="flex flex-1 items-center justify-center py-6">
-                    <Image
-                      src="/images/products/laptop-new.svg"
-                      alt="Laptop product showcase"
-                      width={640}
-                      height={420}
-                      className="h-full max-h-64 w-full max-w-md object-contain drop-shadow-[0_24px_30px_rgba(24,24,27,0.16)]"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/80 px-4 py-3 backdrop-blur-sm">
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-900">Laptops & Computing</p>
-                      <p className="text-xs text-zinc-500">Reliable devices sourced for performance and value.</p>
-                    </div>
-                    <Link
-                      href={getCategoryHref('laptops')}
-                      className="shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-800"
-                    >
-                      Browse
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact CTA */}
-      <section className="bg-zinc-950 px-6 py-16 text-white">
-        <div className="mx-auto max-w-7xl text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">Ready to order?</h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-zinc-400">
-            Chat with us on WhatsApp. We will help you find the right product at the right price.
-          </p>
-          <div className="mt-6">
-            <a
-              href="https://wa.me/263773754747?text=Hi%20Cansan%20Solutions%2C%20I'm%20interested%20in%20your%20products."
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-green-600/25 transition hover:bg-green-500"
+      <section className="bg-zinc-950 px-6 py-14 text-white">
+        <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {SERVICE_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-              </svg>
-              Start Chat on WhatsApp
-            </a>
-          </div>
-          <p className="mt-4 text-xs text-zinc-500">Usually replies within minutes</p>
+              {item.label}
+            </Link>
+          ))}
         </div>
       </section>
     </div>
