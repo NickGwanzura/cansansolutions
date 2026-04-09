@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Products', icon: PackageIcon },
@@ -140,65 +141,147 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const isItemActive = (href: string) => {
+    if (href === '/admin') {
+      return pathname === '/admin';
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <ul className="space-y-1">
+      {NAV_ITEMS.map((item) => {
+        const isActive = isItemActive(item.href);
+        return (
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                isActive
+                  ? 'bg-red-600 text-white'
+                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              <item.icon className={isActive ? 'text-white' : 'text-zinc-400'} />
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-full w-60 bg-zinc-900 text-white">
-      {/* Header */}
-      <div className="flex h-14 items-center gap-3 border-b border-zinc-800 px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
-          </svg>
-        </div>
-        <div>
-          <span className="font-heading text-sm font-bold">Cansan Admin</span>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="p-3">
-        <ul className="space-y-1">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-red-600 text-white'
-                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                  }`}
-                >
-                  <item.icon className={isActive ? 'text-white' : 'text-zinc-400'} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800 p-3">
+    <>
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 lg:hidden">
         <button
-          onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 transition hover:bg-zinc-50"
+          aria-label="Open admin navigation"
         >
-          <LogoutIcon />
-          Sign Out
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
         </button>
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-red-600 text-white">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
+            </svg>
+          </div>
+          <span className="font-heading text-sm font-bold text-zinc-900">Cansan Admin</span>
+        </div>
         <a
           href="/"
           target="_blank"
-          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-300"
+          className="text-xs font-semibold text-zinc-600 transition hover:text-zinc-900"
         >
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
           View Site
         </a>
       </div>
-    </aside>
+
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="h-full flex-1 bg-black/40"
+            aria-label="Close admin navigation overlay"
+          />
+          <aside className="flex h-full w-72 flex-col bg-zinc-900 text-white shadow-xl">
+            <div className="flex h-14 items-center justify-between border-b border-zinc-800 px-4">
+              <span className="font-heading text-sm font-bold">Cansan Admin</span>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                aria-label="Close admin navigation"
+              >
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-3">
+              <NavList onNavigate={() => setMobileOpen(false)} />
+            </nav>
+            <div className="border-t border-zinc-800 p-3">
+              <button
+                onClick={onLogout}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              >
+                <LogoutIcon />
+                Sign Out
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+
+      <aside className="fixed left-0 top-0 z-40 hidden h-full w-60 flex-col bg-zinc-900 text-white lg:flex">
+        <div className="flex h-14 items-center gap-3 border-b border-zinc-800 px-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
+            </svg>
+          </div>
+          <div>
+            <span className="font-heading text-sm font-bold">Cansan Admin</span>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-3">
+          <NavList />
+        </nav>
+
+        <div className="border-t border-zinc-800 p-3">
+          <button
+            onClick={onLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          >
+            <LogoutIcon />
+            Sign Out
+          </button>
+          <a
+            href="/"
+            target="_blank"
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-300"
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            View Site
+          </a>
+        </div>
+      </aside>
+    </>
   );
 }

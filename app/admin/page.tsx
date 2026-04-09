@@ -42,6 +42,15 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function formatAdminCurrency(amount: number, currency: string = 'USD') {
+  return new Intl.NumberFormat('en-ZW', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 // ─────────────────────────────────────────────
 // Login screen
 // ─────────────────────────────────────────────
@@ -230,12 +239,16 @@ function ProductForm({
   onClose: () => void;
   saving: boolean;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState<FormData>(initial);
   const [slugManual, setSlugManual] = useState(!!initial.slug);
   const [error, setError] = useState('');
   const [addAnother, setAddAnother] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'variants'>('basic');
   const [enhancing, setEnhancing] = useState(false);
+  const [enhancingSpecs, setEnhancingSpecs] = useState(false);
+  const initialSerialized = useMemo(() => JSON.stringify(initial), [initial]);
+  const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== initialSerialized, [form, initialSerialized]);
 
   const enhanceDescription = async () => {
     if (!form.name.trim()) { setError('Enter a product name first'); return; }
@@ -260,6 +273,73 @@ function ProductForm({
       setError('AI enhance failed');
     } finally {
       setEnhancing(false);
+    }
+  };
+
+  const parseSpecsText = (value: string): Record<string, string> => {
+    const specs: Record<string, string> = {};
+
+    for (const line of value.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      const delimiterIndex = trimmed.indexOf(':');
+      if (delimiterIndex <= 0) continue;
+
+      const key = trimmed.slice(0, delimiterIndex).trim();
+      const val = trimmed.slice(delimiterIndex + 1).trim();
+      if (key && val) {
+        specs[key] = val;
+      }
+    }
+
+    return specs;
+  };
+
+  const stringifySpecs = (specs: Record<string, string>) =>
+    Object.entries(specs)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+
+  const enhanceSpecs = async () => {
+    if (!form.name.trim()) {
+      setError('Enter a product name first');
+      return;
+    }
+
+    setEnhancingSpecs(true);
+    try {
+      const res = await fetch('/api/admin/enhance-specs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          category: form.category,
+          condition: form.condition,
+          price: form.price,
+          tags: form.tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          description: form.description,
+          currentSpecs: parseSpecsText(form.specsText),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'AI specs generation failed');
+        return;
+      }
+
+      const currentSpecs = parseSpecsText(form.specsText);
+      const generatedSpecs = data.specs && typeof data.specs === 'object' ? (data.specs as Record<string, string>) : {};
+      const mergedSpecs = { ...generatedSpecs, ...currentSpecs };
+      set('specsText', stringifySpecs(mergedSpecs));
+    } catch {
+      setError('AI specs generation failed');
+    } finally {
+      setEnhancingSpecs(false);
     }
   };
 
@@ -292,6 +372,17 @@ function ProductForm({
     else onSave(form);
   };
 
+  const requestClose = () => {
+    if (saving) return;
+
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('You have unsaved changes. Discard them?');
+      if (!confirmed) return;
+    }
+
+    onClose();
+  };
+
   // Convert legacy single image to array
   const images = form.images.length > 0 ? form.images : 
     ((form as unknown as { image?: string }).image ? [(form as unknown as { image: string }).image] : []);
@@ -302,13 +393,13 @@ function ProductForm({
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={requestClose} />
       <div className="w-full max-w-lg bg-white flex flex-col shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
           <h2 className="font-heading text-sm font-bold text-zinc-900">
             {initial.name ? 'Edit Product' : 'Add Product'}
           </h2>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 transition">
+          <button onClick={requestClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 transition">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -333,7 +424,7 @@ function ProductForm({
           ))}
         </div>
 
-        <form onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <form ref={formRef} onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
               {error}
@@ -406,7 +497,7 @@ function ProductForm({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Price (USD) *</label>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Price *</label>
                   <input
                     required
                     type="number"
@@ -417,6 +508,18 @@ function ProductForm({
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                     placeholder="99.00"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Currency</label>
+                  <select
+                    value={form.currency}
+                    onChange={(e) => set('currency', e.target.value)}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="ZAR">ZAR</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
                 </div>
               </div>
 
@@ -491,7 +594,7 @@ function ProductForm({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price (USD)</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price</label>
                     <input
                       type="number"
                       min={0}
@@ -553,9 +656,34 @@ function ProductForm({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
-                    Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
-                  </label>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-zinc-500">
+                      Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={enhanceSpecs}
+                      disabled={enhancingSpecs}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+                    >
+                      {enhancingSpecs ? (
+                        <>
+                          <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+                          </svg>
+                          Add Specs with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     rows={4}
                     value={form.specsText}
@@ -611,8 +739,7 @@ function ProductForm({
               onClick={() => {
                 setAddAnother(true);
                 setTimeout(() => {
-                  const el = document.querySelector('form');
-                  el?.requestSubmit();
+                  formRef.current?.requestSubmit();
                 }, 0);
               }}
               className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
@@ -621,26 +748,25 @@ function ProductForm({
             </button>
           )}
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
-            >
-              Cancel
-            </button>
-            <button
+              <button
+                type="button"
+                onClick={requestClose}
+                className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+              >
+                Cancel
+              </button>
+              <button
               type="button"
               disabled={saving}
-              onClick={() => {
-                setAddAnother(false);
-                setTimeout(() => {
-                  const el = document.querySelector('form');
-                  el?.requestSubmit();
-                }, 0);
-              }}
-              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-            >
-              {saving && !addAnother ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
+                onClick={() => {
+                  setAddAnother(false);
+                  setTimeout(() => {
+                    formRef.current?.requestSubmit();
+                  }, 0);
+                }}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {saving && !addAnother ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
             </button>
           </div>
         </div>
@@ -759,6 +885,138 @@ function ImportProductsModal({
               className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
             >
               {loading ? 'Importing…' : 'Import Products'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FirstShopImportModal({
+  collectionHandle,
+  limit,
+  bankRate,
+  productLinks,
+  loading,
+  onCollectionHandleChange,
+  onLimitChange,
+  onBankRateChange,
+  onProductLinksChange,
+  onImport,
+  onClose,
+}: {
+  collectionHandle: string;
+  limit: string;
+  bankRate: string;
+  productLinks: string;
+  loading: boolean;
+  onCollectionHandleChange: (value: string) => void;
+  onLimitChange: (value: string) => void;
+  onBankRateChange: (value: string) => void;
+  onProductLinksChange: (value: string) => void;
+  onImport: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
+          <div>
+            <h2 className="font-heading text-lg font-bold text-zinc-900">Import FirstShop SA Products</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Import by collection, or paste specific FirstShop product links.
+            </p>
+          </div>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-zinc-100">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-5 px-6 py-5">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Imported items are mapped to <strong>SA Imports</strong> and tagged for <strong>5-day delivery from SA</strong>.
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Collection Handle or URL
+              </label>
+              <input
+                value={collectionHandle}
+                onChange={(e) => onCollectionHandleChange(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                placeholder="external-solid-state-drive-ssd"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">Limit</label>
+              <input
+                type="number"
+                min={1}
+                max={120}
+                value={limit}
+                onChange={(e) => onLimitChange(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Bank Rate (ZAR per 1 USD)
+              </label>
+              <input
+                type="number"
+                min={0.01}
+                step="0.0001"
+                value={bankRate}
+                onChange={(e) => onBankRateChange(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                placeholder="16.3104"
+              />
+              <p className="mt-1 text-xs text-zinc-500">Leave blank to use live rate feed automatically.</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Specific Product Links (Optional)
+            </label>
+            <textarea
+              rows={8}
+              value={productLinks}
+              onChange={(e) => onProductLinksChange(e.target.value)}
+              placeholder={`https://www.firstshop.co.za/products/verbatim-1tb-m-2-usb-3-2-external-pocket-ssd-black-red-32192-316748\nhttps://www.firstshop.co.za/products/another-product-handle`}
+              className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Paste one link per line. When links are provided, these products are imported directly.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
+          <p className="text-xs text-zinc-400">Supports FirstShop product URLs or direct handles.</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={onImport}
+              className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+            >
+              {loading ? 'Importing…' : 'Import FirstShop SA'}
             </button>
           </div>
         </div>
@@ -889,6 +1147,8 @@ function BulkEditModal({
 // Main Admin Dashboard with Pagination, Export, etc.
 // ─────────────────────────────────────────────
 const ITEMS_PER_PAGE = 20;
+type SortField = 'name' | 'price' | 'stock' | 'category';
+type SortDirection = 'asc' | 'desc';
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -898,6 +1158,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [filterStock, setFilterStock] = useState<'all' | 'in' | 'out'>('all');
   const [filterFeatured, setFilterFeatured] = useState<'all' | 'yes' | 'no'>('all');
   const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -918,6 +1180,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [importing, setImporting] = useState(false);
   const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
   const [importText, setImportText] = useState('');
+  const [firstshopImportOpen, setFirstshopImportOpen] = useState(false);
+  const [firstshopCollectionHandle, setFirstshopCollectionHandle] = useState('external-solid-state-drive-ssd');
+  const [firstshopLimit, setFirstshopLimit] = useState('60');
+  const [firstshopBankRate, setFirstshopBankRate] = useState('');
+  const [firstshopProductLinks, setFirstshopProductLinks] = useState('');
+  const [importingFirstshop, setImportingFirstshop] = useState(false);
+  const [enrichingSpecs, setEnrichingSpecs] = useState(false);
 
   const [toast, setToast] = useState('');
 
@@ -942,7 +1211,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, filterCat, filterStock, filterFeatured, priceRange]);
+  }, [search, filterCat, filterStock, filterFeatured, priceRange, sortField, sortDirection]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -963,12 +1232,42 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
   }, [products, search, filterCat, filterStock, filterFeatured, priceRange]);
 
+  const sortedFiltered = useMemo(() => {
+    const list = [...filtered];
+    list.sort((a, b) => {
+      let left: string | number = '';
+      let right: string | number = '';
+
+      if (sortField === 'name') {
+        left = a.name.toLowerCase();
+        right = b.name.toLowerCase();
+      } else if (sortField === 'price') {
+        left = a.price;
+        right = b.price;
+      } else if (sortField === 'stock') {
+        left = a.inStock ? (typeof a.stockCount === 'number' ? a.stockCount : 9999) : -1;
+        right = b.inStock ? (typeof b.stockCount === 'number' ? b.stockCount : 9999) : -1;
+      } else if (sortField === 'category') {
+        left = getCategoryLabel(a.category).toLowerCase();
+        right = getCategoryLabel(b.category).toLowerCase();
+      }
+
+      if (left < right) return sortDirection === 'asc' ? -1 : 1;
+      if (left > right) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [filtered, sortDirection, sortField]);
+
   // Pagination
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filtered.slice(
+  const totalPages = Math.ceil(sortedFiltered.length / ITEMS_PER_PAGE);
+  const paginatedProducts = sortedFiltered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+  const visibleStart = sortedFiltered.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const visibleEnd = Math.min(currentPage * ITEMS_PER_PAGE, sortedFiltered.length);
 
   // Batch selection helpers
   const allSelected = paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.has(p.id));
@@ -991,6 +1290,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     if (newSet.has(id)) newSet.delete(id);
     else newSet.add(id);
     setSelectedIds(newSet);
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortField(field);
+    setSortDirection(field === 'price' ? 'desc' : 'asc');
+  };
+
+  const sortGlyph = (field: SortField) => {
+    if (sortField !== field) return '↕';
+    return sortDirection === 'asc' ? '↑' : '↓';
   };
 
   const openAdd = () => { setEditTarget(null); setFormOpen(true); };
@@ -1150,6 +1463,50 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const handleEnrichSpecs = async (ids?: string[]) => {
+    const targetCount = ids && ids.length > 0 ? ids.length : products.length;
+    if (targetCount === 0) {
+      showToast('No products available for AI specs enrichment');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      ids && ids.length > 0
+        ? `Generate AI specs for ${ids.length} selected products? Existing specs will be preserved.`
+        : `Generate AI specs across all ${products.length} products? Existing specs will be preserved.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setEnrichingSpecs(true);
+    try {
+      const res = await fetch('/api/admin/products/enrich-specs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: ids && ids.length > 0 ? ids : undefined,
+          onlyMissing: true,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || 'AI specs enrichment failed');
+        return;
+      }
+
+      await fetchProducts();
+      const updated = Number(data.updated || 0);
+      const skipped = Number(data.skipped || 0);
+      const failed = Number(data.failed || 0);
+      showToast(`AI specs done: ${updated} updated, ${skipped} skipped, ${failed} failed`);
+    } finally {
+      setEnrichingSpecs(false);
+    }
+  };
+
   const handleImport = async () => {
     let parsed;
 
@@ -1185,6 +1542,56 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     showToast(err.error || 'Import failed');
   };
 
+  const handleImportFirstShop = async () => {
+    const parsedLimit = Number.parseInt(firstshopLimit, 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(120, parsedLimit)) : 60;
+    const parsedBankRate = Number.parseFloat(firstshopBankRate);
+    const bankRate = Number.isFinite(parsedBankRate) && parsedBankRate > 0 ? parsedBankRate : undefined;
+    const links = firstshopProductLinks
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const importMessage =
+      links.length > 0
+        ? `Import ${links.length} specific FirstShop products into SA Imports with 5-day delivery labeling?`
+        : 'Import FirstShop SA products from collection into SA Imports with 5-day delivery labeling?';
+    const confirmed = window.confirm(importMessage);
+    if (!confirmed) return;
+
+    setImportingFirstshop(true);
+    try {
+      const res = await fetch('/api/admin/products/import-firstshop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'append',
+          limit,
+          collectionHandle: firstshopCollectionHandle,
+          bankRate,
+          productLinks: links.length > 0 ? links : undefined,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || 'FirstShop import failed');
+        return;
+      }
+
+      await fetchProducts();
+      setFirstshopImportOpen(false);
+      setFirstshopProductLinks('');
+      const rateUsed =
+        data?.conversion && typeof data.conversion.usdToZarRate === 'number'
+          ? ` @ rate ${data.conversion.usdToZarRate}`
+          : '';
+      showToast(`Imported ${data.imported || 0} SA products${rateUsed}`);
+    } finally {
+      setImportingFirstshop(false);
+    }
+  };
+
   const inStockCount = products.filter((p) => p.inStock).length;
   const featuredCount = products.filter((p) => p.featured).length;
 
@@ -1208,126 +1615,187 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <div className="relative flex-1 min-w-[180px]">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products…"
-              className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-            />
+        <div className="mb-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[220px] flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products…"
+                className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+              />
+            </div>
+            <button
+              onClick={openAdd}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 shadow-sm"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add Product
+            </button>
           </div>
-          
-          {/* Filters */}
-          <select
-            value={filterCat}
-            onChange={(e) => setFilterCat(e.target.value)}
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
-          >
-            <option value="">All categories</option>
-            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-          
-          <select
-            value={filterStock}
-            onChange={(e) => setFilterStock(e.target.value as 'all' | 'in' | 'out')}
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
-          >
-            <option value="all">All stock</option>
-            <option value="in">In stock</option>
-            <option value="out">Out of stock</option>
-          </select>
 
-          <select
-            value={filterFeatured}
-            onChange={(e) => setFilterFeatured(e.target.value as 'all' | 'yes' | 'no')}
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
-          >
-            <option value="all">All items</option>
-            <option value="yes">Featured only</option>
-            <option value="no">Not featured</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={filterCat}
+              onChange={(e) => setFilterCat(e.target.value)}
+              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
+            >
+              <option value="">All categories</option>
+              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
 
-          {/* Price Range */}
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              placeholder="Min $"
-              value={priceRange.min}
-              onChange={(e) => setPriceRange((r) => ({ ...r, min: e.target.value }))}
-              className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
-            />
-            <span className="text-zinc-400">-</span>
-            <input
-              type="number"
-              placeholder="Max $"
-              value={priceRange.max}
-              onChange={(e) => setPriceRange((r) => ({ ...r, max: e.target.value }))}
-              className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
-            />
+            <select
+              value={filterStock}
+              onChange={(e) => setFilterStock(e.target.value as 'all' | 'in' | 'out')}
+              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
+            >
+              <option value="all">All stock</option>
+              <option value="in">In stock</option>
+              <option value="out">Out of stock</option>
+            </select>
+
+            <select
+              value={filterFeatured}
+              onChange={(e) => setFilterFeatured(e.target.value as 'all' | 'yes' | 'no')}
+              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
+            >
+              <option value="all">All items</option>
+              <option value="yes">Featured only</option>
+              <option value="no">Not featured</option>
+            </select>
+
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                placeholder="Min"
+                value={priceRange.min}
+                onChange={(e) => setPriceRange((r) => ({ ...r, min: e.target.value }))}
+                className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
+              />
+              <span className="text-zinc-400">-</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={priceRange.max}
+                onChange={(e) => setPriceRange((r) => ({ ...r, max: e.target.value }))}
+                className="w-20 rounded-lg border border-zinc-200 px-2 py-2 text-sm"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                setSearch('');
+                setFilterCat('');
+                setFilterStock('all');
+                setFilterFeatured('all');
+                setPriceRange({ min: '', max: '' });
+              }}
+              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Clear Filters
+            </button>
+
+            <div className="h-6 w-px bg-zinc-200" />
+
+            {selectedIds.size > 0 ? (
+              <>
+                <button
+                  onClick={() => setBulkEditOpen(true)}
+                  className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                  </svg>
+                  Edit {selectedIds.size}
+                </button>
+                <button
+                  onClick={() => handleEnrichSpecs(Array.from(selectedIds))}
+                  disabled={enrichingSpecs}
+                  className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-60"
+                >
+                  {enrichingSpecs ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-700 border-t-transparent" />
+                  ) : (
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    </svg>
+                  )}
+                  AI Specs {selectedIds.size}
+                </button>
+                <button
+                  onClick={() => setBatchDeleteOpen(true)}
+                  className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.668 0 0 0-7.5 0" />
+                  </svg>
+                  Delete {selectedIds.size}
+                </button>
+              </>
+            ) : null}
+
+            <button
+              onClick={() => handleEnrichSpecs()}
+              disabled={enrichingSpecs || products.length === 0}
+              className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-60"
+            >
+              {enrichingSpecs ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-700 border-t-transparent" />
+              ) : (
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                </svg>
+              )}
+              AI Specs All
+            </button>
+
+            <button
+              onClick={() => setImportOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
+              </svg>
+              Import
+            </button>
+
+            <button
+              onClick={() => setFirstshopImportOpen(true)}
+              disabled={importingFirstshop}
+              className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+            >
+              {importingFirstshop ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-700 border-t-transparent" />
+              ) : (
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h10.5v9H3.75zm10.5 2.25h3l3 3v3.75h-6zm-7.5 8.25a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm10.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+                </svg>
+              )}
+              Import FirstShop SA
+            </button>
+
+            <button
+              onClick={exportProducts}
+              className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Export
+            </button>
           </div>
-          
-          {/* Batch actions */}
-          {selectedIds.size > 0 && (
-            <>
-              <button
-                onClick={() => setBulkEditOpen(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
-              >
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                </svg>
-                Edit {selectedIds.size}
-              </button>
-              <button
-                onClick={() => setBatchDeleteOpen(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
-              >
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-                Delete {selectedIds.size}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
-            </svg>
-            Import
-          </button>
-
-          <button
-            onClick={exportProducts}
-            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            Export
-          </button>
-          
-          <button
-            onClick={openAdd}
-            className="ml-auto flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 shadow-sm"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Add Product
-          </button>
         </div>
 
         {/* Results count */}
         <div className="mb-4 flex items-center justify-between text-sm text-zinc-500">
-          <span>Showing {filtered.length} products</span>
+          <span>
+            Showing {visibleStart}-{visibleEnd} of {sortedFiltered.length} filtered ({products.length} total)
+          </span>
           {selectedIds.size > 0 && <span>{selectedIds.size} selected</span>}
         </div>
 
@@ -1338,7 +1806,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         ) : (
           <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-            {filtered.length === 0 ? (
+            {sortedFiltered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500">
                   <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -1366,11 +1834,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <div className="max-h-[70vh] overflow-auto">
                   <table className="w-full text-sm">
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                       <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                        <th className="px-4 py-3 w-10">
+                        <th className="w-10 px-4 py-3">
                           <input
                             type="checkbox"
                             checked={allSelected}
@@ -1379,11 +1847,47 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
                           />
                         </th>
-                        <th className="px-4 py-3">Product</th>
-                        <th className="px-4 py-3 hidden sm:table-cell">Category</th>
+                        <th className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleSort('name')}
+                            className="inline-flex items-center gap-1 transition hover:text-zinc-700"
+                          >
+                            Product
+                            <span className="text-[10px]">{sortGlyph('name')}</span>
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 hidden sm:table-cell">
+                          <button
+                            type="button"
+                            onClick={() => toggleSort('category')}
+                            className="inline-flex items-center gap-1 transition hover:text-zinc-700"
+                          >
+                            Category
+                            <span className="text-[10px]">{sortGlyph('category')}</span>
+                          </button>
+                        </th>
                         <th className="px-4 py-3 hidden lg:table-cell">Type</th>
-                        <th className="px-4 py-3">Price</th>
-                        <th className="px-4 py-3 hidden md:table-cell">Status</th>
+                        <th className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleSort('price')}
+                            className="inline-flex items-center gap-1 transition hover:text-zinc-700"
+                          >
+                            Price
+                            <span className="text-[10px]">{sortGlyph('price')}</span>
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 hidden md:table-cell">
+                          <button
+                            type="button"
+                            onClick={() => toggleSort('stock')}
+                            className="inline-flex items-center gap-1 transition hover:text-zinc-700"
+                          >
+                            Status
+                            <span className="text-[10px]">{sortGlyph('stock')}</span>
+                          </button>
+                        </th>
                         <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -1429,8 +1933,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               {isBundleProduct(p) ? 'Bundle' : 'Single'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 font-semibold text-zinc-900">
-                            ${p.price.toFixed(2)}
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-zinc-900">{formatAdminCurrency(p.price, p.currency)}</p>
+                            <p className="text-[10px] font-medium uppercase text-zinc-400">{p.currency}</p>
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
                             <div className="flex items-center gap-1.5">
@@ -1569,6 +2074,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           onModeChange={setImportMode}
           onImport={handleImport}
           onClose={() => setImportOpen(false)}
+        />
+      )}
+
+      {firstshopImportOpen && (
+        <FirstShopImportModal
+          collectionHandle={firstshopCollectionHandle}
+          limit={firstshopLimit}
+          bankRate={firstshopBankRate}
+          productLinks={firstshopProductLinks}
+          loading={importingFirstshop}
+          onCollectionHandleChange={setFirstshopCollectionHandle}
+          onLimitChange={setFirstshopLimit}
+          onBankRateChange={setFirstshopBankRate}
+          onProductLinksChange={setFirstshopProductLinks}
+          onImport={handleImportFirstShop}
+          onClose={() => setFirstshopImportOpen(false)}
         />
       )}
 

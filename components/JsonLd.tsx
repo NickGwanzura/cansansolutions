@@ -8,6 +8,8 @@ interface ProductJsonLdProps {
   categoryName?: string;
 }
 
+const DEFAULT_PRICE_VALID_UNTIL = '2030-12-31';
+
 interface FaqJsonLdProps {
   questions: Array<{
     question: string;
@@ -41,13 +43,24 @@ interface ServiceJsonLdProps {
 
 export function ProductJsonLd({ product, categoryName }: ProductJsonLdProps) {
   const brand = getBrandForProduct(product);
+  const image = product.image
+    ? (product.image.startsWith('http') ? product.image : absoluteUrl(product.image))
+    : absoluteUrl('/images/products/placeholder.svg');
+  const additionalProperty = Object.entries(product.specs ?? {}).map(([name, value]) => ({
+    '@type': 'PropertyValue',
+    name,
+    value: String(value),
+  }));
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: stripHtml(product.description),
-    image: product.image ? (product.image.startsWith('http') ? product.image : absoluteUrl(product.image)) : absoluteUrl('/images/products/placeholder.svg'),
+    image,
+    url: absoluteUrl(`/products/${product.slug}`),
     sku: product.id,
+    mpn: product.id,
     category: categoryName,
     brand: {
       '@type': 'Brand',
@@ -58,10 +71,45 @@ export function ProductJsonLd({ product, categoryName }: ProductJsonLdProps) {
       url: absoluteUrl(`/products/${product.slug}`),
       priceCurrency: product.currency,
       price: product.price.toString(),
+      priceValidUntil: DEFAULT_PRICE_VALID_UNTIL,
       availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition:
         product.condition === 'pre-owned' ? 'https://schema.org/UsedCondition' : 'https://schema.org/NewCondition',
+      seller: {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: SITE_URL,
+        telephone: SITE_PHONE,
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'ZW',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 1,
+            unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 1,
+            maxValue: 3,
+            unitCode: 'DAY',
+          },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'ZW',
+        url: absoluteUrl('/warranty'),
+      },
     },
+    additionalProperty: additionalProperty.length > 0 ? additionalProperty : undefined,
     aggregateRating:
       product.reviewCount && product.reviewCount > 0 && product.rating !== undefined
         ? {

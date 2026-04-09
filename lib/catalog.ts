@@ -27,6 +27,8 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
     'Source PC components and upgrade parts in Zimbabwe, including storage, RAM, motherboards, and performance accessories.',
   drives:
     'Shop SSDs, HDDs, flash storage, and backup drives for laptops, desktops, and office systems.',
+  'sa-imports':
+    'Browse special-order tech sourced from South Africa with transparent 5-day delivery timelines into Zimbabwe.',
   mobile:
     'Buy smartphones and mobile accessories in Harare with pricing, stock checks, and fast WhatsApp ordering.',
   cctv:
@@ -199,6 +201,42 @@ const CATEGORY_PAGE_CONTENT: Record<string, CategoryPageContent> = {
     ctaBody: 'Tell us whether it is for home, office, or retail and how many zones you want covered.',
     ctaLabel: 'Request CCTV Help',
     ctaHref: '/services',
+  },
+  'sa-imports': {
+    intro:
+      'Shop selected tech sourced from South Africa with clear lead times, local payment support, and Zimbabwe delivery handling by Cansan.',
+    trustPoints: [
+      {
+        title: 'Sourced from trusted South African suppliers',
+        description: 'Products in this section are imported from vetted SA channels and clearly marked before checkout.',
+      },
+      {
+        title: 'Clear 5-day delivery expectation',
+        description: 'These imports follow a planned lead time of around 5 days after order confirmation.',
+      },
+      {
+        title: 'Local support and payment in Zimbabwe',
+        description: 'You still pay locally and get after-sales guidance through Cansan, even for special-order imports.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'How long does SA Import delivery take?',
+        answer: 'Most SA Import orders are delivered in about 5 days after payment and stock confirmation.',
+      },
+      {
+        question: 'Can I pay in Zimbabwe for SA Import products?',
+        answer: 'Yes. Cansan confirms available payment options locally, including USD cash, bank transfer, and EcoCash where applicable.',
+      },
+      {
+        question: 'Do SA Import products include support?',
+        answer: 'Yes. Cansan handles ordering updates and provides post-purchase guidance for warranty and support processes.',
+      },
+    ],
+    ctaTitle: 'Need a special-order item from South Africa?',
+    ctaBody: 'Send the product link on WhatsApp and we will confirm lead time, final landed price, and delivery options.',
+    ctaLabel: 'Request SA Import Quote',
+    ctaHref: '/contact',
   },
 };
 

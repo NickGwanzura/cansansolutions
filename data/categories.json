@@ -8,6 +8,7 @@
   { "id": "audio", "label": "TV, Audio & Video", "icon": "headphones", "slug": "audio" },
   { "id": "pc-parts", "label": "PC Parts & Components", "icon": "cpu", "slug": "pc-parts" },
   { "id": "drives", "label": "Drives & Storage", "icon": "storage", "slug": "drives" },
+  { "id": "sa-imports", "label": "SA Imports (5-Day Delivery)", "icon": "truck", "slug": "sa-imports" },
   { "id": "mobile", "label": "Mobile & Accessories", "icon": "smartphone", "slug": "mobile" },
   { "id": "cctv", "label": "CCTV & Security", "icon": "shield-camera", "slug": "cctv" },
   { "id": "bundles", "label": "Top Deals", "icon": "deals", "slug": "bundles" }

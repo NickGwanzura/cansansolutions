@@ -1,277 +1,284 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { useMemo, useState } from 'react';
 import { useCartStore } from '@/lib/cart-store';
-import { stripHtml, truncateText } from '@/lib/seo';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct } from '@/lib/catalog';
+import { getBrandForProduct } from '@/lib/brands';
 
-const CONDITION_STYLE: Record<string, string> = {
-  new: 'bg-green-600 text-white',
-  'pre-owned': 'bg-amber-500 text-white',
-};
-
-function StarRating({ rating, count }: { rating: number; count: number }) {
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <svg
-            key={star}
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill={star <= Math.round(rating) ? '#f59e0b' : 'none'}
-            stroke="#f59e0b"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
-            />
-          </svg>
-        ))}
-      </div>
-      <span className="text-[10px] text-zinc-500">{count} review{count !== 1 ? 's' : ''}</span>
-    </div>
-  );
-}
-
-function StockStatus({ inStock, stockCount }: { inStock: boolean; stockCount?: number }) {
-  if (!inStock) return (
-    <span className="flex items-center gap-1 text-[11px] font-medium text-red-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-      Out of stock
-    </span>
-  );
-  if (stockCount === 1) return (
-    <span className="flex items-center gap-1 text-[11px] font-medium text-red-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-      Very low stock (1 unit)
-    </span>
-  );
-  if (stockCount !== undefined && stockCount <= 3) return (
-    <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-      Low stock ({stockCount} units)
-    </span>
-  );
-  return (
-    <span className="flex items-center gap-1 text-[11px] font-medium text-green-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-      In stock
-    </span>
-  );
-}
-
-export function ProductCard({
-  product,
-  onQuickView,
-}: {
+type ProductCardProps = {
   product: Product;
   onQuickView?: (p: Product) => void;
-}) {
+};
+
+const TYPE_BY_CATEGORY: Record<string, string> = {
+  drives: 'External SSD',
+  'sa-imports': 'Imported Tech Product',
+  laptops: 'Laptop',
+  networking: 'Networking Device',
+  cctv: 'Security System',
+  accessories: 'Accessory',
+  mobile: 'Smartphone',
+  monitors: 'Monitor',
+  desktops: 'Desktop PC',
+  printing: 'Printer',
+  bundles: 'Tech Bundle',
+};
+
+const USE_CASE_BY_CATEGORY: Record<string, string> = {
+  drives: 'Fast Backup',
+  'sa-imports': 'Special-Order Performance',
+  laptops: 'Work and Study',
+  networking: 'Stable Home and Office WiFi',
+  cctv: 'Home and Business Security',
+  accessories: 'Daily Productivity',
+  mobile: 'Everyday Productivity',
+  monitors: 'Office Productivity',
+  desktops: 'Business Performance',
+  printing: 'Office Printing',
+  bundles: 'Value Savings',
+};
+
+const SPEC_PRIORITY_KEYS = [
+  'capacity',
+  'processor',
+  'cpu',
+  'read speed',
+  'write speed',
+  'memory',
+  'ram',
+  'storage',
+  'connector',
+  'interface',
+  'resolution',
+  'screen',
+];
+
+function normalizeLabel(label: string) {
+  return label
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function compactSpaces(value: string) {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function extractNameSpec(name: string): string | null {
+  const patterns = [
+    /\b\d+\s?TB\b/i,
+    /\b\d+\s?GB\b/i,
+    /\bCore\s+i[3579]\b/i,
+    /\bRyzen\s+\d\b/i,
+    /\bUltra\s+\d\b/i,
+    /\bUSB[-\s]?C\b/i,
+    /\b\d{2,4}\s?MB\/s\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = name.match(pattern);
+    if (match) {
+      return compactSpaces(match[0]);
+    }
+  }
+
+  return null;
+}
+
+function getPrimarySpec(product: Product): string {
+  const entries = Object.entries(product.specs ?? {});
+
+  for (const priority of SPEC_PRIORITY_KEYS) {
+    const found = entries.find(([key]) => key.toLowerCase().includes(priority));
+    if (found) {
+      return compactSpaces(String(found[1]));
+    }
+  }
+
+  return extractNameSpec(product.name) ?? 'High Performance';
+}
+
+function getMicroSpecs(product: Product): string[] {
+  const entries = Object.entries(product.specs ?? {});
+  const preferred = entries
+    .filter(([key]) => SPEC_PRIORITY_KEYS.some((priority) => key.toLowerCase().includes(priority)))
+    .slice(0, 3)
+    .map(([key, value]) => `${normalizeLabel(key)}: ${value}`);
+
+  if (preferred.length >= 2) {
+    return preferred;
+  }
+
+  const fallbackFromName = [
+    /\b\d+\s?TB\b/i,
+    /\bUSB[-\s]?C\b/i,
+    /\b\d{2,4}\s?MB\/s\b/i,
+    /\b\d+\s?GB\s?RAM\b/i,
+    /\bCore\s+i[3579]\b/i,
+  ]
+    .map((pattern) => product.name.match(pattern)?.[0])
+    .filter(Boolean)
+    .slice(0, 3) as string[];
+
+  const merged = [...preferred, ...fallbackFromName].slice(0, 3);
+
+  return merged.length > 0 ? merged : ['Genuine product', 'Local support'];
+}
+
+function buildSeoTitle(product: Product): string {
+  const brand = getBrandForProduct(product)?.name ?? product.name.split(' ')[0] ?? 'Cansan';
+  const keySpec = getPrimarySpec(product);
+  const type = TYPE_BY_CATEGORY[product.category] ?? getCategoryLabel(product.category);
+  const useCase = USE_CASE_BY_CATEGORY[product.category] ?? 'Everyday Use';
+
+  return compactSpaces(`${brand} ${keySpec} ${type} for ${useCase}`);
+}
+
+function getStockText(product: Product): { label: string; tone: string } {
+  if (!product.inStock) {
+    return { label: 'Out of stock', tone: 'text-red-600 bg-red-50 border-red-200' };
+  }
+
+  if (typeof product.stockCount === 'number' && product.stockCount <= 5) {
+    return { label: `Only ${product.stockCount} left`, tone: 'text-amber-700 bg-amber-50 border-amber-200' };
+  }
+
+  if (typeof product.stockCount === 'number' && product.stockCount <= 12) {
+    return { label: 'Low Stock', tone: 'text-orange-700 bg-orange-50 border-orange-200' };
+  }
+
+  return { label: 'In Stock', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+}
+
+function isSaImportProduct(product: Product) {
+  const normalizedTags = product.tags.map((tag) => tag.toLowerCase().trim());
+  return (
+    product.category === 'sa-imports' ||
+    normalizedTags.includes('sa-import') ||
+    normalizedTags.includes('firstshop') ||
+    normalizedTags.includes('delivery-5-days')
+  );
+}
+
+export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart);
-  const items = useCartStore((s) => s.items);
-  const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState(false);
   const isBundle = isBundleProduct(product);
 
-  const qtyInCart = items.find((i) => i.id === product.id)?.qty ?? 0;
-  const discount = product.originalPrice && product.originalPrice > product.price
-    ? product.originalPrice - product.price
-    : null;
+  const seoTitle = useMemo(() => buildSeoTitle(product), [product]);
+  const microSpecs = useMemo(() => getMicroSpecs(product), [product]);
+  const stock = useMemo(() => getStockText(product), [product]);
+  const saImport = useMemo(() => isSaImportProduct(product), [product]);
+  const urgencyMicrocopy = saImport
+    ? '5-day delivery from SA after order confirmation'
+    : product.inStock && typeof product.stockCount === 'number' && product.stockCount <= 5
+      ? 'Fast selling today in Zimbabwe'
+      : 'Fast delivery available in Zimbabwe';
 
-  const handleAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!product.inStock) return;
+  const hasDiscount = Boolean(product.originalPrice && product.originalPrice > product.price);
+  const discountPercent =
+    hasDiscount && product.originalPrice
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0;
+
+  const imageSrc = product.image || '/images/products/placeholder.svg';
+
+  const handleAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!product.inStock) {
+      return;
+    }
+
     addToCart(product);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
+    setAdding(true);
+    window.setTimeout(() => setAdding(false), 1000);
   };
 
-  const specEntries = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
-  const summary = truncateText(stripHtml(product.description), 72);
-
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-      className="group relative flex flex-col rounded-xl sm:rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden hover:shadow-xl hover:border-zinc-200 transition-all duration-300"
-    >
-      {/* Image area */}
-      <Link
-        href={`/products/${product.slug}`}
-        className="relative block overflow-hidden bg-gradient-to-br from-zinc-50 to-zinc-100"
-      >
-        <div className="aspect-square p-5">
-          <img
-            src={product.image}
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+      <Link href={`/products/${product.slug}`} className="relative block">
+        <div className="relative aspect-[4/3] overflow-hidden bg-white p-5">
+          <Image
+            src={imageSrc}
             alt={product.name}
-            className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
+            fill
+            loading="lazy"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="object-contain p-3 transition duration-500 group-hover:scale-105"
           />
-        </div>
 
-        {/* Top-left badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {discount !== null && (
-            <span className="rounded bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
-              ${discount.toLocaleString()} off
+          {hasDiscount ? (
+            <span className="absolute left-3 top-3 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+              -{discountPercent}%
             </span>
-          )}
-          {!discount && product.featured && product.inStock && (
-            <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-              Hot
-            </span>
-          )}
-          {isBundle && (
-            <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-              Bundle
-            </span>
-          )}
-          {qtyInCart > 0 && (
-            <span className="rounded-full bg-green-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              {qtyInCart} in cart
-            </span>
-          )}
-        </div>
+          ) : null}
 
-        {/* Condition badge — top right */}
-        {product.condition && (
-          <span className={`absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-sm ${CONDITION_STYLE[product.condition] ?? 'bg-zinc-200 text-zinc-600'}`}>
-            {product.condition === 'new' ? 'New' : 'Pre-owned'}
+          <span className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${stock.tone}`}>
+            {stock.label}
           </span>
-        )}
 
-        {/* Category chip — bottom right */}
-        <div className="absolute bottom-3 right-3">
-          <span className="rounded-full bg-white/80 backdrop-blur-sm border border-zinc-200 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
-            {getCategoryLabel(product.category)}
-          </span>
-        </div>
-
-        {/* Out of stock overlay */}
-        {!product.inStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-            <span className="rounded-full bg-zinc-800 px-3 py-1 text-[11px] font-semibold text-white tracking-wide">
-              Out of Stock
-            </span>
-          </div>
-        )}
-
-        {/* Quick View overlay */}
-        {onQuickView && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {onQuickView ? (
             <button
-              onClick={(e) => { e.preventDefault(); onQuickView(product); }}
-              className="rounded-full bg-white/90 backdrop-blur-sm border border-zinc-200 px-3.5 py-1.5 text-xs font-semibold text-zinc-800 shadow-md transition hover:bg-white hover:shadow-lg active:scale-95"
+              onClick={(event) => {
+                event.preventDefault();
+                onQuickView(product);
+              }}
+              className="absolute bottom-3 right-3 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100"
             >
               Quick View
             </button>
-          </div>
-        )}
+          ) : null}
+        </div>
       </Link>
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
-        <Link
-          href={`/products/${product.slug}`}
-          className="font-heading text-sm font-semibold leading-snug text-zinc-900 line-clamp-2 hover:text-red-600 transition-colors"
-        >
-          {product.name}
+      <div className="flex flex-1 flex-col p-4">
+        <Link href={`/products/${product.slug}`} className="text-sm font-semibold leading-snug text-zinc-900 transition hover:text-red-700">
+          <h3 className="line-clamp-2">{seoTitle}</h3>
         </Link>
 
-        {/* Specs bullets */}
-        {specEntries.length > 0 ? (
-          <ul className="space-y-1">
-            {specEntries.map(([key, val]) => (
-              <li key={key} className="flex items-start gap-1.5 text-[11px] text-zinc-600">
-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-zinc-400" />
-                <span className="line-clamp-1">
-                  <span className="font-semibold text-zinc-700">{key}:</span> {val}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs leading-relaxed text-zinc-500 line-clamp-2">{summary}</p>
-        )}
+        <ul className="mt-3 space-y-1.5 text-xs text-zinc-600">
+          {microSpecs.slice(0, 3).map((spec) => (
+            <li key={spec} className="flex items-start gap-2">
+              <span className="mt-1.5 h-1 w-1 rounded-full bg-red-500" />
+              <span className="line-clamp-1">{spec}</span>
+            </li>
+          ))}
+        </ul>
 
-        {isBundle && product.bundleItems.length > 0 && (
-          <p className="text-[11px] font-medium text-zinc-500">
-            Includes {product.bundleItems.length} item{product.bundleItems.length === 1 ? '' : 's'}
-          </p>
-        )}
+        <div className="mt-4 flex items-end gap-2">
+          <p className="text-lg font-bold text-zinc-950">{formatCurrency(product.price, product.currency)}</p>
+          {hasDiscount && product.originalPrice ? (
+            <p className="text-xs text-zinc-400 line-through">{formatCurrency(product.originalPrice, product.currency)}</p>
+          ) : null}
+        </div>
 
-        {/* Rating */}
-        {product.reviewCount !== undefined && product.reviewCount > 0 && product.rating !== undefined && (
-          <StarRating rating={product.rating} count={product.reviewCount} />
-        )}
+        <p className={`mt-1 text-[11px] ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}>
+          {urgencyMicrocopy}
+        </p>
 
-        {/* Stock status */}
-        <StockStatus inStock={product.inStock} stockCount={product.stockCount} />
-
-        {/* Price + CTA */}
-        <div className="mt-auto flex flex-col gap-2 pt-3 border-t border-zinc-50">
-          <div className="flex items-baseline gap-2">
-            <span className="font-heading text-base font-bold text-zinc-900">
-              {formatCurrency(product.price, product.currency)}
-            </span>
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs text-zinc-400 line-through">
-                {formatCurrency(product.originalPrice, product.currency)}
-              </span>
-            )}
-          </div>
-
-          <motion.button
-            disabled={!product.inStock}
-            onClick={handleAdd}
-            whileTap={product.inStock ? { scale: 0.92 } : {}}
-            className={`relative min-h-10 w-full rounded-full px-3.5 py-2 text-xs font-bold shadow-sm transition-all duration-200 overflow-hidden
-              ${added
-                ? 'bg-green-500 text-white'
-                : 'bg-amber-400 text-zinc-900 hover:bg-amber-300'
-              }
-              disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none`}
+        <div className="mt-4 flex gap-2">
+          <Link
+            href={`/products/${product.slug}`}
+            className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-red-700"
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {added ? (
-                <motion.span
-                  key="added"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center justify-center gap-1"
-                >
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                  Added!
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="add"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center justify-center gap-1"
-                >
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                  </svg>
-                  {isBundle ? 'Add bundle' : 'Add to cart'}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            View Product
+          </Link>
+          <button
+            onClick={handleAdd}
+            disabled={!product.inStock}
+            className="rounded-full border border-zinc-300 px-4 py-2.5 text-xs font-semibold text-zinc-800 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400"
+          >
+            {product.inStock ? (adding ? 'Added' : isBundle ? 'Add Bundle' : 'Add') : 'Unavailable'}
+          </button>
         </div>
       </div>
-    </motion.div>
+    </article>
   );
 }
