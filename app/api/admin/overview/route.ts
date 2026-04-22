@@ -59,6 +59,12 @@ export async function GET(req: NextRequest) {
     });
     const overdueAmount = overdueInvoices.reduce((s, i) => s + i.total, 0);
 
+    const pendingQuotes = quotes.filter((q) => ['draft', 'sent'].includes(q.status));
+    const pendingQuotesAmount = pendingQuotes.reduce((s, q) => s + q.total, 0);
+    const acceptedQuotesMtd = quotes
+      .filter((q) => q.status === 'accepted' && inMonth(q.issueDate))
+      .reduce((s, q) => s + q.total, 0);
+
     // ─── KPIs ───
     const summary = {
       mtdInvoiced,
@@ -69,6 +75,9 @@ export async function GET(req: NextRequest) {
       outstandingCount: outstandingInvoices.length,
       overdueAmount,
       overdueCount: overdueInvoices.length,
+      quotesPending: pendingQuotesAmount,
+      quotesPendingCount: pendingQuotes.length,
+      acceptedQuotesMtd,
       totalClients: clients.length,
       totalProducts: products.length,
     };

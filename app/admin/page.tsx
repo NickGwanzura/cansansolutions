@@ -15,6 +15,9 @@ type OverviewData = {
     outstandingCount: number;
     overdueAmount: number;
     overdueCount: number;
+    quotesPending: number;
+    quotesPendingCount: number;
+    acceptedQuotesMtd: number;
     totalClients: number;
     totalProducts: number;
   };
@@ -332,13 +335,15 @@ function DashboardOverview({ onLogout }: { onLogout: () => void }) {
 
         {data && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
               <KpiCard label="Received MTD" value={fmt(data.summary.mtdReceived)} hint="payments received" tone="positive" href="/admin/receipts" />
               <KpiCard label="Invoiced MTD" value={fmt(data.summary.mtdInvoiced)} hint="new invoices issued" href="/admin/invoices" />
               <KpiCard label="Expenses MTD" value={fmt(data.summary.mtdExpenses)} hint="spent this month" tone="warning" href="/admin/expenses" />
               <KpiCard label="Net Cash MTD" value={fmt(data.summary.netCashMtd)} hint="received − expenses" tone={data.summary.netCashMtd >= 0 ? 'positive' : 'danger'} />
               <KpiCard label="Outstanding AR" value={fmt(data.summary.outstanding)} hint={`${data.summary.outstandingCount} invoice${data.summary.outstandingCount === 1 ? '' : 's'} unpaid`} href="/admin/invoices" />
               <KpiCard label="Overdue" value={fmt(data.summary.overdueAmount)} hint={`${data.summary.overdueCount} past due`} tone="danger" href="/admin/invoices" />
+              <KpiCard label="Quotes Pending" value={fmt(data.summary.quotesPending)} hint={`${data.summary.quotesPendingCount} draft/sent`} href="/admin/quotes" />
+              <KpiCard label="Accepted Quotes MTD" value={fmt(data.summary.acceptedQuotesMtd)} hint="won this month" tone="positive" href="/admin/quotes" />
             </div>
 
             <QuickActions />
