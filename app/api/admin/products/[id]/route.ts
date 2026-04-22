@@ -1,22 +1,17 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { updateProduct, deleteProductById } from '@/lib/admin-data';
+import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { updateProduct, deleteProductById, getProductById } from '@/lib/admin-data';
 import { normalizeBundleItems, normalizeProductType } from '@/lib/catalog';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
-
-async function checkAuth() {
-  const store = await cookies();
-  return store.get('admin_auth')?.value === ADMIN_PASSWORD;
-}
+import { checkAdminAuth } from '@/lib/check-admin-auth';
+import { submitProductToIndexNow } from '@/lib/indexnow';
 
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const data = await req.json();
 
@@ -26,19 +21,35 @@ export async function PUT(
   
   const product = await updateProduct(id, data);
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  
+
+  revalidatePath('/');
+  revalidatePath('/products');
+  revalidatePath(`/products/${product.slug}`);
+  submitProductToIndexNow(product.slug);
+
   return NextResponse.json(product);
 }
 
 export async function DELETE(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  
+
+  // Capture the slug BEFORE deletion so IndexNow can tell Bing/Yandex to
+  // recrawl the now-404 URL and drop it from their indexes.
+  const existing = await getProductById(id);
+
   const success = await deleteProductById(id);
   if (!success) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  
+
+  revalidatePath('/');
+  revalidatePath('/products');
+  if (existing?.slug) {
+    revalidatePath(`/products/${existing.slug}`);
+    submitProductToIndexNow(existing.slug);
+  }
+
   return NextResponse.json({ ok: true });
 }

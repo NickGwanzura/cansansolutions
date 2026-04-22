@@ -35,9 +35,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
-  alternates: {
-    canonical: "/",
-  },
+  // Canonical URLs are set per-page via buildAbsoluteMetadata() in lib/seo.ts.
+  // A root canonical would incorrectly inherit to every page that doesn't
+  // override it, pointing them all at the homepage.
   openGraph: {
     type: "website",
     locale: "en_ZW",

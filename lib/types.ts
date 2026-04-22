@@ -208,3 +208,97 @@ export type DeliveryNote = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type SeoEventInput = {
+  eventType?: 'page_view' | 'click' | 'not_found';
+  path: string;
+  referrer?: string;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  searchTerm?: string;
+  userAgent?: string;
+  deviceType?: 'desktop' | 'mobile' | 'tablet' | 'bot' | 'unknown';
+  country?: string;
+  city?: string;
+  visitorId?: string;
+};
+
+export type SeoSeriesPoint = {
+  date: string;
+  views: number;
+};
+
+export type SeoBreakdownRow = {
+  label: string;
+  views: number;
+};
+
+export type SeoAnalyticsSummary = {
+  windowDays: number;
+  totalViews: number;
+  uniquePages: number;
+  uniqueVisitors: number;
+  organicViews: number;
+  directViews: number;
+  referralViews: number;
+  socialViews: number;
+  topPages: SeoBreakdownRow[];
+  topSources: SeoBreakdownRow[];
+  topSearchTerms: SeoBreakdownRow[];
+  topClicks: SeoBreakdownRow[];
+  brokenUrls: SeoBreakdownRow[];
+  devices: SeoBreakdownRow[];
+  dailyViews: SeoSeriesPoint[];
+  lastTrackedAt?: string;
+};
+
+export type Ga4ChannelRow = {
+  channel: string;
+  sessions: number;
+  users: number;
+};
+
+export type Ga4PageRow = {
+  page: string;
+  sessions: number;
+};
+
+export type Ga4Summary = {
+  sessions: number;
+  users: number;
+  pageViews: number;
+  avgSessionDurationSeconds: number;
+  channels: Ga4ChannelRow[];
+  topLandingPages: Ga4PageRow[];
+};
+
+export type SearchConsoleRow = {
+  value: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+};
+
+export type SearchConsoleSummary = {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  averagePosition: number;
+  topQueries: SearchConsoleRow[];
+  topPages: SearchConsoleRow[];
+};
+
+export type SeoConnectors = {
+  ga4Configured: boolean;
+  gscConfigured: boolean;
+  ga4Error?: string;
+  gscError?: string;
+};
+
+export type SeoAnalyticsPayload = SeoAnalyticsSummary & {
+  connectors: SeoConnectors;
+  ga4?: Ga4Summary;
+  gsc?: SearchConsoleSummary;
+};

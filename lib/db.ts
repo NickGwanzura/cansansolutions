@@ -1,7 +1,19 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Banner, Brand, Client, CompanyProfile, DeliveryNote, Expense, Invoice, Quote, Receipt } from './types';
+import type {
+  Banner,
+  Brand,
+  Client,
+  CompanyProfile,
+  DeliveryNote,
+  Expense,
+  Invoice,
+  Quote,
+  Receipt,
+  SeoAnalyticsSummary,
+  SeoEventInput,
+} from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
 let _sql: NeonQueryFunction<false, false> | null = null;
@@ -205,6 +217,27 @@ async function ensureSchema(): Promise<void> {
       updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql()`
+    CREATE TABLE IF NOT EXISTS seo_events (
+      id           TEXT PRIMARY KEY,
+      event_type   TEXT NOT NULL DEFAULT 'page_view',
+      path         TEXT NOT NULL,
+      referrer     TEXT NOT NULL DEFAULT '',
+      source       TEXT NOT NULL DEFAULT 'direct',
+      medium       TEXT NOT NULL DEFAULT '',
+      campaign     TEXT NOT NULL DEFAULT '',
+      search_term  TEXT NOT NULL DEFAULT '',
+      user_agent   TEXT NOT NULL DEFAULT '',
+      device_type  TEXT NOT NULL DEFAULT 'unknown',
+      country      TEXT NOT NULL DEFAULT '',
+      city         TEXT NOT NULL DEFAULT '',
+      visitor_id   TEXT NOT NULL DEFAULT '',
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql()`CREATE INDEX IF NOT EXISTS idx_seo_events_created_at ON seo_events (created_at DESC)`;
+  await sql()`CREATE INDEX IF NOT EXISTS idx_seo_events_path ON seo_events (path)`;
+  await sql()`CREATE INDEX IF NOT EXISTS idx_seo_events_source ON seo_events (source)`;
   await seedBannersFromFile();
   schemaReady = true;
 }
@@ -1147,4 +1180,216 @@ export async function getNextDeliveryNoteNumber(): Promise<string> {
   const last = String(rows[0].number ?? 'DN-0000');
   const num = parseInt(last.replace('DN-', ''), 10) || 0;
   return `DN-${String(num + 1).padStart(4, '0')}`;
+}
+
+function clampDays(days: number | undefined): number {
+  if (!Number.isFinite(days)) return 30;
+  return Math.min(Math.max(Math.floor(days as number), 1), 365);
+}
+
+function normalizePath(value: string): string {
+  const trimmed = String(value || '/').trim();
+  if (!trimmed) return '/';
+  if (trimmed.startsWith('/')) return trimmed.slice(0, 512);
+  return `/${trimmed}`.slice(0, 512);
+}
+
+function toCount(value: unknown): number {
+  return Number(value ?? 0) || 0;
+}
+
+export async function saveSeoEvent(event: SeoEventInput): Promise<void> {
+  if (!hasDatabase()) return;
+  await ensureSchema();
+
+  const now = Date.now();
+  const id = `seo-${now}-${Math.random().toString(36).slice(2, 10)}`;
+  const eventType = event.eventType || 'page_view';
+  const pathValue = normalizePath(event.path);
+  const referrer = String(event.referrer || '').slice(0, 1024);
+  const source = String(event.source || 'direct').slice(0, 64).toLowerCase();
+  const medium = String(event.medium || '').slice(0, 64).toLowerCase();
+  const campaign = String(event.campaign || '').slice(0, 128);
+  const searchTerm = String(event.searchTerm || '').slice(0, 160);
+  const userAgent = String(event.userAgent || '').slice(0, 512);
+  const deviceType = String(event.deviceType || 'unknown').slice(0, 32).toLowerCase();
+  const country = String(event.country || '').slice(0, 64).toUpperCase();
+  const city = String(event.city || '').slice(0, 96);
+  const visitorId = String(event.visitorId || '').slice(0, 128);
+
+  await sql()`
+    INSERT INTO seo_events (
+      id, event_type, path, referrer, source, medium, campaign, search_term,
+      user_agent, device_type, country, city, visitor_id
+    ) VALUES (
+      ${id}, ${eventType}, ${pathValue}, ${referrer}, ${source}, ${medium}, ${campaign}, ${searchTerm},
+      ${userAgent}, ${deviceType}, ${country}, ${city}, ${visitorId}
+    )
+  `;
+}
+
+export async function getSeoAnalyticsSummary(days?: number): Promise<SeoAnalyticsSummary> {
+  const windowDays = clampDays(days);
+  const emptySummary: SeoAnalyticsSummary = {
+    windowDays,
+    totalViews: 0,
+    uniquePages: 0,
+    uniqueVisitors: 0,
+    organicViews: 0,
+    directViews: 0,
+    referralViews: 0,
+    socialViews: 0,
+    topPages: [],
+    topSources: [],
+    topSearchTerms: [],
+    topClicks: [],
+    brokenUrls: [],
+    devices: [],
+    dailyViews: [],
+  };
+
+  if (!hasDatabase()) return emptySummary;
+  await ensureSchema();
+
+  const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+  const [
+    overviewRows,
+    topPagesRows,
+    topSourcesRows,
+    topSearchRows,
+    topClickRows,
+    brokenUrlRows,
+    deviceRows,
+    dailyRows,
+    lastTrackedRows,
+  ] = await Promise.all([
+    sql()`
+      SELECT
+        COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS total_views,
+        COUNT(DISTINCT path) FILTER (WHERE event_type = 'page_view')::int AS unique_pages,
+        COUNT(DISTINCT NULLIF(visitor_id, '')) FILTER (WHERE event_type = 'page_view')::int AS unique_visitors,
+        COUNT(*) FILTER (WHERE event_type = 'page_view' AND source = 'organic')::int AS organic_views,
+        COUNT(*) FILTER (WHERE event_type = 'page_view' AND source = 'direct')::int AS direct_views,
+        COUNT(*) FILTER (WHERE event_type = 'page_view' AND source = 'referral')::int AS referral_views,
+        COUNT(*) FILTER (WHERE event_type = 'page_view' AND source = 'social')::int AS social_views
+      FROM seo_events
+      WHERE created_at >= ${since}
+    `,
+    sql()`
+      SELECT path, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'page_view'
+      GROUP BY path
+      ORDER BY views DESC
+      LIMIT 12
+    `,
+    sql()`
+      SELECT COALESCE(NULLIF(source, ''), 'direct') AS source, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'page_view'
+      GROUP BY source
+      ORDER BY views DESC
+      LIMIT 8
+    `,
+    sql()`
+      SELECT search_term, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'page_view'
+        AND search_term <> ''
+      GROUP BY search_term
+      ORDER BY views DESC
+      LIMIT 8
+    `,
+    sql()`
+      SELECT search_term, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'click'
+        AND search_term <> ''
+      GROUP BY search_term
+      ORDER BY views DESC
+      LIMIT 10
+    `,
+    sql()`
+      SELECT path, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'not_found'
+      GROUP BY path
+      ORDER BY views DESC
+      LIMIT 10
+    `,
+    sql()`
+      SELECT COALESCE(NULLIF(device_type, ''), 'unknown') AS device_type, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'page_view'
+      GROUP BY device_type
+      ORDER BY views DESC
+      LIMIT 6
+    `,
+    sql()`
+      SELECT TO_CHAR(date_trunc('day', created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS views
+      FROM seo_events
+      WHERE created_at >= ${since}
+        AND event_type = 'page_view'
+      GROUP BY date_trunc('day', created_at)
+      ORDER BY date_trunc('day', created_at)
+    `,
+    sql()`SELECT MAX(created_at) AS last_tracked_at FROM seo_events`,
+  ]);
+
+  const overview = overviewRows[0] ?? {};
+  const topPages = topPagesRows.map((row) => ({
+    label: String(row.path ?? '/'),
+    views: toCount(row.views),
+  }));
+  const topSources = topSourcesRows.map((row) => ({
+    label: String(row.source ?? 'direct'),
+    views: toCount(row.views),
+  }));
+  const topSearchTerms = topSearchRows.map((row) => ({
+    label: String(row.search_term ?? ''),
+    views: toCount(row.views),
+  }));
+  const topClicks = topClickRows.map((row) => ({
+    label: String(row.search_term ?? ''),
+    views: toCount(row.views),
+  }));
+  const brokenUrls = brokenUrlRows.map((row) => ({
+    label: String(row.path ?? '/'),
+    views: toCount(row.views),
+  }));
+  const devices = deviceRows.map((row) => ({
+    label: String(row.device_type ?? 'unknown'),
+    views: toCount(row.views),
+  }));
+  const dailyViews = dailyRows.map((row) => ({
+    date: String(row.day ?? ''),
+    views: toCount(row.views),
+  }));
+
+  const lastTrackedAt = lastTrackedRows[0]?.last_tracked_at;
+
+  return {
+    windowDays,
+    totalViews: toCount(overview.total_views),
+    uniquePages: toCount(overview.unique_pages),
+    uniqueVisitors: toCount(overview.unique_visitors),
+    organicViews: toCount(overview.organic_views),
+    directViews: toCount(overview.direct_views),
+    referralViews: toCount(overview.referral_views),
+    socialViews: toCount(overview.social_views),
+    topPages,
+    topSources,
+    topSearchTerms,
+    topClicks,
+    brokenUrls,
+    devices,
+    dailyViews,
+    lastTrackedAt: lastTrackedAt ? new Date(String(lastTrackedAt)).toISOString() : undefined,
+  };
 }
