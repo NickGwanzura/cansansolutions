@@ -631,11 +631,28 @@ export default function QuotesAdmin() {
                   </div>
                 </div>
                 {printing.notes && (
-                  <div className="mb-8 rounded-lg bg-zinc-50 border border-zinc-200 px-4 py-3">
+                  <div className="mb-6 rounded-lg bg-zinc-50 border border-zinc-200 px-4 py-3">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Notes &amp; Terms</p>
                     <p className="text-sm text-zinc-600 whitespace-pre-wrap">{printing.notes}</p>
                   </div>
                 )}
+                {/* Bank Details */}
+                <div className="mb-8 rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Bank Details</p>
+                  <p className="text-sm font-semibold text-zinc-900 mb-2">CANSAN SOLUTIONS</p>
+                  <div className="grid grid-cols-2 gap-4 text-xs text-zinc-600">
+                    <div>
+                      <p className="font-semibold text-zinc-700">CABS</p>
+                      <p>Currency: USD</p>
+                      <p>Account Number: 1149564261</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-zinc-700">CBZ</p>
+                      <p>Currency: USD</p>
+                      <p>Account Number: 01127428320019</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="border-t-2 border-zinc-900 pt-4 flex justify-between items-center">
                   <div>
                     <p className="text-xs font-semibold text-zinc-700">{company?.name || 'Cansan Solutions'}</p>
