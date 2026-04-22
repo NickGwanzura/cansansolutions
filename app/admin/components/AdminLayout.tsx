@@ -1,6 +1,7 @@
 'use client';
 
 import AdminSidebar from './AdminSidebar';
+import CommandPalette from './CommandPalette';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export default function AdminLayout({ children, onLogout }: AdminLayoutProps) {
       <div className="pt-14 lg:ml-60 lg:pt-0">
         {children}
       </div>
+      <CommandPalette />
     </div>
   );
 }

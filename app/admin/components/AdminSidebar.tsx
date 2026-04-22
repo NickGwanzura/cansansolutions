@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
-  { href: '/admin', label: 'Products', icon: PackageIcon },
+  { href: '/admin', label: 'Dashboard', icon: DashboardIcon },
+  { href: '/admin/products', label: 'Products', icon: PackageIcon },
   { href: '/admin/categories', label: 'Categories', icon: FolderIcon },
   { href: '/admin/banners', label: 'Banners', icon: ImageIcon },
   { href: '/admin/brands', label: 'Brands', icon: ImageStackIcon },
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/admin/expenses', label: 'Expenses', icon: ExpenseIcon },
   { href: '/admin/reports', label: 'Reports', icon: ReportsIcon },
   { href: '/admin/analytics', label: 'Analytics', icon: ChartIcon },
+  { href: '/admin/seo', label: 'SEO Analytics', icon: SeoIcon },
   { href: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
@@ -52,6 +54,14 @@ function ReceiptIcon({ className }: { className?: string }) {
   );
 }
 
+function DashboardIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h3A2.25 2.25 0 0 1 11.25 6v3A2.25 2.25 0 0 1 9 11.25H6A2.25 2.25 0 0 1 3.75 9V6Zm0 9A2.25 2.25 0 0 1 6 12.75h3A2.25 2.25 0 0 1 11.25 15v3A2.25 2.25 0 0 1 9 20.25H6A2.25 2.25 0 0 1 3.75 18v-3Zm9-9A2.25 2.25 0 0 1 15 3.75h3A2.25 2.25 0 0 1 20.25 6v3A2.25 2.25 0 0 1 18 11.25h-3A2.25 2.25 0 0 1 12.75 9V6Zm0 9a2.25 2.25 0 0 1 2.25-2.25h3A2.25 2.25 0 0 1 20.25 15v3A2.25 2.25 0 0 1 18 20.25h-3A2.25 2.25 0 0 1 12.75 18v-3Z" />
+    </svg>
+  );
+}
+
 function PackageIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -80,6 +90,15 @@ function ChartIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+    </svg>
+  );
+}
+
+function SeoIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75 21 21m-9.75-1.5a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 9 1.5 1.5L13.5 6.75" />
     </svg>
   );
 }

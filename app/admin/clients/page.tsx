@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Client } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
+import { downloadCsv } from '@/lib/csv-export';
 
 function getInitials(name: string) {
   return name.charAt(0).toUpperCase() || '?';
@@ -155,15 +156,35 @@ export default function ClientsAdmin() {
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-zinc-900">Clients</h1>
-          <button
-            onClick={() => startEdit()}
-            className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New Client
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => downloadCsv(
+                `clients-${new Date().toISOString().slice(0, 10)}.csv`,
+                [
+                  { header: 'Name', get: (c: Client) => c.name },
+                  { header: 'Company', get: (c: Client) => c.company || '' },
+                  { header: 'Email', get: (c: Client) => c.email },
+                  { header: 'Phone', get: (c: Client) => c.phone },
+                  { header: 'Address', get: (c: Client) => c.address },
+                  { header: 'Notes', get: (c: Client) => c.notes || '' },
+                ],
+                clients,
+              )}
+              disabled={clients.length === 0}
+              className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => startEdit()}
+              className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              New Client
+            </button>
+          </div>
         </div>
 
         {/* Search */}

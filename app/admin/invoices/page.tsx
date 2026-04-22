@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Invoice, InvoiceStatus, LineItem, CustomerInfo, CompanyProfile, Product, Client } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
+import { downloadCsv } from '@/lib/csv-export';
 
 const CURRENCIES = ['USD', 'KES', 'ZAR'];
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
@@ -286,15 +287,41 @@ export default function InvoicesAdmin() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-bold text-zinc-900">Invoices</h1>
-          <button
-            onClick={() => startEdit()}
-            className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New Invoice
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => downloadCsv(
+                `invoices-${new Date().toISOString().slice(0, 10)}.csv`,
+                [
+                  { header: 'Number', get: (i: Invoice) => i.number },
+                  { header: 'Status', get: (i: Invoice) => i.status },
+                  { header: 'Customer', get: (i: Invoice) => i.customer.name },
+                  { header: 'Company', get: (i: Invoice) => i.customer.company || '' },
+                  { header: 'Email', get: (i: Invoice) => i.customer.email },
+                  { header: 'Issue Date', get: (i: Invoice) => i.issueDate },
+                  { header: 'Due Date', get: (i: Invoice) => i.dueDate },
+                  { header: 'Subtotal', get: (i: Invoice) => i.subtotal.toFixed(2) },
+                  { header: 'Tax', get: (i: Invoice) => i.taxAmount.toFixed(2) },
+                  { header: 'Discount', get: (i: Invoice) => i.discount.toFixed(2) },
+                  { header: 'Total', get: (i: Invoice) => i.total.toFixed(2) },
+                  { header: 'Currency', get: (i: Invoice) => i.currency },
+                ],
+                invoices,
+              )}
+              disabled={invoices.length === 0}
+              className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => startEdit()}
+              className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              New Invoice
+            </button>
+          </div>
         </div>
 
         {/* List */}
