@@ -233,6 +233,18 @@ export default function InvoicesAdmin() {
     }
   };
 
+  const downloadRowPdf = async (inv: Invoice) => {
+    setPrinting(inv);
+    setDownloading(true);
+    try {
+      const { downloadElementAsPdf } = await import('@/lib/pdf');
+      await downloadElementAsPdf('invoice-print', `${inv.number}.pdf`);
+    } finally {
+      setDownloading(false);
+      setPrinting(null);
+    }
+  };
+
   // Stats
   const totalCount = invoices.length;
   const paidCount = invoices.filter((i) => i.status === 'paid').length;
@@ -330,7 +342,8 @@ export default function InvoicesAdmin() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1.5">
                         <button onClick={() => startEdit(inv)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Edit</button>
-                        <button onClick={() => setPrinting(inv)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Print</button>
+                        <button onClick={() => setPrinting(inv)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Preview</button>
+                        <button onClick={() => downloadRowPdf(inv)} disabled={downloading} className="rounded-lg border border-zinc-900 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60">PDF</button>
                         <button onClick={() => removeInvoice(inv.id)} className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100">Delete</button>
                       </div>
                     </td>

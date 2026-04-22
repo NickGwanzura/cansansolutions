@@ -235,6 +235,18 @@ export default function DeliveryNotesAdmin() {
     }
   };
 
+  const downloadRowPdf = async (n: DeliveryNote) => {
+    setPrinting(n);
+    setDownloading(true);
+    try {
+      const { downloadElementAsPdf } = await import('@/lib/pdf');
+      await downloadElementAsPdf('dn-print', `${n.number}.pdf`);
+    } finally {
+      setDownloading(false);
+      setPrinting(null);
+    }
+  };
+
   const totalCount = notes.length;
   const dispatchedCount = notes.filter((n) => n.status === 'dispatched').length;
   const deliveredCount = notes.filter((n) => n.status === 'delivered').length;
@@ -331,7 +343,8 @@ export default function DeliveryNotesAdmin() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1.5">
                         <button onClick={() => startEdit(n)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Edit</button>
-                        <button onClick={() => setPrinting(n)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Print</button>
+                        <button onClick={() => setPrinting(n)} className="rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50">Preview</button>
+                        <button onClick={() => downloadRowPdf(n)} disabled={downloading} className="rounded-lg border border-zinc-900 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60">PDF</button>
                         <button onClick={() => removeDN(n.id)} className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100">Delete</button>
                       </div>
                     </td>

@@ -59,6 +59,7 @@ function fmtDate(dateStr: string) {
 export default function ReportsAdmin() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetchReport();
@@ -78,6 +79,17 @@ export default function ReportsAdmin() {
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
     window.location.reload();
+  };
+
+  const downloadReport = async () => {
+    setDownloading(true);
+    try {
+      const { downloadElementAsPdf } = await import('@/lib/pdf');
+      const stamp = new Date().toISOString().slice(0, 10);
+      await downloadElementAsPdf('report-print', `financial-report-${stamp}.pdf`, '', 'paginate');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (loading) {
@@ -111,7 +123,19 @@ export default function ReportsAdmin() {
   return (
     <AdminLayout onLogout={handleLogout}>
       <main className="p-6 space-y-6">
-        <h1 className="text-xl font-bold text-zinc-900">Financial Reports</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-zinc-900">Financial Reports</h1>
+          <button
+            onClick={downloadReport}
+            disabled={downloading}
+            className="flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:opacity-60"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+            {downloading ? 'Generating…' : 'Download PDF'}
+          </button>
+        </div>
+
+        <div id="report-print" className="space-y-6 bg-white">
 
         {/* 1. Summary Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -284,6 +308,7 @@ export default function ReportsAdmin() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </main>
     </AdminLayout>
