@@ -5,7 +5,7 @@ import { SITE_EMAIL } from '@/lib/site';
 
 const WA_NUMBER = '263773754747';
 const WA_DISPLAY = '+263 77 375 4747';
-const DEV_WA_NUMBER = '263777816368';
+const DEV_URL = 'https://www.spiritus.co.zw';
 
 const quickLinks = [
   { href: '/', label: 'Home' },
@@ -292,7 +292,7 @@ export function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
             <span className="text-zinc-500">Developed by</span>
             <a
-              href={`https://wa.me/${DEV_WA_NUMBER}?text=${encodeURIComponent("Hi NT Global, I'm interested in your web development services.")}`}
+              href={DEV_URL}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 font-semibold text-red-500 transition hover:text-red-400"
@@ -300,10 +300,10 @@ export function Footer() {
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
               </svg>
-              NT Global
+              Spiritus
             </a>
             <span className="text-zinc-600">|</span>
-            <span className="text-zinc-500">Web & Software Solutions</span>
+            <span className="text-zinc-500">www.spiritus.co.zw</span>
           </div>
         </div>
       </div>
