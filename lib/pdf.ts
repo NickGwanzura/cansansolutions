@@ -11,7 +11,13 @@ export async function downloadElementAsPdf(
   watermarkText: string = "CANSAN SOLUTIONS",
   mode: PdfMode = "fit",
 ): Promise<void> {
-  const el = document.getElementById(elementId);
+  // Wait for the target to mount — callers often trigger us immediately after
+  // setState, before React has committed the preview modal to the DOM.
+  let el = document.getElementById(elementId);
+  if (!el) {
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+    el = document.getElementById(elementId);
+  }
   if (!el) return;
 
   // Let React paint and all images finish loading before capture.
