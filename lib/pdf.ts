@@ -33,16 +33,18 @@ export async function downloadElementAsPdf(
     ),
   );
 
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import("html2canvas"),
+  // html-to-image renders through SVG <foreignObject>, which lets the browser
+  // paint natively — so modern CSS color functions (oklch/lab from Tailwind v4)
+  // don't trip a CSS-parser like html2canvas does.
+  const [{ toCanvas }, { jsPDF }] = await Promise.all([
+    import("html-to-image"),
     import("jspdf"),
   ]);
 
-  const canvas = await html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
+  const canvas = await toCanvas(el, {
+    pixelRatio: 2,
     backgroundColor: "#ffffff",
+    cacheBust: true,
   });
 
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
