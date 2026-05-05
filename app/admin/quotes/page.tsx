@@ -5,7 +5,7 @@ import type { Quote, QuoteStatus, LineItem, CustomerInfo, CompanyProfile, Produc
 import AdminLayout from '../components/AdminLayout';
 import { downloadCsv } from '@/lib/csv-export';
 
-const CURRENCIES = ['USD', 'KES', 'ZAR'];
+const CURRENCIES = ['USD', 'KES', 'ZAR', 'ZWL'];
 const STATUSES: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired'];
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Receipt, PaymentMethod, LineItem, CustomerInfo, CompanyProfile, Product, Client } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
-const CURRENCIES = ['USD', 'KES', 'ZAR'];
+const CURRENCIES = ['USD', 'KES', 'ZAR', 'ZWL'];
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'cash', label: 'Cash' },
   { value: 'card', label: 'Card' },

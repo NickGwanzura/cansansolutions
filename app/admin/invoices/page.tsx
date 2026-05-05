@@ -5,7 +5,7 @@ import type { Invoice, InvoiceStatus, LineItem, CustomerInfo, CompanyProfile, Pr
 import AdminLayout from '../components/AdminLayout';
 import { downloadCsv } from '@/lib/csv-export';
 
-const CURRENCIES = ['USD', 'KES', 'ZAR'];
+const CURRENCIES = ['USD', 'KES', 'ZAR', 'ZWL'];
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
 
 const STATUS_COLORS: Record<InvoiceStatus, string> = {
