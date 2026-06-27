@@ -166,6 +166,12 @@ async function ensureSchema(): Promise<void> {
   `;
   // Add tin_number column if it doesn't exist (migration for existing databases)
   await sql()`ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS tin_number TEXT NOT NULL DEFAULT ''`;
+  // Ensure existing row has the correct TIN and VAT values
+  await sql()`
+    UPDATE company_profile
+    SET tin_number = '2001360981', vat_number = '220445061'
+    WHERE id = 'default' AND (tin_number IS NULL OR tin_number = '' OR vat_number IS NULL OR vat_number = '')
+  `;
   await sql()`
     INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, logo_url)
     VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '/images/brand/cansan-logo.png')
@@ -905,8 +911,8 @@ export async function getCompanyProfile(): Promise<CompanyProfile> {
   if (rows.length > 0) return rowToCompanyProfile(rows[0]);
   // Seed default if missing
   const inserted = await sql()`
-    INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '/images/brand/cansan-logo.png')
+    INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, vat_number, tin_number, logo_url)
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
     RETURNING *
   `;
