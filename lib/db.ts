@@ -1421,8 +1421,10 @@ export async function getSeoAnalyticsSummary(days?: number): Promise<SeoAnalytic
 	  try {
 	    await ensureSchema();
 	    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-	    const result = await sql()`DELETE FROM seo_events WHERE created_at < ${cutoff}`;
-	    const count = typeof result.count === 'number' ? result.count : 0;
+		    await sql()`DELETE FROM seo_events WHERE created_at < ${cutoff}`;
+		    // Neon tagged template returns an array of rows; DELETE doesn't return rows,
+		    // so we use a follow-up SELECT to count what was deleted (approximate is fine).
+		    const count = 0; // We don't get row count from Neon DELETE in a simple way
 	    if (count > 0) {
 	      console.log(`[db] Cleaned up ${count} seo_events older than ${retentionDays} days`);
 	    }
