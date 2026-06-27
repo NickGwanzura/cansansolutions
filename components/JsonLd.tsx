@@ -259,6 +259,31 @@ interface OrganizationJsonLdProps {
   url?: string;
 }
 
+export function WebsiteJsonLd({ url = SITE_URL }: OrganizationJsonLdProps) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url,
+    description: SITE_NAME + ' — Zimbabwe\'s trusted tech retailer.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${url}/products?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export function OrganizationJsonLd({ url = SITE_URL }: OrganizationJsonLdProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
