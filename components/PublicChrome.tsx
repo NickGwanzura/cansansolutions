@@ -20,7 +20,7 @@ export default function PublicChrome({ children }: { children: React.ReactNode }
   return (
     <>
       <HeaderWrapper />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <Footer />
       <FloatingWhatsApp />
       <Suspense fallback={null}>

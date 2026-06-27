@@ -1,18 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 import Groq from 'groq-sdk';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
-
-async function checkAuth() {
-  const store = await cookies();
-  return store.get('admin_auth')?.value === ADMIN_PASSWORD;
-}
-
 export async function POST(req: Request) {
-  if (!(await checkAuth())) {
+  if (!(await checkAdminAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

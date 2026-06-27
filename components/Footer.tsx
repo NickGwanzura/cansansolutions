@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { BrandLogo } from './BrandLogo';
 import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
-import { SITE_EMAIL } from '@/lib/site';
+import { SITE_EMAIL, SITE_PHONE } from '@/lib/site';
+import { WA_NUMBER } from '@/lib/site';
 
-const WA_NUMBER = '263773754747';
-const WA_DISPLAY = '+263 77 375 4747';
+const WA_DISPLAY = SITE_PHONE;
 const DEV_URL = 'https://www.spiritus.co.zw';
 
 const quickLinks = [

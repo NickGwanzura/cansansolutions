@@ -27,6 +27,13 @@ echo "[startup] Starting Cansan Solutions"
 echo "[startup] PORT=${PORT:-3000}"
 echo "[startup] DATA_DIR=$DATA_DIR"
 
+# Warn about default admin password
+if [ -z "${ADMIN_PASSWORD:-}" ]; then
+  echo "[startup] ⚠️  WARNING: ADMIN_PASSWORD is not set! Using default password."
+elif [ "$ADMIN_PASSWORD" = "cansan2024" ]; then
+  echo "[startup] ⚠️  WARNING: ADMIN_PASSWORD is set to the default value. Change it for production."
+fi
+
 seed_file "categories.json"
 seed_file "products.json"
 

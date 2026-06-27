@@ -38,6 +38,13 @@ else
   echo "[Setup] No seed file found at /app/data.seed/products.json"
 fi
 
+# Warn about default admin password
+if [ -z "${ADMIN_PASSWORD:-}" ]; then
+  echo "[startup] ⚠️  WARNING: ADMIN_PASSWORD is not set! Using default password."
+elif [ "$ADMIN_PASSWORD" = "cansan2024" ]; then
+  echo "[startup] ⚠️  WARNING: ADMIN_PASSWORD is set to the default value. Change it for production."
+fi
+
 echo "[Setup] Permissions fixed, switching to nextjs user..."
 echo ""
 

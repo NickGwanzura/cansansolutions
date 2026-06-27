@@ -596,7 +596,7 @@ export default function QuotesAdmin() {
                     <p className="text-[11px] text-zinc-400">{company?.tagline || 'Technology Solutions'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Quotation</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Proforma Invoice</p>
                     <p className="text-3xl font-black text-zinc-900 tracking-tight">{printing.number}</p>
                     <span className={`mt-2 inline-block rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                       printing.status === 'accepted' ? 'bg-green-100 text-green-700' :
@@ -616,7 +616,8 @@ export default function QuotesAdmin() {
                     {(company?.city || company?.country) && <p className="text-xs text-zinc-500">{[company?.city, company?.country].filter(Boolean).join(', ')}</p>}
                     {company?.phone && <p className="text-xs text-zinc-500 mt-1">{company.phone}</p>}
                     {company?.email && <p className="text-xs text-zinc-500">{company.email}</p>}
-                    {company?.vatNumber && <p className="text-xs text-zinc-400 mt-1">VAT: {company.vatNumber}</p>}
+                    {company?.tinNumber && <p className="text-xs text-zinc-400 mt-1">TIN: {company.tinNumber}</p>}
+                    {company?.vatNumber && <p className="text-xs text-zinc-400">VAT: {company.vatNumber}</p>}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Prepared For</p>

@@ -5,6 +5,8 @@ export const SITE_DESCRIPTION =
 export const SITE_EMAIL = 'info@cansansolutions.co.zw';
 export const SITE_PHONE = '+263 77 375 4747';
 export const SITE_PHONE_E164 = '+263773754747';
+// WhatsApp number without the + prefix (as used in wa.me links)
+export const WA_NUMBER = '263773754747';
 export const SITE_ADDRESS = {
   streetAddress: 'Shop 7, ZB House, Corner Speke & 1st Street',
   addressLocality: 'Harare',

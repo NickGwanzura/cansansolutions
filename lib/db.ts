@@ -159,13 +159,16 @@ async function ensureSchema(): Promise<void> {
       email         TEXT NOT NULL DEFAULT '',
       website       TEXT NOT NULL DEFAULT '',
       vat_number    TEXT NOT NULL DEFAULT '',
+      tin_number    TEXT NOT NULL DEFAULT '',
       logo_url      TEXT NOT NULL DEFAULT '/images/brand/cansan-logo.png',
       updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  // Add tin_number column if it doesn't exist (migration for existing databases)
+  await sql()`ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS tin_number TEXT NOT NULL DEFAULT ''`;
   await sql()`
-    INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '', '/images/brand/cansan-logo.png')
+    INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, logo_url)
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
   `;
   await sql()`
@@ -479,6 +482,12 @@ export async function deleteBrand(id: string): Promise<boolean> {
 export async function getProduct(id: string): Promise<ReturnType<typeof rowToProduct> | null> {
   await ensureSchema();
   const rows = await sql()`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+  return rows.length > 0 ? rowToProduct(rows[0]) : null;
+}
+
+export async function getProductBySlug(slug: string): Promise<ReturnType<typeof rowToProduct> | null> {
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM products WHERE slug = ${slug} LIMIT 1`;
   return rows.length > 0 ? rowToProduct(rows[0]) : null;
 }
 
@@ -884,6 +893,7 @@ function rowToCompanyProfile(row: Record<string, unknown>): CompanyProfile {
     email: String(row.email ?? ''),
     website: String(row.website ?? ''),
     vatNumber: String(row.vat_number ?? ''),
+    tinNumber: String(row.tin_number ?? ''),
     logoUrl: String(row.logo_url ?? '/images/brand/cansan-logo.png'),
     updatedAt: toIsoString(row.updated_at),
   };
@@ -910,7 +920,7 @@ export async function saveCompanyProfile(profile: CompanyProfile): Promise<Compa
   const now = new Date();
   const rows = await sql()`
     INSERT INTO company_profile (
-      id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, logo_url, updated_at
+      id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, logo_url, updated_at
     ) VALUES (
       'default',
       ${profile.name},
@@ -923,6 +933,7 @@ export async function saveCompanyProfile(profile: CompanyProfile): Promise<Compa
       ${profile.email},
       ${profile.website},
       ${profile.vatNumber},
+      ${profile.tinNumber},
       ${profile.logoUrl},
       ${now}
     )
@@ -937,6 +948,7 @@ export async function saveCompanyProfile(profile: CompanyProfile): Promise<Compa
       email         = EXCLUDED.email,
       website       = EXCLUDED.website,
       vat_number    = EXCLUDED.vat_number,
+      tin_number    = EXCLUDED.tin_number,
       logo_url      = EXCLUDED.logo_url,
       updated_at    = ${now}
     RETURNING *
@@ -1251,6 +1263,9 @@ export async function getSeoAnalyticsSummary(days?: number): Promise<SeoAnalytic
   if (!hasDatabase()) return emptySummary;
   await ensureSchema();
 
+  // Opportunistic cleanup: delete events older than 90 days (runs ~once per analytics fetch)
+  cleanupSeoEvents(90).catch(() => {});
+
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
   const [
     overviewRows,
@@ -1390,6 +1405,30 @@ export async function getSeoAnalyticsSummary(days?: number): Promise<SeoAnalytic
     brokenUrls,
     devices,
     dailyViews,
-    lastTrackedAt: lastTrackedAt ? new Date(String(lastTrackedAt)).toISOString() : undefined,
-  };
-}
+	    lastTrackedAt: lastTrackedAt ? new Date(String(lastTrackedAt)).toISOString() : undefined,
+	  };
+	}
+
+	/**
+	 * Delete seo_events older than the specified number of days.
+	 * Returns the number of deleted rows, or 0 if no DB is configured.
+	 *
+	 * Safe to call on every analytics fetch — DELETE overhead is negligible
+	 * with the INDEX on created_at, and keeps the table from growing unbounded.
+	 */
+	export async function cleanupSeoEvents(retentionDays = 90): Promise<number> {
+	  if (!hasDatabase()) return 0;
+	  try {
+	    await ensureSchema();
+	    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+	    const result = await sql()`DELETE FROM seo_events WHERE created_at < ${cutoff}`;
+	    const count = typeof result.count === 'number' ? result.count : 0;
+	    if (count > 0) {
+	      console.log(`[db] Cleaned up ${count} seo_events older than ${retentionDays} days`);
+	    }
+	    return count;
+	  } catch (error) {
+	    console.error('[db] Failed to cleanup seo_events:', error);
+	    return 0;
+	  }
+	}

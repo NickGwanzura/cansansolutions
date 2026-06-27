@@ -112,8 +112,14 @@ const BRAND_ALIASES: Record<string, string> = {
   samsung: 'samsung',
   'tp-link': 'tp-link',
   tplink: 'tp-link',
-  tp: 'tp-link',
 };
+
+/** Word-boundary regex to avoid substring false-positives like "tp" matching "laptop" */
+function wordBoundaryMatch(text: string, alias: string): boolean {
+  // Escape special regex characters in the alias
+  const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text);
+}
 
 export function getBrandBySlug(slug: string) {
   return STORE_BRANDS.find((brand) => brand.slug === slug);
@@ -134,7 +140,8 @@ export function extractBrandSlugFromProduct(product: Product): string | null {
 
   const productName = product.name.toLowerCase();
   for (const [alias, slug] of Object.entries(BRAND_ALIASES)) {
-    if (productName.includes(alias)) {
+    // Use word-boundary matching to avoid false positives (e.g. "tp" in "laptop")
+    if (wordBoundaryMatch(productName, alias)) {
       return slug;
     }
   }

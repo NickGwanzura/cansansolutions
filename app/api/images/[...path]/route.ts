@@ -4,6 +4,20 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
+const MIME_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.svg': 'image/svg+xml',
+  '.gif': 'image/gif',
+  '.ico': 'image/x-icon',
+  '.bmp': 'image/bmp',
+  '.tiff': 'image/tiff',
+  '.tif': 'image/tiff',
+};
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ path: string[] }> }
@@ -24,17 +38,13 @@ export async function GET(
     try {
       const buffer = await fs.readFile(uploadsFilePath);
       const ext = path.extname(relativePath).toLowerCase();
-      const contentType = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.webp': 'image/webp',
-        '.avif': 'image/avif',
-        '.svg': 'image/svg+xml',
-      }[ext] || 'application/octet-stream';
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
       
       return new NextResponse(buffer, {
-        headers: { 'Content-Type': contentType },
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400, immutable',
+        },
       });
     } catch {
       // Fallback to public directory (build-time files)
@@ -43,17 +53,13 @@ export async function GET(
       
       const buffer = await fs.readFile(publicFilePath);
       const ext = path.extname(relativePath).toLowerCase();
-      const contentType = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.webp': 'image/webp',
-        '.avif': 'image/avif',
-        '.svg': 'image/svg+xml',
-      }[ext] || 'application/octet-stream';
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
       
       return new NextResponse(buffer, {
-        headers: { 'Content-Type': contentType },
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400, immutable',
+        },
       });
     }
   } catch (error) {

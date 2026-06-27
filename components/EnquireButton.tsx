@@ -1,11 +1,10 @@
 import Link from 'next/link';
+import { WA_NUMBER } from '@/lib/site';
 
 type Props = {
   text?: string;
   className?: string;
 };
-
-const WA_NUMBER = '263773754747';
 
 export function EnquireButton({
   className = '',

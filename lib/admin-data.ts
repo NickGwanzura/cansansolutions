@@ -1,4 +1,4 @@
-import { getProducts, getProduct, saveProduct, deleteProduct, getCategories, replaceProducts } from './db';
+import { getProducts, getProduct, getProductBySlug as dbGetProductBySlug, saveProduct, deleteProduct, getCategories, replaceProducts } from './db';
 import type { Product } from './types';
 import { normalizeBundleItems, normalizeProductType } from './catalog';
 
@@ -84,9 +84,8 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const products = (await getProducts()) as ProductRecord[];
-    const found = products.find((p) => p.slug === slug);
-    return found ? mapRow(found) : null;
+    const data = await dbGetProductBySlug(slug);
+    return data ? mapRow(data as unknown as ProductRecord) : null;
   } catch (error) {
     console.error('[getProductBySlug] Failed:', error);
     return null;

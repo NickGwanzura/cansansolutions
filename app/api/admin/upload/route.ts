@@ -1,21 +1,14 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { UTApi } from 'uploadthing/server';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
-
-async function checkAuth() {
-  const store = await cookies();
-  return store.get('admin_auth')?.value === ADMIN_PASSWORD;
-}
 
 const utapi = new UTApi();
 
 export async function POST(req: Request) {
   try {
-    if (!(await checkAuth())) {
+    if (!(await checkAdminAuth())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,6 +17,12 @@ export async function POST(req: Request) {
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    // Limit file size to 10MB
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
     }
 
     const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase();

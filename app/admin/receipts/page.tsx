@@ -584,7 +584,8 @@ export default function ReceiptsAdmin() {
                     {(company?.city || company?.country) && <p className="text-xs text-zinc-500">{[company?.city, company?.country].filter(Boolean).join(', ')}</p>}
                     {company?.phone && <p className="text-xs text-zinc-500 mt-1">{company.phone}</p>}
                     {company?.email && <p className="text-xs text-zinc-500">{company.email}</p>}
-                    {company?.vatNumber && <p className="text-xs text-zinc-400 mt-1">VAT: {company.vatNumber}</p>}
+                    {company?.tinNumber && <p className="text-xs text-zinc-400 mt-1">TIN: {company.tinNumber}</p>}
+                    {company?.vatNumber && <p className="text-xs text-zinc-400">VAT: {company.vatNumber}</p>}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Received From</p>

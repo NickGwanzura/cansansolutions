@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
 import { readProducts } from '@/lib/admin-data';
-import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
+import { CATALOG_CATEGORIES, getCategoryHref, isSaImportProduct } from '@/lib/catalog';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
@@ -126,16 +126,6 @@ const HOMEPAGE_FEATURED_COUNT = 8;
 const HOMEPAGE_LAPTOP_COUNT = 2;
 const HOMEPAGE_SA_IMPORT_COUNT = 3;
 const HARARE_TIME_ZONE = 'Africa/Harare';
-
-function isSaImportProduct(product: Product) {
-  const normalizedTags = product.tags.map((tag) => tag.toLowerCase().trim());
-  return (
-    product.category === 'sa-imports' ||
-    normalizedTags.includes('sa-import') ||
-    normalizedTags.includes('firstshop') ||
-    normalizedTags.includes('delivery-5-days')
-  );
-}
 
 function isLaptopProduct(product: Product) {
   return product.category.toLowerCase().includes('laptop');
@@ -651,7 +641,7 @@ export default async function HomePage() {
 
             <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-zinc-900">Trending This Week</h3>
+                <h3 className="text-xl font-bold text-zinc-900">More to Explore</h3>
                 <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">Fast selling</span>
               </div>
 

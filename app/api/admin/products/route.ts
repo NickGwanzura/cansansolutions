@@ -1,27 +1,15 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { readProducts, createProduct } from '@/lib/admin-data';
 import { normalizeBundleItems, normalizeProductType } from '@/lib/catalog';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
-
-async function checkAuth() {
-  try {
-    const store = await cookies();
-    return store.get('admin_auth')?.value === ADMIN_PASSWORD;
-  } catch (e) {
-    console.error('[Auth] Cookie check failed:', e);
-    return false;
-  }
-}
 
 export async function GET() {
   try {
     console.log('[API GET] Starting request...');
     
-    const authed = await checkAuth();
+    const authed = await checkAdminAuth();
     console.log('[API GET] Auth result:', authed);
     
     if (!authed) {
@@ -37,8 +25,7 @@ export async function GET() {
     console.error('[API GET] CRITICAL ERROR:', error);
     return NextResponse.json({ 
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined,
     }, { status: 500 });
   }
 }
@@ -47,7 +34,7 @@ export async function POST(req: Request) {
   try {
     console.log('[API POST] Starting...');
     
-    if (!(await checkAuth())) {
+    if (!(await checkAdminAuth())) {
       console.log('[API POST] Auth failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -81,8 +68,7 @@ export async function POST(req: Request) {
     console.error('[API POST] ERROR:', error);
     return NextResponse.json({ 
       error: 'Failed to create product',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined,
     }, { status: 500 });
   }
 }

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { ProductJsonLd } from '@/components/JsonLd';
 import { AddToCartButton } from './AddToCartButton';
 import { getProductBySlug, readProducts } from '@/lib/admin-data';
-import { getCategoryBySlug, getCategoryHref, isBundleProduct } from '@/lib/catalog';
+import { getCategoryBySlug, getCategoryHref, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
 import { truncateText, stripHtml, buildAbsoluteMetadata } from '@/lib/seo';
 import { formatCurrency } from '@/lib/utils';
 import { getBrandForProduct, getBrandHref } from '@/lib/brands';
@@ -221,9 +221,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
   const stockCount = typeof product.stockCount === 'number' ? product.stockCount : undefined;
   const lowStock = product.inStock && stockCount !== undefined && stockCount <= 5;
   const criticallyLowStock = product.inStock && stockCount !== undefined && stockCount <= 2;
-  const isSaImportProduct =
-    product.category === 'sa-imports' ||
-    product.tags.some((tag) => ['sa-import', 'firstshop', 'delivery-5-days'].includes(tag.toLowerCase()));
+  const isSaImport = isSaImportProduct(product);
 
   const seoHeadline = isExternalSsd
     ? `${product.name} External SSD ${connector} ${interfaceVersion} in Zimbabwe`
@@ -242,8 +240,8 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
       ]
     : [
         'Genuine product sourced from verified suppliers',
-        isSaImportProduct ? 'Imported from South Africa with a clear 5-day lead time' : 'Live stock confirmation before payment',
-        isSaImportProduct ? 'Delivery target is about 5 days after order confirmation' : 'Harare delivery and nationwide courier support',
+        isSaImport ? 'Imported from South Africa with a clear 5-day lead time' : 'Live stock confirmation before payment',
+        isSaImport ? 'Delivery target is about 5 days after order confirmation' : 'Harare delivery and nationwide courier support',
         'Warranty and after-sales guidance from Cansan',
       ];
 
@@ -399,7 +397,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                   Fast Selling
                 </span>
               ) : null}
-              {isSaImportProduct ? (
+              {isSaImport ? (
                 <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
                   5-Day Delivery from SA
                 </span>
@@ -466,7 +464,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               <p className="mt-1 text-xs text-zinc-600">
                 Price indicative. Confirm final stock, delivery, and quote on WhatsApp before checkout.
               </p>
-              {isSaImportProduct ? (
+              {isSaImport ? (
                 <p className="mt-1 text-xs font-semibold text-red-700">
                   This item is sourced from South Africa and usually arrives within 5 days after confirmation.
                 </p>
@@ -501,7 +499,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               {[
                 {
                   title: 'Zimbabwe Delivery',
-                  body: isSaImportProduct
+                  body: isSaImport
                     ? 'Imported from South Africa with an expected 5-day delivery lead time in Zimbabwe.'
                     : 'Harare same-day options plus nationwide courier coordination for stocked items.',
                 },
@@ -646,7 +644,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
             {[
               {
                 title: 'Harare & Nationwide Delivery',
-                body: isSaImportProduct
+                body: isSaImport
                   ? 'South Africa import route with around 5-day delivery after order confirmation.'
                   : 'Same-day delivery options in Harare and nationwide courier for confirmed stock.',
               },

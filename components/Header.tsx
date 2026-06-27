@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/cart-store';
 import { BrandLogo } from './BrandLogo';
 import { CartDrawer } from './CartDrawer';
+import { WA_NUMBER } from '@/lib/site';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -51,7 +52,7 @@ export function Header() {
               </span>
             </div>
             <a 
-              href="https://wa.me/263773754747" 
+              href={`https://wa.me/${WA_NUMBER}`} 
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 hover:text-white transition"
@@ -87,6 +88,7 @@ export function Header() {
                 <Link
                   key={href}
                   href={href}
+                  aria-current={active ? 'page' : undefined}
                   className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'text-zinc-900'

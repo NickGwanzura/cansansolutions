@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { useCartStore } from '@/lib/cart-store';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
-import { getCategoryLabel, isBundleProduct } from '@/lib/catalog';
+import { getCategoryLabel, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
 import { getBrandForProduct } from '@/lib/brands';
 
 type ProductCardProps = {
@@ -155,16 +155,6 @@ function getStockText(product: Product): { label: string; tone: string } {
   return { label: 'In Stock', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
 }
 
-function isSaImportProduct(product: Product) {
-  const normalizedTags = product.tags.map((tag) => tag.toLowerCase().trim());
-  return (
-    product.category === 'sa-imports' ||
-    normalizedTags.includes('sa-import') ||
-    normalizedTags.includes('firstshop') ||
-    normalizedTags.includes('delivery-5-days')
-  );
-}
-
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart);
   const [adding, setAdding] = useState(false);
@@ -230,7 +220,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 event.preventDefault();
                 onQuickView(product);
               }}
-              className="absolute bottom-3 right-3 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100"
+              className="absolute bottom-3 right-3 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             >
               Quick View
             </button>

@@ -375,3 +375,18 @@ export function normalizeBundleItems(value: unknown): string[] {
 export function isBundleProduct(product: { productType?: unknown }): boolean {
   return normalizeProductType(product.productType) === 'bundle';
 }
+
+/**
+ * Check whether a product belongs to the "SA Imports" category based on its
+ * assigned category slug and tags.
+ */
+export function isSaImportProduct(product: {
+  category?: string;
+  tags?: string[];
+}): boolean {
+  const cat = (product.category || '').toLowerCase();
+  if (cat === 'sa-imports' || cat === 'sa_imports') return true;
+  return (product.tags || []).some(
+    (tag) => tag.toLowerCase() === 'sa-import' || tag.toLowerCase() === 'sa imports',
+  );
+}

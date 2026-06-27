@@ -1,23 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { deleteProductById, importProducts } from '@/lib/admin-data';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
-
-async function checkAuth() {
-  try {
-    const store = await cookies();
-    return store.get('admin_auth')?.value === ADMIN_PASSWORD;
-  } catch (e) {
-    return false;
-  }
-}
 
 export async function DELETE(req: Request) {
   try {
-    if (!(await checkAuth())) {
+    if (!(await checkAdminAuth())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -60,7 +49,7 @@ export async function DELETE(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    if (!(await checkAuth())) {
+    if (!(await checkAdminAuth())) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

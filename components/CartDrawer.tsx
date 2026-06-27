@@ -5,9 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
-import { getWhatsAppOrderMessage, formatCurrency } from '@/lib/utils';
-
-const WA_NUMBER = '263773754747';
+import { getWhatsAppOrderMessage, buildWhatsAppPreview, formatCurrency } from '@/lib/utils';
+import { WA_NUMBER } from '@/lib/site';
 
 type Props = { open: boolean; onClose: () => void };
 type Step = 'cart' | 'review';
@@ -86,6 +85,9 @@ export function CartDrawer({ open, onClose }: Props) {
           {/* Drawer */}
           <motion.div
             key="drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Shopping cart"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -315,7 +317,7 @@ export function CartDrawer({ open, onClose }: Props) {
                         Message preview
                       </p>
                       <div className="rounded-xl bg-green-50 border border-green-100 p-3 text-[11px] text-zinc-600 leading-relaxed whitespace-pre-wrap font-mono">
-                        {buildPreview(items, note)}
+                        {buildWhatsAppPreview(items, note)}
                       </div>
                     </div>
                   </motion.div>
@@ -390,14 +392,3 @@ export function CartDrawer({ open, onClose }: Props) {
   );
 }
 
-// Build a human-readable preview of the WhatsApp message
-function buildPreview(items: import('@/lib/types').CartItem[], note: string) {
-  const lines = [
-    "Hi Cansan Solutions, I'd like to order:",
-    ...items.map((i) => `• ${i.name} ×${i.qty}  —  $${(i.price * i.qty).toFixed(2)}`),
-    `\nTotal: $${items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)}`,
-  ];
-  if (note.trim()) lines.push(`\nNote: ${note.trim()}`);
-  lines.push('\nPlease confirm availability & delivery details.');
-  return lines.join('\n');
-}
