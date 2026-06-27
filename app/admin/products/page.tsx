@@ -6,6 +6,7 @@ import type { Product, Category } from '@/lib/types';
 import { CATALOG_CATEGORIES, getCategoryLabel, isBundleProduct } from '@/lib/catalog';
 import AdminLayout from '../components/AdminLayout';
 import AdminAuthGate from '../components/AdminAuthGate';
+import ConfirmModal from '../components/ConfirmModal';
 
 const CATEGORIES = CATALOG_CATEGORIES as Category[];
 
@@ -185,6 +186,7 @@ function ProductForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState<FormData>(initial);
   const [slugManual, setSlugManual] = useState(!!initial.slug);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [error, setError] = useState('');
   const [addAnother, setAddAnother] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'variants'>('basic');
@@ -319,8 +321,8 @@ function ProductForm({
     if (saving) return;
 
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm('You have unsaved changes. Discard them?');
-      if (!confirmed) return;
+      setConfirmDiscard(true);
+      return;
     }
 
     onClose();
@@ -715,6 +717,16 @@ function ProductForm({
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmDiscard}
+        title="Discard changes?"
+        message="You have unsaved changes. Discard them?"
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        variant="default"
+        onConfirm={() => { setConfirmDiscard(false); onClose(); }}
+        onCancel={() => setConfirmDiscard(false)}
+      />
     </div>
   );
 }

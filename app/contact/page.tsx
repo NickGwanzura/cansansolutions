@@ -26,7 +26,7 @@ const contactItems = [
       </svg>
     ),
     color: 'bg-green-50 text-green-600',
-    btnClass: 'bg-green-600 hover:bg-green-700 text-white',
+    btnClass: 'bg-red-600 hover:bg-red-700 text-white',
     btnLabel: 'Open WhatsApp',
   },
   {
@@ -41,7 +41,7 @@ const contactItems = [
       </svg>
     ),
     color: 'bg-blue-50 text-blue-600',
-    btnClass: 'bg-blue-600 hover:bg-blue-700 text-white',
+    btnClass: 'bg-red-600 hover:bg-red-700 text-white',
     btnLabel: 'Call Now',
   },
   {
@@ -205,7 +205,7 @@ export default function ContactPage() {
       </section>
 
       {/* Final WhatsApp CTA */}
-      <section className="bg-green-600 px-6 py-12 text-center text-white">
+      <section className="bg-red-600 px-6 py-12 text-center text-white">
         <h2 className="text-xl font-bold">Still have questions?</h2>
         <p className="mt-1 text-green-100 text-sm">Send us a message. We usually respond within minutes.</p>
         <a

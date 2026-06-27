@@ -239,6 +239,7 @@ export default function CategoriesPage() {
                     onChange={(e) => setEditing({ ...editing, id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm font-mono"
                     placeholder="e.g. laptops"
+                    autoFocus
                     required
                     disabled={!!categories.find((c) => c.id === editing.id)}
                   />

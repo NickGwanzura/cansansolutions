@@ -24,7 +24,7 @@ export default function SettingsPage() {
   // Company profile
   const [company, setCompany] = useState<CompanyProfile>({
     id: 'default', name: '', tagline: '', addressLine1: '', addressLine2: '',
-    city: '', country: '', phone: '', email: '', website: '', vatNumber: '', tinNumber: '',
+    city: '', country: '', phone: '', email: '', website: '', vatNumber: '', tinNumber: '', vendorNumber: '',
     logoUrl: '/images/brand/cansan-logo.png',
   });
   const [savingCompany, setSavingCompany] = useState(false);
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                   <input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Website</label>
                   <input value={company.website} onChange={(e) => setCompany({ ...company, website: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
@@ -250,6 +250,10 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">VAT Number</label>
                   <input value={company.vatNumber} onChange={(e) => setCompany({ ...company, vatNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="e.g. 220445061" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Vendor Number</label>
+                  <input value={company.vendorNumber} onChange={(e) => setCompany({ ...company, vendorNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="e.g. 723804" />
                 </div>
               </div>
               <button

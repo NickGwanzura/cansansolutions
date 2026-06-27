@@ -4,6 +4,7 @@ import PublicChrome from "@/components/PublicChrome";
 import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
 import { DM_Sans, Sora } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { ToastProvider } from "@/components/Toast";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -81,7 +82,9 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <PublicChrome>{children}</PublicChrome>
+        <ToastProvider>
+          <PublicChrome>{children}</PublicChrome>
+        </ToastProvider>
       </body>
     </html>
   );

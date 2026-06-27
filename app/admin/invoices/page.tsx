@@ -152,17 +152,28 @@ export default function InvoicesAdmin() {
     }
   };
 
-  const startEditWithClient = (client: Client) => {
+  const startEditWithClient = async (client: Client) => {
+    let number = '';
+    try {
+      const res = await fetch('/api/admin/generate-number?prefix=INV');
+      if (res.ok) number = (await res.json()).number;
+    } catch {}
     setEditing({
       ...emptyInvoice(),
+      number,
       id: `inv-${Date.now()}`,
       customer: { name: client.name, email: client.email, phone: client.phone, address: client.address, company: client.company || '' },
     });
     setClientPicker(false);
   };
 
-  const startEditBlank = () => {
-    setEditing({ ...emptyInvoice(), id: `inv-${Date.now()}` });
+  const startEditBlank = async () => {
+    let number = '';
+    try {
+      const res = await fetch('/api/admin/generate-number?prefix=INV');
+      if (res.ok) number = (await res.json()).number;
+    } catch {}
+    setEditing({ ...emptyInvoice(), number, id: `inv-${Date.now()}` });
     setClientPicker(false);
   };
 
@@ -627,6 +638,7 @@ export default function InvoicesAdmin() {
                     {company?.email && <p className="text-xs text-zinc-500">{company.email}</p>}
                     {company?.tinNumber && <p className="text-xs text-zinc-400 mt-1">TIN: {company.tinNumber}</p>}
                     {company?.vatNumber && <p className="text-xs text-zinc-400">VAT: {company.vatNumber}</p>}
+                    {company?.vendorNumber && <p className="text-xs text-zinc-400">Vendor: {company.vendorNumber}</p>}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Bill To</p>

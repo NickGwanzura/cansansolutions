@@ -336,7 +336,7 @@ export default function ExpensesAdmin() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-zinc-500 mb-1">Date</label>
-                    <input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" required />
+                    <input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" required autoFocus />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-500 mb-1">Category</label>

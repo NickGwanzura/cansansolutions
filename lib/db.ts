@@ -158,23 +158,25 @@ async function ensureSchema(): Promise<void> {
       phone         TEXT NOT NULL DEFAULT '',
       email         TEXT NOT NULL DEFAULT '',
       website       TEXT NOT NULL DEFAULT '',
-      vat_number    TEXT NOT NULL DEFAULT '',
-      tin_number    TEXT NOT NULL DEFAULT '',
-      logo_url      TEXT NOT NULL DEFAULT '/images/brand/cansan-logo.png',
+	      vat_number    TEXT NOT NULL DEFAULT '',
+	      tin_number    TEXT NOT NULL DEFAULT '',
+	      vendor_number TEXT NOT NULL DEFAULT '',
+	      logo_url      TEXT NOT NULL DEFAULT '/images/brand/cansan-logo.png',
       updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
   // Add tin_number column if it doesn't exist (migration for existing databases)
   await sql()`ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS tin_number TEXT NOT NULL DEFAULT ''`;
-  // Ensure existing row has the correct TIN and VAT values
+  await sql()`ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS vendor_number TEXT NOT NULL DEFAULT ''`;
+  // Ensure existing row has the correct TIN, VAT, and vendor values
   await sql()`
     UPDATE company_profile
-    SET tin_number = '2001360981', vat_number = '220445061'
-    WHERE id = 'default' AND (tin_number IS NULL OR tin_number = '' OR vat_number IS NULL OR vat_number = '')
+    SET tin_number = '2001360981', vat_number = '220445061', vendor_number = '723804'
+    WHERE id = 'default' AND (tin_number IS NULL OR tin_number = '' OR vat_number IS NULL OR vat_number = '' OR vendor_number IS NULL OR vendor_number = '')
   `;
   await sql()`
-    INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '/images/brand/cansan-logo.png')
+    INSERT INTO company_profile (id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, vendor_number, logo_url)
+    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', '', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '723804', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
   `;
   await sql()`
@@ -604,6 +606,30 @@ function defaultCategories(): Category[] {
   ];
 }
 
+/**
+ * Generate the next invoice/quote number based on the existing ones.
+ * Format: INV-0001 / QTE-0001 (padded to 4 digits).
+ */
+export async function generateNextNumber(prefix: 'INV' | 'QTE'): Promise<string> {
+  await ensureSchema();
+  const pattern = prefix + '-%';
+  try {
+    let rows: Record<string, unknown>[];
+    if (prefix === 'INV') {
+      rows = await sql()`SELECT number FROM invoices WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
+    } else {
+      rows = await sql()`SELECT number FROM quotes WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
+    }
+    if (rows.length === 0) return `${prefix}-0001`;
+    const last = String(rows[0].number);
+    const num = parseInt(last.replace(`${prefix}-`, ''), 10);
+    const next = Number.isNaN(num) ? 1 : num + 1;
+    return `${prefix}-${String(next).padStart(4, '0')}`;
+  } catch {
+    return `${prefix}-0001`;
+  }
+}
+
 // ─── Invoices ───
 
 function parseJsonb<T>(value: unknown): T {
@@ -911,8 +937,9 @@ function rowToCompanyProfile(row: Record<string, unknown>): CompanyProfile {
     phone: String(row.phone ?? ''),
     email: String(row.email ?? ''),
     website: String(row.website ?? ''),
-    vatNumber: String(row.vat_number ?? ''),
-    tinNumber: String(row.tin_number ?? ''),
+	    vatNumber: String(row.vat_number ?? ''),
+	    tinNumber: String(row.tin_number ?? ''),
+	    vendorNumber: String(row.vendor_number ?? ''),
     logoUrl: String(row.logo_url ?? '/images/brand/cansan-logo.png'),
     updatedAt: toIsoString(row.updated_at),
   };
@@ -924,8 +951,8 @@ export async function getCompanyProfile(): Promise<CompanyProfile> {
   if (rows.length > 0) return rowToCompanyProfile(rows[0]);
   // Seed default if missing
   const inserted = await sql()`
-    INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, vat_number, tin_number, logo_url)
-    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '/images/brand/cansan-logo.png')
+	    INSERT INTO company_profile (id, name, tagline, address_line1, city, country, phone, email, website, vat_number, tin_number, vendor_number, logo_url)
+	    VALUES ('default', 'Cansan Solutions', 'Technology Solutions', 'Shop 7, ZB House, Corner Speke & 1st Street', 'Harare', 'Zimbabwe', '+263 77 375 4747', 'info@cansansolutions.co.zw', 'https://cansansolutions.shop', '220445061', '2001360981', '723804', '/images/brand/cansan-logo.png')
     ON CONFLICT (id) DO NOTHING
     RETURNING *
   `;
@@ -938,37 +965,39 @@ export async function saveCompanyProfile(profile: CompanyProfile): Promise<Compa
   await ensureSchema();
   const now = new Date();
   const rows = await sql()`
-    INSERT INTO company_profile (
-      id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, logo_url, updated_at
-    ) VALUES (
-      'default',
-      ${profile.name},
-      ${profile.tagline},
-      ${profile.addressLine1},
-      ${profile.addressLine2},
-      ${profile.city},
-      ${profile.country},
-      ${profile.phone},
-      ${profile.email},
-      ${profile.website},
-      ${profile.vatNumber},
-      ${profile.tinNumber},
-      ${profile.logoUrl},
-      ${now}
-    )
-    ON CONFLICT (id) DO UPDATE SET
-      name          = EXCLUDED.name,
-      tagline       = EXCLUDED.tagline,
-      address_line1 = EXCLUDED.address_line1,
-      address_line2 = EXCLUDED.address_line2,
-      city          = EXCLUDED.city,
-      country       = EXCLUDED.country,
-      phone         = EXCLUDED.phone,
-      email         = EXCLUDED.email,
-      website       = EXCLUDED.website,
-      vat_number    = EXCLUDED.vat_number,
-      tin_number    = EXCLUDED.tin_number,
-      logo_url      = EXCLUDED.logo_url,
+	    INSERT INTO company_profile (
+	      id, name, tagline, address_line1, address_line2, city, country, phone, email, website, vat_number, tin_number, vendor_number, logo_url, updated_at
+	    ) VALUES (
+	      'default',
+	      ${profile.name},
+	      ${profile.tagline},
+	      ${profile.addressLine1},
+	      ${profile.addressLine2},
+	      ${profile.city},
+	      ${profile.country},
+	      ${profile.phone},
+	      ${profile.email},
+	      ${profile.website},
+	      ${profile.vatNumber},
+	      ${profile.tinNumber},
+	      ${profile.vendorNumber},
+	      ${profile.logoUrl},
+	      ${now}
+	    )
+	    ON CONFLICT (id) DO UPDATE SET
+	      name          = EXCLUDED.name,
+	      tagline       = EXCLUDED.tagline,
+	      address_line1 = EXCLUDED.address_line1,
+	      address_line2 = EXCLUDED.address_line2,
+	      city          = EXCLUDED.city,
+	      country       = EXCLUDED.country,
+	      phone         = EXCLUDED.phone,
+	      email         = EXCLUDED.email,
+	      website       = EXCLUDED.website,
+	      vat_number    = EXCLUDED.vat_number,
+	      tin_number    = EXCLUDED.tin_number,
+	      vendor_number = EXCLUDED.vendor_number,
+	      logo_url      = EXCLUDED.logo_url,
       updated_at    = ${now}
     RETURNING *
   `;

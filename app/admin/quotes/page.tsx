@@ -618,6 +618,7 @@ export default function QuotesAdmin() {
                     {company?.email && <p className="text-xs text-zinc-500">{company.email}</p>}
                     {company?.tinNumber && <p className="text-xs text-zinc-400 mt-1">TIN: {company.tinNumber}</p>}
                     {company?.vatNumber && <p className="text-xs text-zinc-400">VAT: {company.vatNumber}</p>}
+                    {company?.vendorNumber && <p className="text-xs text-zinc-400">Vendor: {company.vendorNumber}</p>}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Prepared For</p>

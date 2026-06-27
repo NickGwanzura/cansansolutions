@@ -155,6 +155,7 @@ export type CompanyProfile = {
   website: string;
   vatNumber: string;
   tinNumber: string;
+  vendorNumber: string;
   logoUrl: string;
   updatedAt?: string;
 };

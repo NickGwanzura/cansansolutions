@@ -319,24 +319,24 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
     <>
       <ProductJsonLd product={product} categoryName={category?.label} />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-24 sm:px-6 sm:pb-10">
-        <nav className="mb-6 flex items-center gap-2 text-xs text-zinc-400">
-          <Link href="/" className="hover:text-zinc-600">
+        <nav className="mb-6 flex items-center gap-2 text-sm text-zinc-600">
+          <Link href="/" className="hover:text-zinc-900">
             Home
           </Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-zinc-600">
+          <span className="text-zinc-300">/</span>
+          <Link href="/products" className="hover:text-zinc-900">
             Products
           </Link>
           {category ? (
             <>
-              <span>/</span>
-              <Link href={getCategoryHref(category.slug)} className="hover:text-zinc-600">
+              <span className="text-zinc-300">/</span>
+              <Link href={getCategoryHref(category.slug)} className="hover:text-zinc-900">
                 {category.label}
               </Link>
             </>
           ) : null}
-          <span>/</span>
-          <span className="text-zinc-600">{product.name}</span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-zinc-800 font-medium">{product.name}</span>
         </nav>
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">

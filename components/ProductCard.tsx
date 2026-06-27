@@ -8,6 +8,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
 import { getBrandForProduct } from '@/lib/brands';
+import { useToast } from './Toast';
 
 type ProductCardProps = {
   product: Product;
@@ -157,6 +158,7 @@ function getStockText(product: Product): { label: string; tone: string } {
 
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart);
+  const { showToast } = useToast();
   const [adding, setAdding] = useState(false);
   const isBundle = isBundleProduct(product);
 
@@ -188,6 +190,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
     addToCart(product);
     setAdding(true);
+    showToast(`${product.name} added to cart`);
     window.setTimeout(() => setAdding(false), 1000);
   };
 

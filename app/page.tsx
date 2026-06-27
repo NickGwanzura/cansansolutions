@@ -507,8 +507,9 @@ export default async function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Primary Categories</p>
               <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop by Tech Category in Zimbabwe</h2>
             </div>
-            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+            <Link href="/products" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700">
               View all products
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
 
@@ -549,7 +550,7 @@ export default async function HomePage() {
               </p>
             </div>
             <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
-              Browse full catalog
+              Browse full catalog →
             </Link>
           </div>
 
@@ -593,7 +594,7 @@ export default async function HomePage() {
               <h2 className="mt-2 text-3xl font-bold text-zinc-900">Limited Offers and Fast-Selling Products</h2>
             </div>
             <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
-              See all live offers
+              See all deals →
             </Link>
           </div>
 

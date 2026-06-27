@@ -95,7 +95,7 @@ export default function DeliveryPage() {
         </section>
 
         <section className="px-6 py-16">
-          <div className="mx-auto max-w-5xl rounded-3xl bg-blue-600 px-8 py-10 text-white">
+          <div className="mx-auto max-w-5xl rounded-3xl bg-red-600 px-8 py-10 text-white">
             <h2 className="text-2xl font-bold">Need delivery timing before you order?</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-blue-100">
               Send the product link and your location. We will confirm stock, collection readiness, or delivery options before you pay.
