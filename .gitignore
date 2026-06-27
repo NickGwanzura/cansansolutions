@@ -40,5 +40,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# uploads (runtime user-uploaded files)
+/uploads
+
+# editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
 /lib/generated/prisma
 .env

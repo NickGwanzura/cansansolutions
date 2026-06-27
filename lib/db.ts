@@ -178,6 +178,17 @@ async function ensureSchema(): Promise<void> {
     ON CONFLICT (id) DO NOTHING
   `;
   await sql()`
+    CREATE TABLE IF NOT EXISTS site_preferences (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT ''
+    )
+  `;
+  await sql()`
+    INSERT INTO site_preferences (key, value)
+    VALUES ('currency', 'USD'), ('low_stock_threshold', '5'), ('items_per_page', '48')
+    ON CONFLICT (key) DO NOTHING
+  `;
+  await sql()`
     CREATE TABLE IF NOT EXISTS expenses (
       id          TEXT PRIMARY KEY,
       date        DATE NOT NULL,
@@ -577,17 +588,19 @@ type Category = { id: string; label: string; icon: string; slug: string };
 
 function defaultCategories(): Category[] {
   return [
-    { id: 'mobile',       label: 'Mobile & Accessories',    icon: 'smartphone',    slug: 'mobile' },
-    { id: 'laptops',      label: 'Laptops & Computing',     icon: 'laptop',        slug: 'laptops' },
-    { id: 'desktops',     label: 'Desktops & All-in-Ones',  icon: 'desktop',       slug: 'desktops' },
-    { id: 'networking',   label: 'Networking & Wi-Fi',      icon: 'network',       slug: 'networking' },
-    { id: 'cctv',         label: 'CCTV & Security',         icon: 'shield-camera', slug: 'cctv' },
-    { id: 'power',        label: 'Power & Backup',          icon: 'battery',       slug: 'power' },
-    { id: 'audio',        label: 'Audio & Headphones',      icon: 'headphones',    slug: 'audio' },
-    { id: 'gadgets',      label: 'Gadgets & Devices',       icon: 'gadget',        slug: 'gadgets' },
-    { id: 'accessories',  label: 'Accessories & Cables',    icon: 'plug',          slug: 'accessories' },
-    { id: 'printing',     label: 'Printing & Office',       icon: 'printer',       slug: 'printing' },
-    { id: 'bundles',      label: 'Bundles & Deals',         icon: 'bundle',        slug: 'bundles' },
+    { id: 'laptops',      label: 'Laptops',                  icon: 'laptop',        slug: 'laptops' },
+    { id: 'printing',     label: 'Printers',                 icon: 'printer',       slug: 'printing' },
+    { id: 'networking',   label: 'WiFi & Networking',        icon: 'network',       slug: 'networking' },
+    { id: 'desktops',     label: 'Desktops',                 icon: 'desktop',       slug: 'desktops' },
+    { id: 'monitors',     label: 'Monitors & Displays',      icon: 'monitor',       slug: 'monitors' },
+    { id: 'accessories',  label: 'Accessories',              icon: 'plug',          slug: 'accessories' },
+    { id: 'audio',        label: 'Audio',                    icon: 'headphones',    slug: 'audio' },
+    { id: 'pc-parts',     label: 'PC Parts & Components',    icon: 'cpu',           slug: 'pc-parts' },
+    { id: 'drives',       label: 'Storage & Drives',         icon: 'hard-drive',    slug: 'drives' },
+    { id: 'sa-imports',   label: 'SA Imports',               icon: 'truck',         slug: 'sa-imports' },
+    { id: 'mobile',       label: 'Mobile & Accessories',     icon: 'smartphone',    slug: 'mobile' },
+    { id: 'cctv',         label: 'CCTV & Security',          icon: 'shield-camera', slug: 'cctv' },
+    { id: 'bundles',      label: 'Bundles & Deals',          icon: 'bundle',        slug: 'bundles' },
   ];
 }
 
@@ -960,6 +973,39 @@ export async function saveCompanyProfile(profile: CompanyProfile): Promise<Compa
     RETURNING *
   `;
   return rowToCompanyProfile(rows[0]);
+}
+
+export type SitePreferences = {
+  currency: string;
+  lowStockThreshold: string;
+  itemsPerPage: string;
+};
+
+export async function getSitePreferences(): Promise<SitePreferences> {
+  await ensureSchema();
+  const defaults: SitePreferences = { currency: 'USD', lowStockThreshold: '5', itemsPerPage: '48' };
+  try {
+    const rows = await sql()`SELECT key, value FROM site_preferences`;
+    const map = Object.fromEntries(rows.map((r: Record<string, unknown>) => [r.key, String(r.value)]));
+    return {
+      currency: map.currency || defaults.currency,
+      lowStockThreshold: map.low_stock_threshold || defaults.lowStockThreshold,
+      itemsPerPage: map.items_per_page || defaults.itemsPerPage,
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+export async function saveSitePreferences(prefs: Record<string, string>): Promise<void> {
+  await ensureSchema();
+  for (const [key, value] of Object.entries(prefs)) {
+    await sql()`
+      INSERT INTO site_preferences (key, value)
+      VALUES (${key}, ${value})
+      ON CONFLICT (key) DO UPDATE SET value = ${value}
+    `;
+  }
 }
 
 // ─── Expenses ───

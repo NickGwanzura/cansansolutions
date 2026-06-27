@@ -28,6 +28,7 @@ export default function SettingsPage() {
     logoUrl: '/images/brand/cansan-logo.png',
   });
   const [savingCompany, setSavingCompany] = useState(false);
+  const [_savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -66,8 +67,12 @@ export default function SettingsPage() {
   };
 
   const checkAuth = async () => {
-    const res = await fetch('/api/admin/products');
-    setAuthed(res.ok);
+    try {
+      const res = await fetch('/api/admin/auth');
+      setAuthed(res.ok);
+    } catch {
+      setAuthed(false);
+    }
     setLoading(false);
   };
 
@@ -116,9 +121,28 @@ export default function SettingsPage() {
 
   const saveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    // These would be saved to a config file or database
-    // For now, just show a success message
-    setMessage('Settings saved (demo mode)');
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/admin/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currency,
+          low_stock_threshold: String(lowStockThreshold),
+          items_per_page: String(itemsPerPage),
+        }),
+      });
+      if (res.ok) {
+        setMessage('Settings saved successfully');
+      } else {
+        const err = await res.json();
+        setMessage(err.error || 'Failed to save settings');
+      }
+    } catch {
+      setMessage('Error saving settings');
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   if (loading) {

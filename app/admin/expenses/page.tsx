@@ -5,7 +5,7 @@ import type { Expense, ExpenseCategory } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 import { downloadCsv } from '@/lib/csv-export';
 
-const CURRENCIES = ['USD', 'KES', 'ZAR'];
+const CURRENCIES = ['USD', 'ZWL', 'ZAR', 'KES'];
 
 const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'rent', label: 'Rent' },

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { FeaturedGrid } from '@/components/FeaturedGrid';
 import type { Product } from '@/lib/types';

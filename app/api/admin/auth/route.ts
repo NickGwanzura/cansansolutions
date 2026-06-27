@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
@@ -43,4 +44,13 @@ export async function DELETE() {
   const res = NextResponse.json({ ok: true });
   res.cookies.set('admin_auth', '', { maxAge: 0, path: '/' });
   return res;
+}
+
+/** GET returns 200 if the admin auth cookie is valid, 401 otherwise. */
+export async function GET() {
+  const authed = await checkAdminAuth();
+  if (authed) {
+    return NextResponse.json({ ok: true });
+  }
+  return NextResponse.json({ ok: false }, { status: 401 });
 }

@@ -348,7 +348,7 @@ function POS({ onLogout }: { onLogout: () => void }) {
                   onChange={(e) => setCurrency(e.target.value)}
                   className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
                 >
-                  {['USD', 'KES', 'ZAR'].map((c) => <option key={c} value={c}>{c}</option>)}
+                  {['USD', 'ZWL', 'ZAR', 'KES'].map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select
                   value={paymentMethod}

@@ -18,7 +18,17 @@ const ALLOWED_PATHS = [
 export function proxy(request: NextRequest) {
   // Check if maintenance mode is enabled (read at runtime)
   const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
-  const bypassPassword = process.env.MAINTENANCE_PASSWORD || 'cansan2024';
+  const bypassPassword = process.env.MAINTENANCE_PASSWORD;
+
+  // If no maintenance password is configured, fail closed — don't allow bypass
+  if (!bypassPassword) {
+    if (maintenanceMode) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/coming-soon';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
   
   // If maintenance mode is not enabled, allow all requests
   if (!maintenanceMode) {

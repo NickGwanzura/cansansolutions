@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { DeliveryNote, DeliveryNoteStatus, LineItem, CustomerInfo, CompanyProfile, Product, Client } from '@/lib/types';
 import AdminLayout from '../components/AdminLayout';
 
-const CURRENCIES = ['USD', 'KES', 'ZAR'];
+const CURRENCIES = ['USD', 'ZWL', 'ZAR', 'KES'];
 const STATUSES: DeliveryNoteStatus[] = ['draft', 'dispatched', 'delivered', 'cancelled'];
 
 const STATUS_COLORS: Record<DeliveryNoteStatus, string> = {

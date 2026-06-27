@@ -8,7 +8,7 @@ interface AdminAuthGateProps {
   probeUrl?: string;
 }
 
-export default function AdminAuthGate({ children, probeUrl = '/api/admin/products' }: AdminAuthGateProps) {
+export default function AdminAuthGate({ children, probeUrl = '/api/admin/auth' }: AdminAuthGateProps) {
   const [authed, setAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -19,6 +19,15 @@ export default function AdminAuthGate({ children, probeUrl = '/api/admin/product
     return () => { cancelled = true; };
   }, [probeUrl]);
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+    } catch {
+      // Server-side session invalidation is best-effort
+    }
+    setAuthed(false);
+  };
+
   if (authed === null) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -28,5 +37,5 @@ export default function AdminAuthGate({ children, probeUrl = '/api/admin/product
   }
 
   if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
-  return <>{children({ onLogout: () => setAuthed(false) })}</>;
+  return <>{children({ onLogout: handleLogout })}</>;
 }

@@ -90,8 +90,12 @@ export default function AnalyticsPage() {
   }, [authed]);
 
   const checkAuth = async () => {
-    const res = await fetch('/api/admin/products');
-    setAuthed(res.ok);
+    try {
+      const res = await fetch('/api/admin/auth');
+      setAuthed(res.ok);
+    } catch {
+      setAuthed(false);
+    }
   };
 
   const fetchProducts = async () => {
