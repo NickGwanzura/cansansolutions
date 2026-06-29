@@ -25,6 +25,7 @@
     "next": "16.1.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "resend": "^6.16.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "uploadthing": "^7.7.4",
