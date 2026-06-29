@@ -138,6 +138,18 @@ export function Header() {
                 </svg>
               )}
             </button>
+
+            {/* Login button — subtle, only visible on non-admin pages */}
+            <a
+              href="/admin"
+              className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+              aria-label="Admin login"
+              title="Admin"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+              </svg>
+            </a>
           </div>
         </div>
 
@@ -159,6 +171,14 @@ export function Header() {
                   {label}
                 </Link>
               ))}
+              {/* Admin login in mobile menu */}
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-600"
+              >
+                Admin
+              </Link>
             </nav>
           </div>
         )}

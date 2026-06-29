@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: { unoptimized: true },
+  images: { 
+    unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'utfs.io' },
+      { protocol: 'https', hostname: 'img.uploadthing.com' },
+    ],
+  },
   reactStrictMode: true,
   output: 'standalone',
   distDir: '.next',
@@ -9,6 +15,14 @@ const nextConfig = {
   generateEtags: true,
   httpAgentOptions: {
     keepAlive: true,
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/images/:path*',
+      },
+    ];
   },
   async headers() {
     return [
@@ -37,11 +51,11 @@ const nextConfig = {
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
+            value: 'unsafe-none', // require-corp blocks cross-origin images (utfs.io, etc.)
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
+            value: 'same-origin-allow-popups',
           },
           {
             key: 'Content-Security-Policy',
