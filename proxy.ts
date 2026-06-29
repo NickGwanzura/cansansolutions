@@ -15,14 +15,30 @@ const ALLOWED_PATHS = [
   '/_next/',
 ];
 
+function isMaintenanceActive(): boolean {
+  const mode = process.env.MAINTENANCE_MODE;
+  if (mode !== 'true') return false;
+
+  // Check for automatic expiry time
+  const until = process.env.MAINTENANCE_UNTIL;
+  if (until) {
+    const expiry = new Date(until).getTime();
+    if (!isNaN(expiry) && Date.now() >= expiry) {
+      // Maintenance period has expired — treat as disabled
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function proxy(request: NextRequest) {
-  // Check if maintenance mode is enabled (read at runtime)
-  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  const maintenanceActive = isMaintenanceActive();
   const bypassPassword = process.env.MAINTENANCE_PASSWORD;
 
   // If no maintenance password is configured, fail closed — don't allow bypass
   if (!bypassPassword) {
-    if (maintenanceMode) {
+    if (maintenanceActive) {
       const url = request.nextUrl.clone();
       url.pathname = '/coming-soon';
       return NextResponse.redirect(url);
@@ -30,8 +46,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // If maintenance mode is not enabled, allow all requests
-  if (!maintenanceMode) {
+  // If maintenance mode is not enabled or has expired, allow all requests
+  if (!maintenanceActive) {
     return NextResponse.next();
   }
 
