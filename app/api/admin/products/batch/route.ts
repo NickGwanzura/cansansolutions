@@ -15,9 +15,7 @@ export async function DELETE(req: Request) {
     if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
     }
-    
-    console.log('[API BATCH DELETE] Deleting:', ids.length, 'products');
-    
+
     let successCount = 0;
     let failCount = 0;
     
@@ -30,8 +28,6 @@ export async function DELETE(req: Request) {
         failCount++;
       }
     }
-    
-    console.log('[API BATCH DELETE] Done:', successCount, 'success,', failCount, 'failed');
     
     return NextResponse.json({ 
       success: true, 

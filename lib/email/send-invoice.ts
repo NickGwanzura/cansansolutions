@@ -115,12 +115,11 @@ export async function sendDocumentEmail(params: {
     });
 
     if (error) {
-      console.error('[Email] Resend error:', error);
-      return { success: false, error: error.message };
-    }
+	    console.error('[Email] Resend error:', error);
+	      return { success: false, error: error.message };
+	    }
 
-    console.log('[Email] Sent:', data?.id);
-    return { success: true, id: data?.id };
+	    return { success: true, id: data?.id };
   } catch (err) {
     console.error('[Email] Failed to send:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };

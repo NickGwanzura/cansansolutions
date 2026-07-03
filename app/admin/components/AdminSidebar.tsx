@@ -230,6 +230,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
         <a
           href="/"
           target="_blank"
+          rel="noopener noreferrer"
           className="text-xs font-semibold text-zinc-600 transition hover:text-zinc-900"
         >
           View Site
@@ -301,6 +302,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           <a
             href="/"
             target="_blank"
+            rel="noopener noreferrer"
             className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-300"
           >
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

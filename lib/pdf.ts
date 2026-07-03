@@ -18,7 +18,10 @@ export async function downloadElementAsPdf(
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
     el = document.getElementById(elementId);
   }
-  if (!el) return;
+  if (!el) {
+    console.warn(`[PDF] Element #${elementId} not found — cannot generate PDF`);
+    return;
+  }
 
   // Let React paint and all images finish loading before capture.
   await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));

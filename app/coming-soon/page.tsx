@@ -132,7 +132,7 @@ export default function ComingSoonPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-zinc-600 text-xs">
-            © 2025 Cansan Solutions. All rights reserved.
+            &copy; {new Date().getFullYear()} Cansan Solutions. All rights reserved.
           </p>
         </div>
       </div>
