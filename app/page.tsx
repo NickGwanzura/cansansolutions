@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
@@ -7,6 +6,7 @@ import { CATALOG_CATEGORIES, getCategoryHref, isSaImportProduct } from '@/lib/ca
 import { buildAbsoluteMetadata } from '@/lib/seo';
 import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
+import { HeroProductSlider } from '@/components/HeroProductSlider';
 import { formatCurrency } from '@/lib/utils';
 
 export const revalidate = 3600;
@@ -356,7 +356,20 @@ export default async function HomePage() {
     .filter((product) => product.inStock && !discountedProducts.some((deal) => deal.id === product.id))
     .slice(0, 4);
 
-  const heroProduct = discountedProducts[0] ?? homepageProducts[0];
+  const heroSlideProducts = (() => {
+    const seen = new Set<string>();
+    const pool = [...discountedProducts, ...homepageProducts, ...trendingProducts];
+    const deduped: Product[] = [];
+
+    for (const product of pool) {
+      if (seen.has(product.id)) continue;
+      seen.add(product.id);
+      deduped.push(product);
+      if (deduped.length >= 5) break;
+    }
+
+    return deduped;
+  })();
 
   const homepageCategories = KEY_CATEGORY_SLUGS.map((slug) =>
     CATALOG_CATEGORIES.find((category) => category.slug === slug || category.id === slug)
@@ -404,44 +417,7 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          {heroProduct ? (
-            <div className="relative">
-              <div
-                aria-hidden
-                className="absolute inset-y-2 -right-6 left-10 rounded-[2rem] bg-gradient-to-br from-red-600 to-zinc-950 [clip-path:polygon(12%_0,100%_0,100%_100%,0%_100%)]"
-              />
-              <Link
-                href={`/products/${heroProduct.slug}`}
-                className="group relative block overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl transition hover:-translate-y-1"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">Featured Product</p>
-                <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-zinc-900">{heroProduct.name}</h2>
-
-                <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-50">
-                  <Image
-                    src={heroProduct.image || '/images/products/placeholder.svg'}
-                    alt={heroProduct.name}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 420px"
-                    className="object-contain p-4 transition duration-500 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="mt-4 flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-zinc-500">Today&apos;s price</p>
-                    <p className="text-2xl font-extrabold text-zinc-950">
-                      {formatCurrency(heroProduct.price, heroProduct.currency)}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-                    Fast selling
-                  </span>
-                </div>
-              </Link>
-            </div>
-          ) : null}
+          <HeroProductSlider products={heroSlideProducts} />
         </div>
       </section>
 

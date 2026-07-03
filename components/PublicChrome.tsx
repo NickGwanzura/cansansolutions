@@ -8,12 +8,13 @@ import { FloatingWhatsApp } from './FloatingWhatsApp';
 import { SeoTracker } from './SeoTracker';
 
 // Public chrome (header, footer, WhatsApp, analytics) is hidden under /admin
-// so the admin console has its own layout without site chrome bleeding through.
+// and /coming-soon so those pages have their own layout without site chrome
+// (shop nav/cart/footer) bleeding through.
 export default function PublicChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin') ?? false;
+  const isChromeless = pathname?.startsWith('/admin') || pathname?.startsWith('/coming-soon');
 
-  if (isAdmin) {
+  if (isChromeless) {
     return <main>{children}</main>;
   }
 
