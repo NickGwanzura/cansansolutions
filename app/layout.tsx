@@ -2,22 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 import PublicChrome from "@/components/PublicChrome";
 import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
-import { DM_Sans, Sora } from "next/font/google";
+import { Inter } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ToastProvider } from "@/components/Toast";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-dm-sans",
-});
-
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  display: "swap",
-  variable: "--font-sora",
+  variable: "--font-inter",
 });
 
 const HERO_TITLE = `Buy SSDs, Laptops & CCTV in Zimbabwe | ${SITE_NAME}`;
@@ -75,7 +68,7 @@ export default function RootLayout({
         <LocalBusinessJsonLd />
         <WebsiteJsonLd />
       </head>
-      <body className={`${dmSans.variable} ${sora.variable} font-sans antialiased bg-white text-zinc-900`}>
+      <body className={`${inter.variable} font-sans antialiased bg-white text-zinc-900`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-red-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"

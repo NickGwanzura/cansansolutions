@@ -89,6 +89,13 @@ const CATEGORY_CONTENT = {
   },
 } as const;
 
+const HERO_TRUST_POINTS = [
+  'Fast Harare delivery and nationwide courier',
+  'Pay with USD cash, swipe, bank transfer, EcoCash',
+  'Warranty-backed products and post-sale support',
+  'Bulk pricing available for offices and institutions',
+];
+
 const TRUST_BAR_ITEMS = [
   'Fast Delivery Zimbabwe',
   'Secure Payments',
@@ -335,22 +342,6 @@ function getDailyHomepageProducts(products: Product[]) {
   return selected.slice(0, HOMEPAGE_FEATURED_COUNT);
 }
 
-function getHeroSlideProducts(products: Product[], highlighted: Product[]): Product[] {
-  const seen = new Set<string>();
-  const withImages = [...highlighted, ...products]
-    .filter((product) => {
-      const image = (product.image || '').trim();
-      return Boolean(image) && image !== '/images/products/placeholder.svg';
-    })
-    .filter((product) => {
-      if (seen.has(product.id)) return false;
-      seen.add(product.id);
-      return true;
-    });
-
-  return withImages.slice(0, 14);
-}
-
 export default async function HomePage() {
   const products = await readProducts();
   const featuredInsights = getFeaturedInsights(3);
@@ -366,7 +357,6 @@ export default async function HomePage() {
     .slice(0, 4);
 
   const heroProduct = discountedProducts[0] ?? homepageProducts[0];
-  const heroSlideProducts = getHeroSlideProducts(products, homepageProducts);
 
   const homepageCategories = KEY_CATEGORY_SLUGS.map((slug) =>
     CATALOG_CATEGORIES.find((category) => category.slug === slug || category.id === slug)
@@ -374,115 +364,83 @@ export default async function HomePage() {
 
   return (
     <div className="overflow-x-hidden bg-white text-zinc-900">
-      <section className="relative overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950 px-6 py-18 text-white sm:py-24">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-red-500/20 blur-3xl" />
-          <div className="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-orange-300/12 blur-3xl" />
-          {heroSlideProducts.length > 0 ? (
-            <>
-              <div className="absolute -top-2 left-0 flex w-max gap-3 opacity-35 hero-slide-forward">
-                {[...heroSlideProducts, ...heroSlideProducts].map((product, index) => (
-                  <div
-                    key={`hero-slide-a-${product.id}-${index}`}
-                    className="relative h-24 w-24 overflow-hidden rounded-xl border border-white/20 bg-white/95 shadow-lg sm:h-28 sm:w-28"
-                  >
-                    <Image
-                      src={product.image || '/images/products/placeholder.svg'}
-                      alt={product.name}
-                      fill
-                      sizes="96px"
-                      className="object-contain p-2"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="absolute bottom-6 right-0 flex w-max gap-3 opacity-25 hero-slide-reverse">
-                {[...heroSlideProducts.slice().reverse(), ...heroSlideProducts.slice().reverse()].map((product, index) => (
-                  <div
-                    key={`hero-slide-b-${product.id}-${index}`}
-                    className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/20 bg-white/95 shadow-lg sm:h-24 sm:w-24"
-                  >
-                    <Image
-                      src={product.image || '/images/products/placeholder.svg'}
-                      alt={product.name}
-                      fill
-                      sizes="80px"
-                      className="object-contain p-2"
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+      <section className="relative overflow-hidden bg-white px-6 py-14 sm:py-20">
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <p className="inline-flex items-center rounded-full border border-red-300/30 bg-red-200/10 px-3 py-1 text-xs font-semibold tracking-wide text-red-100">
-              Zimbabwe Tech Store
+            <p className="text-sm font-bold uppercase tracking-wide text-red-700">
+              Zimbabwe&apos;s WhatsApp-First Tech Store
             </p>
-            <h1 className="mt-4 font-heading text-4xl font-extrabold leading-tight sm:text-5xl">
+            <h1 className="mt-3 font-heading text-4xl font-extrabold leading-tight text-zinc-950 sm:text-5xl">
               Trusted Zimbabwe Tech Store for SSDs, Laptops, Networking and CCTV
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-red-100 sm:text-lg">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg">
               Buy genuine devices with fast delivery, secure payment options, and local support that stays available after you order.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/products"
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-red-900 transition hover:-translate-y-0.5 hover:bg-red-50"
+                className="inline-flex items-center justify-center rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-red-700"
               >
                 Shop Now
               </Link>
               <Link
                 href="#shop-categories"
-                className="inline-flex items-center justify-center rounded-full border border-red-200/40 bg-red-100/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-100/20"
+                className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-800 transition hover:-translate-y-0.5 hover:border-zinc-400"
               >
                 Browse Categories
               </Link>
             </div>
 
-            <ul className="mt-7 grid max-w-2xl gap-2 text-sm text-red-100 sm:grid-cols-2">
-              <li>Fast Harare delivery and nationwide courier</li>
-              <li>Pay with USD cash, swipe, bank transfer, EcoCash</li>
-              <li>Warranty-backed products and post-sale support</li>
-              <li>Bulk pricing available for offices and institutions</li>
+            <ul className="mt-7 grid max-w-xl gap-2.5 text-sm text-zinc-600 sm:grid-cols-2">
+              {HERO_TRUST_POINTS.map((point) => (
+                <li key={point} className="flex items-center gap-2">
+                  <svg aria-hidden="true" className="h-4 w-4 shrink-0 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  <span>{point}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {heroProduct ? (
-            <Link
-              href={`/products/${heroProduct.slug}`}
-              className="group overflow-hidden rounded-3xl border border-white/20 bg-white/95 p-5 text-zinc-900 shadow-2xl shadow-red-950/30 transition hover:-translate-y-1"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">Featured Product</p>
-              <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-zinc-900">{heroProduct.name}</h2>
+            <div className="relative">
+              <div
+                aria-hidden
+                className="absolute inset-y-2 -right-6 left-10 rounded-[2rem] bg-gradient-to-br from-red-600 to-zinc-950 [clip-path:polygon(12%_0,100%_0,100%_100%,0%_100%)]"
+              />
+              <Link
+                href={`/products/${heroProduct.slug}`}
+                className="group relative block overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl transition hover:-translate-y-1"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">Featured Product</p>
+                <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-zinc-900">{heroProduct.name}</h2>
 
-              <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-2xl bg-white">
-                <Image
-                  src={heroProduct.image || '/images/products/placeholder.svg'}
-                  alt={heroProduct.name}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 420px"
-                  className="object-contain p-4 transition duration-500 group-hover:scale-105"
-                />
-              </div>
-
-              <div className="mt-4 flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-xs text-zinc-500">Today&apos;s price</p>
-                  <p className="text-2xl font-extrabold text-zinc-950">
-                    {formatCurrency(heroProduct.price, heroProduct.currency)}
-                  </p>
+                <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-50">
+                  <Image
+                    src={heroProduct.image || '/images/products/placeholder.svg'}
+                    alt={heroProduct.name}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 420px"
+                    className="object-contain p-4 transition duration-500 group-hover:scale-105"
+                  />
                 </div>
-                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-                  Fast selling
-                </span>
-              </div>
-            </Link>
+
+                <div className="mt-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-zinc-500">Today&apos;s price</p>
+                    <p className="text-2xl font-extrabold text-zinc-950">
+                      {formatCurrency(heroProduct.price, heroProduct.currency)}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+                    Fast selling
+                  </span>
+                </div>
+              </Link>
+            </div>
           ) : null}
         </div>
       </section>
@@ -491,7 +449,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TRUST_BAR_ITEMS.map((item) => (
             <div key={item} className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+              <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
                 ✓
               </span>
               <span>{item}</span>
@@ -526,7 +484,7 @@ export default async function HomePage() {
                   href={getCategoryHref(category.slug)}
                   className={`group rounded-2xl border border-zinc-200 bg-gradient-to-br ${content.tone} p-5 transition hover:-translate-y-1 hover:shadow-lg`}
                 >
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-700 shadow-sm">
+                  <span aria-hidden="true" className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-700 shadow-sm">
                     {content.icon}
                   </span>
                   <h3 className="mt-4 text-base font-bold text-zinc-900">{content.title}</h3>
@@ -555,7 +513,7 @@ export default async function HomePage() {
           </div>
 
           {homepageProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {homepageProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

@@ -140,6 +140,7 @@ export function ProductsClient({
         <div className="mb-6">
           <div className="relative">
             <svg
+              aria-hidden="true"
               className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
               fill="none"
               viewBox="0 0 24 24"
@@ -161,7 +162,7 @@ export function ProductsClient({
                 onClick={() => setSearchQuery('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -174,7 +175,7 @@ export function ProductsClient({
             onClick={() => setShowMobileFilters((value) => !value)}
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-800"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h18M6.75 12h10.5M10.5 19.5h3" />
             </svg>
             {showMobileFilters ? 'Hide filters' : 'Filters & sort'}
@@ -299,7 +300,7 @@ export function ProductsClient({
               onClick={clearAllFilters}
               className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Clear all filters

@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
-  --font-heading: var(--font-sora), system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-inter), system-ui, sans-serif;
   --animate-marquee: marquee 32s linear infinite;
   --animate-marquee-slow: marquee 52s linear infinite;
 }
@@ -17,40 +17,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sora), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 @keyframes marquee {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
-}
-
-.hero-slide-forward {
-  animation: hero-slide-forward 42s linear infinite;
-}
-
-.hero-slide-reverse {
-  animation: hero-slide-reverse 46s linear infinite;
-}
-
-@keyframes hero-slide-forward {
-  0% {
-    transform: translateX(-10%);
-  }
-  100% {
-    transform: translateX(-52%);
-  }
-}
-
-@keyframes hero-slide-reverse {
-  0% {
-    transform: translateX(8%);
-  }
-  100% {
-    transform: translateX(52%);
-  }
 }
