@@ -207,10 +207,19 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             className="object-contain p-3 transition duration-500 group-hover:scale-105"
           />
 
-          {hasDiscount ? (
-            <span className="absolute left-3 top-3 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
-              -{discountPercent}%
-            </span>
+          {hasDiscount || product.dealLabel ? (
+            <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+              {hasDiscount ? (
+                <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                  -{discountPercent}%
+                </span>
+              ) : null}
+              {product.dealLabel ? (
+                <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                  {product.dealLabel}
+                </span>
+              ) : null}
+            </div>
           ) : null}
 
           <span className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${stock.tone}`}>

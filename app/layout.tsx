@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import "./globals.css";
 import PublicChrome from "@/components/PublicChrome";
 import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ToastProvider } from "@/components/Toast";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+const perfectCorporate = localFont({
+  src: [
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-Thin.woff2", weight: "100", style: "normal" },
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-ExtraLight.woff2", weight: "200", style: "normal" },
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-Light.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/perfect-corporate/PerfectCorporate-SemiBold.woff2", weight: "600 900", style: "normal" },
+  ],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-perfect-corporate",
 });
 
 const HERO_TITLE = `Buy SSDs, Laptops & CCTV in Zimbabwe | ${SITE_NAME}`;
@@ -62,13 +68,12 @@ export default function RootLayout({
   return (
     <html lang="en-ZW">
       <head>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://wa.me" />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
         <WebsiteJsonLd />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-white text-zinc-900`}>
+      <body className={`${perfectCorporate.variable} font-sans antialiased bg-white text-zinc-900`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-red-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"

@@ -154,8 +154,8 @@ export function Header() {
                 </button>
 
                 {categoriesOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-1 w-[560px] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl">
-                    <div className="grid grid-cols-2 gap-1">
+                  <div className="absolute left-0 top-full z-50 mt-1 w-[680px] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl">
+                    <div className="grid grid-cols-3 gap-1">
                       {CATALOG_CATEGORIES.map((category) => (
                         <Link
                           key={category.id}

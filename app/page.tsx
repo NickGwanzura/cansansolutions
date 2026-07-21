@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
-import { readProducts } from '@/lib/admin-data';
+import { getHomepageBanners, readProducts } from '@/lib/admin-data';
 import { CATALOG_CATEGORIES, getCategoryHref, isSaImportProduct } from '@/lib/catalog';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { HeroProductSlider } from '@/components/HeroProductSlider';
+import { HeroBannerCarousel } from '@/components/HeroBannerCarousel';
+import { WA_NUMBER } from '@/lib/site';
 import { formatCurrency } from '@/lib/utils';
 
 export const revalidate = 3600;
@@ -18,76 +21,87 @@ export const metadata: Metadata = buildAbsoluteMetadata({
   path: '/',
 });
 
-const KEY_CATEGORY_SLUGS = ['drives', 'sa-imports', 'laptops', 'networking', 'cctv', 'accessories'] as const;
-
-const CATEGORY_CONTENT = {
-  drives: {
-    title: 'Storage',
-    description: 'NVMe SSDs, external drives, and backup solutions for speed and reliability.',
-    tone: 'from-red-50 via-white to-rose-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <ellipse cx="12" cy="5" rx="8.5" ry="2.5" />
-        <path d="M20.5 12c0 1.4-3.8 2.5-8.5 2.5S3.5 13.4 3.5 12M3.5 5v14c0 1.4 3.8 2.5 8.5 2.5s8.5-1.1 8.5-2.5V5" />
-      </svg>
-    ),
-  },
-  'sa-imports': {
-    title: 'SA Imports',
-    description: 'Special-order products sourced from South Africa with a clear 5-day delivery lead time.',
-    tone: 'from-rose-50 via-white to-red-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M3.5 7.5h11v8h-11z" />
-        <path d="M14.5 10.5h3.5l2.5 2.5V15.5H14.5z" />
-        <circle cx="7.5" cy="17.5" r="1.5" />
-        <circle cx="17.5" cy="17.5" r="1.5" />
-      </svg>
-    ),
-  },
-  laptops: {
-    title: 'Laptops',
-    description: 'Work, school, and business laptops with local stock confirmation.',
-    tone: 'from-zinc-50 via-white to-red-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <rect x="3" y="5" width="18" height="11" rx="1.5" />
-        <path d="M2 19h20" />
-      </svg>
-    ),
-  },
-  networking: {
-    title: 'Networking',
-    description: 'Routers, switches, access points, and office-ready connectivity gear.',
-    tone: 'from-orange-50 via-white to-red-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M4 9c4.8-4.7 11.2-4.7 16 0M7.5 12.5c2.9-2.8 6.1-2.8 9 0M11.2 16.2a1.1 1.1 0 1 1 1.6 1.6 1.1 1.1 0 0 1-1.6-1.6Z" />
-      </svg>
-    ),
-  },
-  cctv: {
-    title: 'CCTV',
-    description: 'Security cameras and surveillance kits for homes and businesses.',
-    tone: 'from-red-50 via-white to-zinc-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M2.5 12c1.2-3.6 4.6-6 8.8-6 4.1 0 7.5 2.4 8.7 6-1.2 3.6-4.6 6-8.7 6-4.2 0-7.6-2.4-8.8-6Z" />
-        <circle cx="11.3" cy="12" r="2.7" />
-      </svg>
-    ),
-  },
-  accessories: {
-    title: 'Accessories',
-    description: 'Adapters, keyboards, mice, cables, chargers, and practical add-ons.',
-    tone: 'from-zinc-50 via-white to-red-100',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M8 4.5V7m8-2.5V7M12 7v4.5m0 0a3.5 3.5 0 1 0 3.5 3.5H12V11.5Zm0 0A3.5 3.5 0 1 1 8.5 15H12" />
-      </svg>
-    ),
-  },
-} as const;
+const CATEGORY_ICONS: Record<string, ReactNode> = {
+  laptop: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="3" y="5" width="18" height="11" rx="1.5" />
+      <path d="M2 19h20" />
+    </svg>
+  ),
+  printer: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M6.5 8V4h11v4M6.5 17.5H5A2 2 0 0 1 3 15.5v-4A2 2 0 0 1 5 9.5h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1.5" />
+      <rect x="6.5" y="13" width="11" height="7" rx="0.75" />
+    </svg>
+  ),
+  network: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M4 9c4.8-4.7 11.2-4.7 16 0M7.5 12.5c2.9-2.8 6.1-2.8 9 0M11.2 16.2a1.1 1.1 0 1 1 1.6 1.6 1.1 1.1 0 0 1-1.6-1.6Z" />
+    </svg>
+  ),
+  desktop: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="4" y="4" width="16" height="11" rx="1.5" />
+      <path d="M9 20h6M12 15v5" />
+    </svg>
+  ),
+  monitor: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="3.5" y="4.5" width="17" height="12" rx="1.5" />
+      <path d="M9 20h6M12 16.5v3.5" />
+    </svg>
+  ),
+  plug: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M8 4.5V7m8-2.5V7M12 7v4.5m0 0a3.5 3.5 0 1 0 3.5 3.5H12V11.5Zm0 0A3.5 3.5 0 1 1 8.5 15H12" />
+    </svg>
+  ),
+  headphones: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
+      <rect x="3" y="14" width="4.5" height="6" rx="1.5" />
+      <rect x="16.5" y="14" width="4.5" height="6" rx="1.5" />
+    </svg>
+  ),
+  cpu: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="7" y="7" width="10" height="10" rx="1.2" />
+      <path d="M9.5 7V4m5 3V4m0 20v-3m-5 3v-3M7 9.5H4m3 5H4m16-5h-3m3 5h-3" />
+    </svg>
+  ),
+  storage: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <ellipse cx="12" cy="5" rx="8.5" ry="2.5" />
+      <path d="M20.5 12c0 1.4-3.8 2.5-8.5 2.5S3.5 13.4 3.5 12M3.5 5v14c0 1.4 3.8 2.5 8.5 2.5s8.5-1.1 8.5-2.5V5" />
+    </svg>
+  ),
+  truck: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M3.5 7.5h11v8h-11z" />
+      <path d="M14.5 10.5h3.5l2.5 2.5V15.5H14.5z" />
+      <circle cx="7.5" cy="17.5" r="1.5" />
+      <circle cx="17.5" cy="17.5" r="1.5" />
+    </svg>
+  ),
+  smartphone: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="7" y="3" width="10" height="18" rx="2" />
+      <path d="M11 18h2" />
+    </svg>
+  ),
+  'shield-camera': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M2.5 12c1.2-3.6 4.6-6 8.8-6 4.1 0 7.5 2.4 8.7 6-1.2 3.6-4.6 6-8.7 6-4.2 0-7.6-2.4-8.8-6Z" />
+      <circle cx="11.3" cy="12" r="2.7" />
+    </svg>
+  ),
+  deals: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path d="M11.5 3.5 4 11l8.5 9.5L20 13z" />
+      <circle cx="9" cy="8" r="1.4" />
+    </svg>
+  ),
+};
 
 const HERO_TRUST_POINTS = [
   'Fast Harare delivery and nationwide courier',
@@ -96,31 +110,31 @@ const HERO_TRUST_POINTS = [
   'Bulk pricing available for offices and institutions',
 ];
 
-const TRUST_BAR_ITEMS = [
-  'Fast Delivery Zimbabwe',
-  'Secure Payments',
-  'Warranty Support',
-  'Trusted Tech Supplier',
-];
-
-const WHY_CANSAN_ITEMS = [
+const FEATURE_TILES = [
   {
-    title: 'Local Stock You Can Confirm',
+    title: 'Genuine Products',
+    stat: '100% Verified',
     description: 'No guesswork. Check current availability before paying or traveling.',
   },
   {
-    title: 'Fast Harare and Nationwide Delivery',
+    title: 'Fast Harare Delivery',
+    stat: 'Same-Day in Harare',
     description: 'Same-day dispatch options in Harare and reliable courier nationwide.',
   },
   {
-    title: 'Competitive Pricing That Still Includes Support',
-    description: 'Strong value pricing without disappearing after checkout.',
+    title: 'WhatsApp Ordering',
+    stat: 'Reply in Minutes',
+    description: 'Get setup guidance, warranty direction, and product advice from a local team.',
+    href: `https://wa.me/${WA_NUMBER}`,
+    external: true,
   },
   {
-    title: 'Real Human Help Before and After Purchase',
-    description: 'Get setup guidance, warranty direction, and product advice from a local team.',
+    title: 'Bulk & Institution Pricing',
+    stat: 'Custom Quotes',
+    description: 'Strong value pricing for offices and schools, without disappearing after checkout.',
+    href: '/bulk-orders',
   },
-];
+] as const;
 
 const SERVICE_LINKS = [
   { label: 'Delivery Information', href: '/delivery' },
@@ -344,6 +358,7 @@ function getDailyHomepageProducts(products: Product[]) {
 
 export default async function HomePage() {
   const products = await readProducts();
+  const banners = await getHomepageBanners();
   const featuredInsights = getFeaturedInsights(3);
 
   const homepageProducts = getDailyHomepageProducts(products);
@@ -371,13 +386,17 @@ export default async function HomePage() {
     return deduped;
   })();
 
-  const homepageCategories = KEY_CATEGORY_SLUGS.map((slug) =>
-    CATALOG_CATEGORIES.find((category) => category.slug === slug || category.id === slug)
-  ).filter((category): category is (typeof CATALOG_CATEGORIES)[number] => Boolean(category));
-
   return (
     <div className="overflow-x-hidden bg-white text-zinc-900">
-      <section className="relative overflow-hidden bg-white px-6 py-14 sm:py-20">
+      {banners.length > 0 ? (
+        <section className="bg-white px-6 pt-6 sm:pt-8">
+          <div className="mx-auto max-w-7xl">
+            <HeroBannerCarousel banners={banners} />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="relative overflow-hidden bg-white px-6 py-10 sm:py-14">
         <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-red-700">
@@ -421,16 +440,43 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-zinc-200 bg-white px-6 py-4">
-        <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {TRUST_BAR_ITEMS.map((item) => (
-            <div key={item} className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700">
-              <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                ✓
-              </span>
-              <span>{item}</span>
-            </div>
-          ))}
+      <section className="border-y border-zinc-200 bg-zinc-50 px-6 py-10">
+        <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {FEATURE_TILES.map((tile) => {
+            const content = (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">{tile.stat}</p>
+                <h3 className="mt-2 text-lg font-bold text-zinc-900">{tile.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600">{tile.description}</p>
+                {'href' in tile ? (
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red-700">
+                    {tile.title === 'WhatsApp Ordering' ? 'Chat now' : 'Get a quote'}
+                    <span aria-hidden="true">→</span>
+                  </span>
+                ) : null}
+              </>
+            );
+
+            if ('href' in tile) {
+              return (
+                <Link
+                  key={tile.title}
+                  href={tile.href}
+                  target={'external' in tile && tile.external ? '_blank' : undefined}
+                  rel={'external' in tile && tile.external ? 'noreferrer' : undefined}
+                  className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <article key={tile.title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+                {content}
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -447,28 +493,19 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {homepageCategories.map((category) => {
-              const content = CATEGORY_CONTENT[category.slug as keyof typeof CATEGORY_CONTENT];
-              if (!content) {
-                return null;
-              }
-
-              return (
-                <Link
-                  key={category.id}
-                  href={getCategoryHref(category.slug)}
-                  className={`group rounded-2xl border border-zinc-200 bg-gradient-to-br ${content.tone} p-5 transition hover:-translate-y-1 hover:shadow-lg`}
-                >
-                  <span aria-hidden="true" className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-700 shadow-sm">
-                    {content.icon}
-                  </span>
-                  <h3 className="mt-4 text-base font-bold text-zinc-900">{content.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600">{content.description}</p>
-                  <span className="mt-4 inline-flex text-xs font-semibold text-red-700">Browse {content.title}</span>
-                </Link>
-              );
-            })}
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
+            {CATALOG_CATEGORIES.map((category) => (
+              <Link
+                key={category.id}
+                href={getCategoryHref(category.slug)}
+                className="group flex flex-col items-center gap-2.5 rounded-2xl border border-zinc-200 bg-white px-3 py-5 text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg"
+              >
+                <span aria-hidden="true" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 text-red-700 transition group-hover:border-red-300 group-hover:bg-red-50">
+                  {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
+                </span>
+                <span className="text-xs font-semibold leading-tight text-zinc-900">{category.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -499,24 +536,6 @@ export default async function HomePage() {
               Featured products will appear here as soon as inventory is loaded.
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="bg-zinc-50 px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Why Choose Cansan</p>
-            <h2 className="mt-2 text-3xl font-bold text-zinc-900">Built for Zimbabwe Buyers Who Need Speed and Certainty</h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {WHY_CANSAN_ITEMS.map((item) => (
-              <article key={item.title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-zinc-900">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-zinc-600">{item.description}</p>
-              </article>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -557,6 +576,11 @@ export default async function HomePage() {
                             <p className="mt-1 text-xs text-zinc-500">
                               {product.inStock ? 'In stock and fast moving' : 'Stock updates available'}
                             </p>
+                            {product.dealLabel ? (
+                              <span className="mt-1.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                                {product.dealLabel}
+                              </span>
+                            ) : null}
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</p>

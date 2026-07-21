@@ -1,5 +1,5 @@
-import { getProducts, getProduct, getProductBySlug as dbGetProductBySlug, saveProduct, deleteProduct, getCategories, replaceProducts } from './db';
-import type { Product } from './types';
+import { getProducts, getProduct, getProductBySlug as dbGetProductBySlug, saveProduct, deleteProduct, getCategories, replaceProducts, getActiveBanners } from './db';
+import type { Banner, Product } from './types';
 import { normalizeBundleItems, normalizeProductType } from './catalog';
 
 type ProductRecord = {
@@ -69,6 +69,16 @@ export async function readProducts(): Promise<Product[]> {
   } catch (error) {
     console.error('[readProducts] Failed:', error);
     return []; // Return empty on error
+  }
+}
+
+export async function getHomepageBanners(): Promise<Banner[]> {
+  try {
+    const banners = await getActiveBanners();
+    return banners.filter((banner) => banner.position === 'homepage-hero');
+  } catch (error) {
+    console.error('[getHomepageBanners] Failed:', error);
+    return [];
   }
 }
 
