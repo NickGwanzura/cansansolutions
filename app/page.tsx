@@ -12,7 +12,12 @@ import { HeroBannerCarousel } from '@/components/HeroBannerCarousel';
 import { WA_NUMBER } from '@/lib/site';
 import { formatCurrency } from '@/lib/utils';
 
-export const revalidate = 3600;
+// Dynamic, not ISR: DATABASE_URL is only injected at container runtime (not
+// available during the Docker build), so static prerendering at build time
+// bakes in an empty product list until the ISR window happens to lapse.
+// Homepage product data also depends on the current Harare calendar day
+// (see getDailyHomepageProducts), so it should never be served stale anyway.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = buildAbsoluteMetadata({
   title: 'Buy SSDs, Laptops & CCTV in Zimbabwe',

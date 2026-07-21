@@ -5,6 +5,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'utfs.io' },
       { protocol: 'https', hostname: 'img.uploadthing.com' },
+      { protocol: 'https', hostname: '*.ufs.sh' },
+      { protocol: 'https', hostname: 'cdn.shopify.com' },
     ],
   },
   reactStrictMode: true,
@@ -64,7 +66,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://utfs.io https://img.uploadthing.com",
+              "img-src 'self' data: blob: https://utfs.io https://img.uploadthing.com https://*.ufs.sh https://cdn.shopify.com",
               "connect-src 'self' https://api.groq.com",
               "frame-ancestors 'self'",
               "form-action 'self'",
