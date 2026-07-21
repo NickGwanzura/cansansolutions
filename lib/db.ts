@@ -1,4 +1,4 @@
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import postgres from 'postgres';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type {
@@ -16,17 +16,22 @@ import type {
 } from './types';
 
 // Lazy-initialize so the module can be imported during build without DATABASE_URL
-let _sql: NeonQueryFunction<false, false> | null = null;
+let _sql: postgres.Sql | null = null;
 
 function hasDatabase(): boolean {
   return Boolean(process.env.DATABASE_URL);
 }
 
-function sql(): NeonQueryFunction<false, false> {
+function sql(): postgres.Sql {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not configured');
   }
-  if (!_sql) _sql = neon(process.env.DATABASE_URL);
+  if (!_sql) {
+    _sql = postgres(process.env.DATABASE_URL, {
+      ssl: process.env.DATABASE_URL.includes('sslmode=require') ? 'require' : false,
+      max: 10,
+    });
+  }
   return _sql;
 }
 
