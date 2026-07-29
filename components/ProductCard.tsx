@@ -160,6 +160,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addToCart);
   const { showToast } = useToast();
   const [adding, setAdding] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
   const isBundle = isBundleProduct(product);
 
   const seoTitle = useMemo(() => buildSeoTitle(product), [product]);
@@ -222,9 +223,24 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             </div>
           ) : null}
 
-          <span className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${stock.tone}`}>
+          <span className={`absolute right-3 top-3 rounded-full border px-3 py-1 text-xs font-semibold ${stock.tone}`}>
             {stock.label}
           </span>
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              setWishlisted((current) => !current);
+            }}
+            aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+            aria-pressed={wishlisted}
+            className={`absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 ${wishlisted ? 'border-red-200 bg-red-50 text-red-600' : 'border-zinc-200 bg-white text-zinc-500 hover:border-red-200 hover:text-red-600'}`}
+          >
+            <svg aria-hidden="true" className="h-4 w-4" fill={wishlisted ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+            </svg>
+          </button>
 
           {onQuickView ? (
             <button
@@ -232,7 +248,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 event.preventDefault();
                 onQuickView(product);
               }}
-              className="absolute bottom-3 right-3 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+              className="absolute bottom-3 right-3 inline-flex min-h-10 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             >
               Quick View
             </button>
@@ -245,7 +261,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           <h3 className="line-clamp-2">{seoTitle}</h3>
         </Link>
 
-        <ul className="mt-3 space-y-1.5 text-xs text-zinc-600">
+        <ul className="mt-3 space-y-1.5 text-sm text-zinc-600">
           {microSpecs.slice(0, 3).map((spec) => (
             <li key={spec} className="flex items-start gap-2">
               <span className="mt-1.5 h-1 w-1 rounded-full bg-red-500" />
@@ -257,25 +273,25 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         <div className="mt-4 flex items-end gap-2">
           <p className="text-lg font-bold text-zinc-950">{formatCurrency(product.price, product.currency)}</p>
           {hasDiscount && product.originalPrice ? (
-            <p className="text-xs text-zinc-400 line-through">{formatCurrency(product.originalPrice, product.currency)}</p>
+            <p className="text-sm text-zinc-400 line-through">{formatCurrency(product.originalPrice, product.currency)}</p>
           ) : null}
         </div>
 
-        <p className={`mt-1 text-[11px] ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}>
+        <p className={`mt-1 text-sm ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}>
           {urgencyMicrocopy}
         </p>
 
         <div className="mt-4 flex gap-2">
           <Link
             href={`/products/${product.slug}`}
-            className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-red-700"
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-red-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-700"
           >
             View Product
           </Link>
           <button
             onClick={handleAdd}
             disabled={!product.inStock}
-            className="rounded-full border border-zinc-300 px-4 py-2.5 text-xs font-semibold text-zinc-800 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400"
+            className="min-h-11 rounded-full border border-zinc-300 px-4 py-2.5 text-sm font-semibold text-zinc-800 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400"
           >
             {product.inStock ? (adding ? 'Added' : isBundle ? 'Add Bundle' : 'Add') : 'Unavailable'}
           </button>

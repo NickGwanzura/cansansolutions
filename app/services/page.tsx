@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageHero } from '@/components/PageHero';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -83,16 +84,21 @@ const services = [
 export default function ServicesPage() {
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-zinc-900 px-6 py-20 text-white">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">What we do</p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Services & Solutions</h1>
-          <p className="mt-5 text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
-            From sourcing the right device to setting up your entire office network — Cansan Solutions has the products, expertise, and support to get the job done.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="What we do"
+        title="Services & Solutions"
+        description="From sourcing the right device to setting up your entire office network, Cansan Solutions has the products, expertise, and support to get the job done."
+        actions={
+          <>
+            <Link href="/products" className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50">
+              Browse products
+            </Link>
+            <Link href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+              Talk to Cansan
+            </Link>
+          </>
+        }
+      />
 
       {/* Services grid */}
       <section className="mx-auto max-w-6xl px-6 py-16">

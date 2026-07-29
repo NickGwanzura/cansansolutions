@@ -1,14 +1,14 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
-import { getHomepageBanners, readProducts } from '@/lib/admin-data';
+import { readProducts } from '@/lib/admin-data';
 import { CATALOG_CATEGORIES, getCategoryHref, isSaImportProduct } from '@/lib/catalog';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { HeroProductSlider } from '@/components/HeroProductSlider';
-import { HeroBannerCarousel } from '@/components/HeroBannerCarousel';
 import { WA_NUMBER } from '@/lib/site';
 import { formatCurrency } from '@/lib/utils';
 
@@ -108,12 +108,21 @@ const CATEGORY_ICONS: Record<string, ReactNode> = {
   ),
 };
 
-const HERO_TRUST_POINTS = [
-  'Fast Harare delivery and nationwide courier',
-  'Pay with USD cash, swipe, bank transfer, EcoCash',
-  'Warranty-backed products and post-sale support',
-  'Bulk pricing available for offices and institutions',
-];
+const CATEGORY_VISUALS: Record<string, string> = {
+  laptops: '/images/products/laptop-new.svg',
+  printing: '/images/products/placeholder.svg',
+  networking: '/images/products/promo-collection.svg',
+  desktops: '/images/products/desktop-new.svg',
+  monitors: '/images/products/imac.svg',
+  accessories: '/images/products/placeholder.svg',
+  audio: '/images/products/placeholder.svg',
+  'pc-parts': '/images/products/promo-collection.svg',
+  drives: '/images/products/promo-collection.svg',
+  'sa-imports': '/images/products/laptop-used.svg',
+  mobile: '/images/products/placeholder.svg',
+  cctv: '/images/products/promo-collection.svg',
+  bundles: '/images/products/promo-collection.svg',
+};
 
 const FEATURE_TILES = [
   {
@@ -363,7 +372,6 @@ function getDailyHomepageProducts(products: Product[]) {
 
 export default async function HomePage() {
   const products = await readProducts();
-  const banners = await getHomepageBanners();
   const featuredInsights = getFeaturedInsights(3);
 
   const homepageProducts = getDailyHomepageProducts(products);
@@ -391,57 +399,31 @@ export default async function HomePage() {
     return deduped;
   })();
 
+  const categoryShowcase = CATALOG_CATEGORIES.filter((category) => CATEGORY_VISUALS[category.slug]).slice(0, 7);
+
   return (
-    <div className="overflow-x-hidden bg-white text-zinc-900">
-      {banners.length > 0 ? (
-        <section className="bg-white px-6 pt-6 sm:pt-8">
-          <div className="mx-auto max-w-7xl">
-            <HeroBannerCarousel banners={banners} />
-          </div>
-        </section>
-      ) : null}
+    <div className="overflow-x-hidden bg-[#f7f7f7] text-zinc-900">
+      <HeroProductSlider products={heroSlideProducts} />
 
-      <section className="relative overflow-hidden bg-white px-6 py-10 sm:py-14">
-        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-red-700">
-              Zimbabwe&apos;s WhatsApp-First Tech Store
-            </p>
-            <h1 className="mt-3 font-heading text-4xl font-extrabold leading-tight text-zinc-950 sm:text-5xl">
-              Trusted Zimbabwe Tech Store for SSDs, Laptops, Networking and CCTV
-            </h1>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg">
-              Buy genuine devices with fast delivery, secure payment options, and local support that stays available after you order.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/products"
-                className="inline-flex items-center justify-center rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-red-700"
-              >
-                Shop Now
-              </Link>
-              <Link
-                href="#shop-categories"
-                className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-800 transition hover:-translate-y-0.5 hover:border-zinc-400"
-              >
-                Browse Categories
-              </Link>
+      <section className="bg-white px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-700">Shop by category</p>
+              <h2 className="mt-1 text-2xl font-bold text-zinc-900">Find the right tech faster</h2>
             </div>
-
-            <ul className="mt-7 grid max-w-xl gap-2.5 text-sm text-zinc-600 sm:grid-cols-2">
-              {HERO_TRUST_POINTS.map((point) => (
-                <li key={point} className="flex items-center gap-2">
-                  <svg aria-hidden="true" className="h-4 w-4 shrink-0 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
+            <Link href="#shop-categories" className="text-sm font-semibold text-red-700 hover:text-red-800">View all categories →</Link>
           </div>
-
-          <HeroProductSlider products={heroSlideProducts} />
+          <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
+            {categoryShowcase.map((category) => (
+              <Link key={category.id} href={getCategoryHref(category.slug)} className="group min-w-36 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 transition hover:border-red-300 hover:shadow-md sm:min-w-40">
+                <div className="relative aspect-[4/3] bg-white p-3">
+                  <Image src={CATEGORY_VISUALS[category.slug]} alt="" fill sizes="180px" className="object-contain p-3 transition duration-300 group-hover:scale-105 motion-reduce:transition-none" />
+                </div>
+                <p className="border-t border-zinc-100 bg-white px-3 py-3 text-center text-sm font-semibold text-zinc-800 group-hover:text-red-700">{category.label}</p>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -489,8 +471,9 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Primary Categories</p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop by Tech Category in Zimbabwe</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Available in store</p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop the technology you need</h2>
+              <p className="mt-2 max-w-2xl text-sm text-zinc-600">Browse current ranges for work, learning, home entertainment and business setups.</p>
             </div>
             <Link href="/products" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700">
               View all products
@@ -503,12 +486,23 @@ export default async function HomePage() {
               <Link
                 key={category.id}
                 href={getCategoryHref(category.slug)}
-                className="group flex flex-col items-center gap-2.5 rounded-2xl border border-zinc-200 bg-white px-3 py-5 text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg"
+                className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg"
               >
-                <span aria-hidden="true" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 text-red-700 transition group-hover:border-red-300 group-hover:bg-red-50">
-                  {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
-                </span>
-                <span className="text-xs font-semibold leading-tight text-zinc-900">{category.label}</span>
+                <div className="relative aspect-[4/3] border-b border-zinc-100 bg-zinc-50">
+                  <Image
+                    src={CATEGORY_VISUALS[category.slug] ?? '/images/products/placeholder.svg'}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 50vw, 220px"
+                    className="object-contain p-4 transition duration-300 group-hover:scale-105 motion-reduce:transition-none"
+                  />
+                  <span aria-hidden="true" className="absolute left-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/90 text-red-700 shadow-sm transition group-hover:border-red-200 group-hover:bg-red-50">
+                    {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
+                  </span>
+                </div>
+                <div className="px-3 py-4">
+                  <span className="text-xs font-semibold leading-tight text-zinc-900">{category.label}</span>
+                </div>
               </Link>
             ))}
           </div>
@@ -531,10 +525,50 @@ export default async function HomePage() {
           </div>
 
           {homepageProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {homepageProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
+              <article className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-950 text-white shadow-sm">
+                <div className="relative h-full p-7">
+                  <div aria-hidden="true" className="absolute -right-10 top-0 h-48 w-48 rounded-full bg-red-500/30 blur-3xl" />
+                  <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.18em] text-red-300">Editor&apos;s pick</p>
+                  <h3 className="relative z-10 mt-3 max-w-sm text-3xl font-bold leading-tight">
+                    {homepageProducts[0]?.name ?? 'Top technology picks selected for today'}
+                  </h3>
+                  <p className="relative z-10 mt-3 max-w-md text-sm leading-relaxed text-white/70">
+                    A daily front-page spotlight built from in-stock laptops, SA imports and top-performing categories so your most important inventory gets seen first.
+                  </p>
+
+                  {homepageProducts[0] ? (
+                    <Link href={`/products/${homepageProducts[0].slug}`} className="relative z-10 mt-7 block overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-5">
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-white/95 p-4">
+                        <Image
+                          src={homepageProducts[0].image || '/images/products/placeholder.svg'}
+                          alt={homepageProducts[0].name}
+                          fill
+                          sizes="(max-width: 1280px) 100vw, 420px"
+                          className="object-contain p-5"
+                        />
+                      </div>
+                      <div className="mt-4 flex items-end justify-between gap-3">
+                        <div>
+                          <p className="text-xs text-white/60">Starting from</p>
+                          <p className="text-2xl font-bold text-white">
+                            {formatCurrency(homepageProducts[0].price, homepageProducts[0].currency)}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-zinc-950">
+                          View product
+                        </span>
+                      </div>
+                    </Link>
+                  ) : null}
+                </div>
+              </article>
+
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+                {homepageProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center text-zinc-500">

@@ -1,4 +1,5 @@
 import { getProducts, getProduct, getProductBySlug as dbGetProductBySlug, saveProduct, deleteProduct, getCategories, replaceProducts, getActiveBanners } from './db';
+import fallbackProducts from '@/data/products.template.json';
 import type { Banner, Product } from './types';
 import { normalizeBundleItems, normalizeProductType } from './catalog';
 
@@ -63,6 +64,13 @@ function mapRow(data: ProductRecord): Product {
 }
 
 export async function readProducts(): Promise<Product[]> {
+  // A local catalogue keeps the storefront usable in development and preview
+  // environments where DATABASE_URL has not been configured. A configured
+  // database remains the only source used in production inventory workflows.
+  if (!process.env.DATABASE_URL) {
+    return fallbackProducts.map((product) => mapRow(product));
+  }
+
   try {
     const products = await getProducts();
     return products.map(mapRow);

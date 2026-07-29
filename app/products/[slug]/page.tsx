@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ProductJsonLd } from '@/components/JsonLd';
+import { PageHero } from '@/components/PageHero';
 import { AddToCartButton } from './AddToCartButton';
 import { getProductBySlug, readProducts } from '@/lib/admin-data';
 import { getCategoryBySlug, getCategoryHref, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
@@ -318,30 +319,79 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
   return (
     <>
       <ProductJsonLd product={product} categoryName={category?.label} />
-      <div className="mx-auto max-w-7xl px-4 py-10 pb-24 sm:px-6 sm:pb-10">
-        <nav className="mb-6 flex items-center gap-2 text-sm text-zinc-600">
-          <Link href="/" className="hover:text-zinc-900">
-            Home
-          </Link>
-          <span className="text-zinc-300">/</span>
-          <Link href="/products" className="hover:text-zinc-900">
-            Products
-          </Link>
-          {category ? (
-            <>
-              <span className="text-zinc-300">/</span>
-              <Link href={getCategoryHref(category.slug)} className="hover:text-zinc-900">
-                {category.label}
-              </Link>
-            </>
-          ) : null}
-          <span className="text-zinc-300">/</span>
-          <span className="text-zinc-800 font-medium">{product.name}</span>
-        </nav>
+      <PageHero
+        eyebrow={category?.label ?? 'Product Details'}
+        title={seoHeadline}
+        description={heroSummary}
+        backgroundImage={imageSrc}
+        breadcrumbs={
+          <nav className="flex items-center gap-2 text-sm text-white/70">
+            <Link href="/" className="hover:text-white">
+              Home
+            </Link>
+            <span className="text-white/30">/</span>
+            <Link href="/products" className="hover:text-white">
+              Products
+            </Link>
+            {category ? (
+              <>
+                <span className="text-white/30">/</span>
+                <Link href={getCategoryHref(category.slug)} className="hover:text-white">
+                  {category.label}
+                </Link>
+              </>
+            ) : null}
+            <span className="text-white/30">/</span>
+            <span className="font-medium text-white">{product.name}</span>
+          </nav>
+        }
+        meta={[
+          <div key="price" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-red-200">Price</p>
+            <p className="mt-1 text-lg font-bold text-white">{formatCurrency(product.price, product.currency)}</p>
+          </div>,
+          <div key="stock" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-red-200">Stock</p>
+            <p className="mt-1 text-lg font-bold text-white">{product.inStock ? 'Available' : 'Check ETA'}</p>
+          </div>,
+        ]}
+        actions={
+          <>
+            <a
+              href={`https://wa.me/${waNumber}?text=${waText}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50"
+            >
+              Order on WhatsApp
+            </a>
+            <Link
+              href="/delivery"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              Delivery and warranty
+            </Link>
+          </>
+        }
+      >
+        {quickSpecChips.length > 0 ? (
+              <div className="flex flex-wrap gap-2 rounded-2xl border border-white/12 bg-white/10 p-4 backdrop-blur-sm">
+                {quickSpecChips.slice(0, 4).map((chip) => (
+              <span key={chip} className="inline-flex min-h-10 items-center rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+        ) : null}
+      </PageHero>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="mx-auto max-w-7xl px-4 py-10 pb-32 sm:px-6 sm:pb-10">
+
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <div className="space-y-4">
-            <div className="flex items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 p-10">
+            <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
+              <div aria-hidden="true" className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(254,226,226,0.95),transparent_70%)]" />
+              <div className="relative flex items-center justify-center rounded-2xl border border-zinc-100 bg-zinc-50 p-10">
               <Image
                 src={imageSrc}
                 alt={product.name}
@@ -349,13 +399,14 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                 height={720}
                 className="max-h-72 w-full object-contain"
               />
+              </div>
             </div>
             {quickSpecChips.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {quickSpecChips.map((chip) => (
                   <span
                     key={chip}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-700"
+                    className="inline-flex min-h-10 items-center rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700"
                   >
                     {chip}
                   </span>
@@ -364,7 +415,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-center gap-2">
               {category ? (
                 <Link
@@ -377,7 +428,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               {brand ? (
                 <Link
                   href={getBrandHref(brand.slug)}
-                  className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-600 hover:bg-red-100"
+                  className="inline-flex min-h-10 items-center rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
                 >
                   {brand.name}
                 </Link>
@@ -404,7 +455,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               ) : null}
             </div>
 
-            <h1 className="text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">{seoHeadline}</h1>
+            <h2 className="text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">{seoHeadline}</h2>
 
             <p className="text-sm leading-relaxed text-zinc-600">{heroSummary}</p>
 
@@ -537,7 +588,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
 
             <div className="flex flex-wrap gap-2">
               {product.tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-[11px] text-zinc-500">
+                <span key={tag} className="inline-flex min-h-9 items-center rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600">
                   {tag}
                 </span>
               ))}
@@ -670,7 +721,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
             <h2 className="mb-5 text-lg font-bold text-zinc-900">
               {isExternalSsd ? 'Related Products & Upsells' : `More in ${category?.label ?? 'this category'}`}
             </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {related.map((relatedProduct) => (
                 <Link
                   key={relatedProduct.id}
@@ -686,15 +737,15 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                       className="max-h-full object-contain"
                     />
                   </div>
-                  <p className="line-clamp-2 text-xs font-semibold text-zinc-800 group-hover:underline">
+                  <p className="line-clamp-2 text-sm font-semibold text-zinc-800 group-hover:underline">
                     {relatedProduct.name}
                   </p>
                   {isBundleProduct(relatedProduct) ? (
-                    <p className="mt-1 text-[11px] font-medium text-zinc-500">
+                    <p className="mt-1 text-sm font-medium text-zinc-500">
                       {relatedProduct.bundleItems.length} item bundle
                     </p>
                   ) : null}
-                  <p className="mt-1 text-xs font-bold text-zinc-900">
+                  <p className="mt-1 text-sm font-bold text-zinc-900">
                     {formatCurrency(relatedProduct.price, relatedProduct.currency)}
                   </p>
                 </Link>
@@ -704,14 +755,14 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         ) : null}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur sm:hidden">
-        <div className="mx-auto flex max-w-7xl gap-2">
-          <AddToCartButton product={product} label="Buy Now" className="rounded-xl py-2.5 text-xs" />
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-2">
+          <AddToCartButton product={product} label="Buy Now" className="min-h-12 rounded-xl px-4 py-3 text-sm" />
           <a
             href={`https://wa.me/${waNumber}?text=${waText}`}
             target="_blank"
             rel="noreferrer"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-green-600 px-4 py-2.5 text-xs font-semibold text-green-700"
+            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-green-600 px-4 py-3 text-sm font-semibold text-green-700"
           >
             WhatsApp
           </a>

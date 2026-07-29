@@ -20,18 +20,18 @@ const NOTE_SUGGESTIONS = [
 function StepDots({ step }: { step: Step }) {
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex items-center gap-1 text-[11px] font-semibold ${step === 'cart' ? 'text-red-600' : 'text-zinc-400'}`}>
-        <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${step === 'cart' ? 'bg-red-600 text-white' : 'bg-zinc-200 text-zinc-500'}`}>1</span>
+      <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'cart' ? 'text-red-600' : 'text-zinc-500'}`}>
+        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'cart' ? 'bg-red-600 text-white' : 'bg-zinc-200 text-zinc-600'}`}>1</span>
         Cart
       </div>
       <div className={`h-px w-6 ${step === 'review' ? 'bg-green-400' : 'bg-zinc-200'}`} />
-      <div className={`flex items-center gap-1 text-[11px] font-semibold ${step === 'review' ? 'text-green-600' : 'text-zinc-300'}`}>
-        <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${step === 'review' ? 'bg-green-600 text-white' : 'bg-zinc-100 text-zinc-300'}`}>2</span>
+      <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'review' ? 'text-green-600' : 'text-zinc-400'}`}>
+        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'review' ? 'bg-green-600 text-white' : 'bg-zinc-100 text-zinc-400'}`}>2</span>
         Review
       </div>
       <div className="h-px w-6 bg-zinc-200" />
-      <div className="flex items-center gap-1 text-[11px] font-semibold text-zinc-300">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-300">3</span>
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-bold text-zinc-400">3</span>
         WhatsApp
       </div>
     </div>
@@ -103,7 +103,7 @@ export function CartDrawer({ open, onClose }: Props) {
                   </svg>
                   <h2 className="font-heading text-sm font-bold text-zinc-900">Your Cart</h2>
                   {items.length > 0 && (
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600">
                       {totalItems} item{totalItems !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -112,7 +112,7 @@ export function CartDrawer({ open, onClose }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-zinc-100"
+                className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-zinc-100"
                 aria-label="Close cart"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
@@ -143,11 +143,11 @@ export function CartDrawer({ open, onClose }: Props) {
                         </div>
                         <div>
                           <p className="font-heading text-sm font-semibold text-zinc-700">Your cart is empty</p>
-                          <p className="mt-1 text-xs text-zinc-400">Browse products and add items to get started</p>
+                          <p className="mt-1 text-sm text-zinc-500">Browse products and add items to get started</p>
                         </div>
                         <button
                           onClick={onClose}
-                          className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
+                          className="inline-flex min-h-11 items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
                         >
                           Browse Products
                         </button>
@@ -155,8 +155,8 @@ export function CartDrawer({ open, onClose }: Props) {
                     ) : (
                       <div className="space-y-4">
                         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-                          <p className="text-xs font-semibold text-emerald-800">What happens next</p>
-                          <p className="mt-1 text-[11px] leading-relaxed text-emerald-700">
+                          <p className="text-sm font-semibold text-emerald-800">What happens next</p>
+                          <p className="mt-1 text-sm leading-relaxed text-emerald-700">
                             Review your items, add any delivery or collection note, then send the order on WhatsApp. Cansan confirms stock, final pricing, and next steps before payment.
                           </p>
                         </div>
@@ -190,34 +190,34 @@ export function CartDrawer({ open, onClose }: Props) {
                                   <Link
                                     href={`/products/${item.slug}`}
                                     onClick={onClose}
-                                    className="font-heading text-xs font-semibold leading-snug text-zinc-900 transition-colors hover:text-red-600 line-clamp-2"
+                                    className="font-heading text-sm font-semibold leading-snug text-zinc-900 transition-colors hover:text-red-600 line-clamp-2"
                                   >
                                     {item.name}
                                   </Link>
-                                  <span className="text-[11px] text-zinc-400">{formatCurrency(item.price, item.currency)} each</span>
+                                  <span className="text-sm text-zinc-500">{formatCurrency(item.price, item.currency)} each</span>
                                   <div className="mt-0.5 flex items-center gap-1.5">
                                     <button
                                       onClick={() => updateQty(item.id, item.qty - 1)}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
+                                      className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
                                     >
                                       −
                                     </button>
-                                    <span className="w-5 text-center text-xs font-bold text-zinc-900">{item.qty}</span>
+                                    <span className="w-7 text-center text-sm font-bold text-zinc-900">{item.qty}</span>
                                     <button
                                       onClick={() => updateQty(item.id, item.qty + 1)}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
+                                      className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
                                     >
                                       +
                                     </button>
                                   </div>
                                 </div>
                                 <div className="shrink-0 flex flex-col items-end gap-2">
-                                  <span className="font-heading text-xs font-bold text-zinc-900">
+                                  <span className="font-heading text-sm font-bold text-zinc-900">
                                     {formatCurrency(item.price * item.qty, item.currency)}
                                   </span>
                                   <button
                                     onClick={() => removeFromCart(item.id)}
-                                    className="text-[11px] text-zinc-300 transition-colors hover:text-red-500"
+                                    className="inline-flex min-h-10 items-center text-sm text-zinc-500 transition-colors hover:text-red-500"
                                   >
                                     Remove
                                   </button>
@@ -243,7 +243,7 @@ export function CartDrawer({ open, onClose }: Props) {
                   >
                     {/* Order summary */}
                     <div>
-                      <h3 className="font-heading text-xs font-bold text-zinc-700 mb-2 uppercase tracking-wide">
+                      <h3 className="mb-2 font-heading text-xs font-bold uppercase tracking-wide text-zinc-700">
                         Order Summary
                       </h3>
                       <ul className="space-y-2">
@@ -259,10 +259,10 @@ export function CartDrawer({ open, onClose }: Props) {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-zinc-800 line-clamp-1">{item.name}</p>
-                              <p className="text-[11px] text-zinc-400">Qty: {item.qty}</p>
+                              <p className="text-sm font-semibold text-zinc-800 line-clamp-1">{item.name}</p>
+                              <p className="text-sm text-zinc-500">Qty: {item.qty}</p>
                             </div>
-                            <span className="text-xs font-bold text-zinc-900 shrink-0">
+                            <span className="shrink-0 text-sm font-bold text-zinc-900">
                               {formatCurrency(item.price * item.qty, item.currency)}
                             </span>
                           </li>
@@ -272,11 +272,11 @@ export function CartDrawer({ open, onClose }: Props) {
 
                     {/* Totals */}
                     <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-3 space-y-1.5">
-                      <div className="flex justify-between text-xs text-zinc-500">
+                      <div className="flex justify-between text-sm text-zinc-600">
                         <span>Subtotal ({totalItems} item{totalItems !== 1 ? 's' : ''})</span>
                         <span className="font-semibold text-zinc-700">{formatCurrency(total, currency)}</span>
                       </div>
-                      <div className="flex justify-between text-xs text-zinc-500">
+                      <div className="flex justify-between text-sm text-zinc-600">
                         <span>Delivery</span>
                         <span className="font-medium text-zinc-500">Confirmed via WhatsApp</span>
                       </div>
@@ -288,7 +288,7 @@ export function CartDrawer({ open, onClose }: Props) {
 
                     {/* Note */}
                     <div>
-                      <label className="block font-heading text-xs font-bold text-zinc-700 mb-1.5 uppercase tracking-wide">
+                      <label className="mb-1.5 block font-heading text-xs font-bold uppercase tracking-wide text-zinc-700">
                         Add a note <span className="font-normal text-zinc-400 normal-case">(optional)</span>
                       </label>
                       <div className="mb-2 flex flex-wrap gap-2">
@@ -296,7 +296,7 @@ export function CartDrawer({ open, onClose }: Props) {
                           <button
                             key={suggestion}
                             onClick={() => setNote((current) => (current ? `${current.trim()}${current.trim().endsWith('.') ? ' ' : '. '}${suggestion}` : suggestion))}
-                            className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition hover:border-red-300 hover:text-red-600"
+                            className="inline-flex min-h-10 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-red-300 hover:text-red-600"
                           >
                             {suggestion}
                           </button>
@@ -307,16 +307,16 @@ export function CartDrawer({ open, onClose }: Props) {
                         onChange={(e) => setNote(e.target.value)}
                         rows={3}
                         placeholder="E.g. delivery address, preferred colour, questions..."
-                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs text-zinc-700 placeholder-zinc-300 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 transition"
+                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-700 placeholder-zinc-400 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100"
                       />
                     </div>
 
                     {/* WhatsApp message preview */}
                     <div>
-                      <p className="font-heading text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wide">
+                      <p className="mb-1.5 font-heading text-xs font-bold uppercase tracking-wide text-zinc-500">
                         Message preview
                       </p>
-                      <div className="rounded-xl bg-green-50 border border-green-100 p-3 text-[11px] text-zinc-600 leading-relaxed whitespace-pre-wrap font-mono">
+                      <div className="whitespace-pre-wrap rounded-xl border border-green-100 bg-green-50 p-3 font-mono text-sm leading-relaxed text-zinc-700">
                         {buildWhatsAppPreview(items, note)}
                       </div>
                     </div>
@@ -391,4 +391,3 @@ export function CartDrawer({ open, onClose }: Props) {
     </AnimatePresence>
   );
 }
-

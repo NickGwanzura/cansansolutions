@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
 import { QuickPreview } from '@/components/QuickPreview';
 import { EmptyState } from '@/components/EmptyState';
+import { PageHero } from '@/components/PageHero';
 import type { Product, Category } from '@/lib/types';
 import { getCategoryHref, isBundleProduct } from '@/lib/catalog';
 
@@ -109,19 +110,40 @@ export function ProductsClient({
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        {/* Page title */}
-        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-              {currentCategory ? currentCategory.label : 'Shop Cansan'}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold text-zinc-900">{heading}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">{description}</p>
-          </div>
-        </div>
+      <PageHero
+        eyebrow={currentCategory ? currentCategory.label : 'Shop Cansan'}
+        title={heading}
+        description={description}
+        actions={
+          <>
+            <Link
+              href="/contact"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50"
+            >
+              Need help choosing?
+            </Link>
+            <Link
+              href="/delivery"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              Delivery information
+            </Link>
+          </>
+        }
+        meta={[
+          <div key="products" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-200">Available now</p>
+            <p className="mt-1 text-lg font-bold text-white">{filtered.length} products</p>
+          </div>,
+          <div key="category" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-200">Current section</p>
+            <p className="mt-1 text-lg font-bold text-white">{currentCategory?.label ?? 'All Categories'}</p>
+          </div>,
+        ]}
+      />
 
-        <div className="mb-8 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-5 text-sm text-zinc-600 sm:grid-cols-3">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div className="mt-6 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-5 text-sm text-zinc-600 sm:grid-cols-3">
           <div>
             <p className="font-semibold text-zinc-900">WhatsApp-first ordering</p>
             <p className="mt-1">Confirm stock, get pricing help, and close orders without waiting on a form.</p>
@@ -160,7 +182,7 @@ export function ProductsClient({
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                className="absolute right-3 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700"
               >
                 <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -186,8 +208,8 @@ export function ProductsClient({
         <div className={`${showMobileFilters ? 'block' : 'hidden'} rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none`}>
           {/* Filters row */}
           <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
-              <span className="mr-1 shrink-0 self-center text-xs font-semibold uppercase tracking-wide text-zinc-400">Type:</span>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 sm:self-center">Type:</span>
               {(
                 [
                   { value: 'all', label: 'Everything' },
@@ -201,7 +223,7 @@ export function ProductsClient({
                     setActiveType(value);
                     if (value === 'bundle') setActiveCondition('all');
                   }}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                     activeType === value
                       ? value === 'bundle'
                         ? 'bg-zinc-900 text-white'
@@ -215,11 +237,11 @@ export function ProductsClient({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Sort:</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="min-h-10 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-600 focus:border-red-300 focus:outline-none"
+                className="min-h-11 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 focus:border-red-300 focus:outline-none"
               >
                 <option value="default">Default</option>
                 <option value="price-low">Price: Low to High</option>
@@ -230,8 +252,8 @@ export function ProductsClient({
           </div>
 
           {activeType !== 'bundle' && (
-            <div className="mb-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
-              <span className="mr-1 shrink-0 self-center text-xs font-semibold uppercase tracking-wide text-zinc-400">Condition:</span>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 sm:self-center">Condition:</span>
               {(
                 [
                   { value: 'all', label: 'All' },
@@ -242,7 +264,7 @@ export function ProductsClient({
                 <button
                   key={value}
                   onClick={() => setActiveCondition(value)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                     activeCondition === value
                       ? value === 'new'
                         ? 'bg-green-600 text-white'
@@ -258,10 +280,10 @@ export function ProductsClient({
             </div>
           )}
 
-          <div className="mb-6 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Link
               href="/products"
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+              className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                 activeCategory === 'all'
                   ? 'bg-red-600 text-white'
                   : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
@@ -273,7 +295,7 @@ export function ProductsClient({
               <Link
                 key={cat.id}
                 href={getCategoryHref(cat.slug)}
-                className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                   activeCategory === cat.slug
                     ? 'bg-red-600 text-white'
                     : 'border border-zinc-200 text-zinc-600 hover:border-red-300 hover:text-red-600'
@@ -298,9 +320,9 @@ export function ProductsClient({
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full px-1 text-sm font-medium text-red-600 transition hover:text-red-700"
             >
-              <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Clear all filters
@@ -310,7 +332,7 @@ export function ProductsClient({
 
         {/* Grid */}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((product) => (
               <ProductCard
                 key={product.id}

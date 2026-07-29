@@ -33,7 +33,7 @@ export function Footer() {
           <div>
             <Link
               href="/"
-              className="inline-flex w-fit rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200"
+              className="inline-flex w-fit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
               aria-label="Cansan Electronics"
             >
               <BrandLogo className="w-[165px] sm:w-[200px]" />

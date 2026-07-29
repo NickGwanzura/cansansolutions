@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { PageHero } from '@/components/PageHero';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -109,16 +111,26 @@ const faqs = [
 export default function ContactPage() {
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-zinc-900 px-6 py-20 text-white">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Get in touch</p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">We&apos;d love to hear from you</h1>
-          <p className="mt-5 text-base text-zinc-400 max-w-lg mx-auto leading-relaxed">
-            Questions, quotes, bulk orders, or just need advice. Our team is ready. WhatsApp is the fastest way to reach us.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Get in touch"
+        title="We'd love to hear from you"
+        description="Questions, quotes, bulk orders, or just need advice. Our team is ready, and WhatsApp is the fastest way to reach us."
+        actions={
+          <>
+            <a
+              href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi Cansan Solutions, I'd like to get in touch.")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50"
+            >
+              Open WhatsApp
+            </a>
+            <Link href="/products" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+              Browse products
+            </Link>
+          </>
+        }
+      />
 
       {/* Contact cards */}
       <section className="mx-auto max-w-5xl px-6 py-16">

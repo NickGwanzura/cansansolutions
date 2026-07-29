@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageHero } from '@/components/PageHero';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { InsightCard } from '@/components/InsightCard';
 import { buildAbsoluteMetadata } from '@/lib/seo';
@@ -49,15 +50,21 @@ export default function InsightsPage() {
       />
 
       <div>
-        <section className="bg-zinc-950 px-6 py-20 text-white">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Insights</p>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Buying guides that help customers choose faster</h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400">
-              These guides target the questions buyers ask before they commit: what to buy, what to avoid, and which options make sense for Harare and Zimbabwean buyers.
-            </p>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Insights"
+          title="Buying guides that help customers choose faster"
+          description="These guides target the questions buyers ask before they commit: what to buy, what to avoid, and which options make sense for Harare and Zimbabwean buyers."
+          actions={
+            <>
+              <Link href="/products" className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50">
+                Browse products
+              </Link>
+              <Link href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+                Ask for advice
+              </Link>
+            </>
+          }
+        />
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="grid gap-6 lg:grid-cols-4">

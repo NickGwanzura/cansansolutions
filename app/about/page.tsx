@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageHero } from '@/components/PageHero';
 import { buildAbsoluteMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -60,18 +61,21 @@ const stats = [
 export default function AboutPage() {
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-zinc-900 px-6 py-20 text-white">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Who we are</p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Zimbabwe&apos;s trusted tech partner
-          </h1>
-          <p className="mt-5 text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
-            Cansan Solutions is a Harare-based technology retailer dedicated to bringing quality electronics and honest advice to every customer — whether you&apos;re upgrading your phone, setting up a home network, or kitting out your office.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Who we are"
+        title="Zimbabwe's trusted tech partner"
+        description="Cansan Solutions is a Harare-based technology retailer dedicated to bringing quality electronics and honest advice to every customer, whether you're upgrading your phone, setting up a home network, or kitting out your office."
+        actions={
+          <>
+            <Link href="/products" className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50">
+              Shop products
+            </Link>
+            <Link href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+              Contact us
+            </Link>
+          </>
+        }
+      />
 
       {/* Stats */}
       <section className="border-b border-zinc-100">
