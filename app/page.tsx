@@ -743,7 +743,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-6 py-16">
+      <section className="bg-white px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -762,8 +762,8 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
-            <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
+          <div className="grid items-start gap-5 xl:grid-cols-2">
+            <article className="h-fit rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-[0_2px_5px_rgba(24,24,27,0.04)] sm:p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-zinc-900">Best Deals</h3>
                 <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
@@ -784,7 +784,7 @@ export default async function HomePage() {
                       <li key={product.id}>
                         <Link
                           href={`/products/${product.slug}`}
-                          className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
+                          className="group flex min-h-[76px] items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition duration-200 hover:border-red-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                         >
                           <div className="min-w-0 pr-2">
                             <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
@@ -820,7 +820,7 @@ export default async function HomePage() {
               )}
             </article>
 
-            <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
+            <article className="h-fit rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-[0_2px_5px_rgba(24,24,27,0.04)] sm:p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-zinc-900">More to Explore</h3>
                 <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
@@ -834,7 +834,7 @@ export default async function HomePage() {
                     <li key={product.id}>
                       <Link
                         href={`/products/${product.slug}`}
-                        className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
+                        className="group flex min-h-[76px] items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition duration-200 hover:border-red-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                       >
                         <div className="min-w-0 pr-2">
                           <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
@@ -844,9 +844,23 @@ export default async function HomePage() {
                             Popular with home and business buyers
                           </p>
                         </div>
-                        <p className="text-sm font-bold text-zinc-900">
+                        <div className="flex shrink-0 items-center gap-2 text-sm font-bold text-zinc-900">
                           {formatCurrency(product.price, product.currency)}
-                        </p>
+                          <svg
+                            aria-hidden="true"
+                            className="h-4 w-4 text-red-600 transition-transform duration-200 group-hover:translate-x-0.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                            />
+                          </svg>
+                        </div>
                       </Link>
                     </li>
                   ))}
@@ -861,7 +875,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-zinc-50 px-6 py-16">
+      <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -888,7 +902,7 @@ export default async function HomePage() {
             {featuredInsights.map((article) => (
               <article
                 key={article.slug}
-                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+                className="group flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_2px_5px_rgba(24,24,27,0.05)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-red-600 sm:p-6"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
                   {article.categoryLabel}
@@ -904,9 +918,23 @@ export default async function HomePage() {
                 </p>
                 <Link
                   href={getInsightHref(article.slug)}
-                  className="mt-4 inline-flex text-sm font-semibold text-red-700 hover:text-red-800"
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-red-700 hover:text-red-800"
                 >
                   Read guide
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                    />
+                  </svg>
                 </Link>
               </article>
             ))}
