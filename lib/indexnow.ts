@@ -1,6 +1,6 @@
 /**
  * IndexNow utility for notifying search engines of content changes.
- * Implemented as a stub — replace with your IndexNow API key and endpoint.
+ * Implemented as a stub - replace with your IndexNow API key and endpoint.
  */
 
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY || '';
@@ -11,7 +11,7 @@ const INDEXNOW_KEY = process.env.INDEXNOW_KEY || '';
  */
 export async function submitUrlToIndexNow(url: string): Promise<boolean> {
   if (!INDEXNOW_KEY) {
-    // No key configured — silently skip
+    // No key configured - silently skip
     return false;
   }
 

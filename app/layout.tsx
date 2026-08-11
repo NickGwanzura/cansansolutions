@@ -1,28 +1,21 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import PublicChrome from "@/components/PublicChrome";
-import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from "@/components/JsonLd";
-import { Inter, Rubik } from "next/font/google";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import { ToastProvider } from "@/components/Toast";
+import type { Metadata } from 'next';
+import './globals.css';
+import PublicChrome from '@/components/PublicChrome';
+import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from '@/components/JsonLd';
+import { Instrument_Sans } from 'next/font/google';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { ToastProvider } from '@/components/Toast';
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-inter",
-});
-
-const rubik = Rubik({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-  variable: "--font-rubik",
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-instrument-sans',
 });
 
 const HERO_TITLE = `Buy SSDs, Laptops & CCTV in Zimbabwe | ${SITE_NAME}`;
 const DEFAULT_OG = {
-  url: "/opengraph-image",
+  url: '/opengraph-image',
   width: 1200,
   height: 630,
   alt: HERO_TITLE,
@@ -40,8 +33,8 @@ export const metadata: Metadata = {
   // A root canonical would incorrectly inherit to every page that doesn't
   // override it, pointing them all at the homepage.
   openGraph: {
-    type: "website",
-    locale: "en_ZW",
+    type: 'website',
+    locale: 'en_ZW',
     url: SITE_URL,
     siteName: SITE_NAME,
     title: HERO_TITLE,
@@ -49,23 +42,21 @@ export const metadata: Metadata = {
     images: [DEFAULT_OG],
   },
   twitter: {
-    card: "summary_large_image",
+    card: 'summary_large_image',
     title: HERO_TITLE,
     description: SITE_DESCRIPTION,
     images: [DEFAULT_OG.url],
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
   },
   other: {
-    "format-detection": "telephone=no",
+    'format-detection': 'telephone=no',
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en-ZW">
       <head>
@@ -74,7 +65,7 @@ export default function RootLayout({
         <LocalBusinessJsonLd />
         <WebsiteJsonLd />
       </head>
-      <body className={`${inter.variable} ${rubik.variable} font-sans antialiased bg-white text-zinc-900`}>
+      <body className={`${instrumentSans.variable} font-sans antialiased bg-white text-zinc-900`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-red-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"

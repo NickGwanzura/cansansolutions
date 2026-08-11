@@ -1,51 +1,54 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { deleteProductById, importProducts } from '@/lib/admin-data';
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
-    if (!(await checkAdminAuth())) {
+    if (!(await checkAdminAuth(req))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const { ids } = await req.json();
-    
+
     if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
     }
 
     let successCount = 0;
     let failCount = 0;
-    
+
     for (const id of ids) {
       try {
         const success = await deleteProductById(id);
         if (success) successCount++;
         else failCount++;
-      } catch (e) {
+      } catch {
         failCount++;
       }
     }
-    
-    return NextResponse.json({ 
-      success: true, 
-      deleted: successCount, 
-      failed: failCount 
+
+    return NextResponse.json({
+      success: true,
+      deleted: successCount,
+      failed: failCount,
     });
   } catch (error) {
     console.error('[API BATCH DELETE] ERROR:', error);
-    return NextResponse.json({ 
-      error: 'Batch delete failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Batch delete failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    if (!(await checkAdminAuth())) {
+    if (!(await checkAdminAuth(req))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -69,7 +72,7 @@ export async function POST(req: Request) {
       {
         error: error instanceof Error ? error.message : 'Import failed',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

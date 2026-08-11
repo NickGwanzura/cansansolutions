@@ -1,4 +1,13 @@
-import { getProducts, getProduct, getProductBySlug as dbGetProductBySlug, saveProduct, deleteProduct, getCategories, replaceProducts, getActiveBanners } from './db';
+import {
+  getProducts,
+  getProduct,
+  getProductBySlug as dbGetProductBySlug,
+  saveProduct,
+  deleteProduct,
+  getCategories,
+  replaceProducts,
+  getActiveBanners,
+} from './db';
 import fallbackProducts from '@/data/products.template.json';
 import type { Banner, Product } from './types';
 import { normalizeBundleItems, normalizeProductType } from './catalog';
@@ -55,7 +64,10 @@ function mapRow(data: ProductRecord): Product {
     featured: Boolean(data.featured ?? false),
     tags,
     originalPrice: data.originalPrice != null ? Number(data.originalPrice) : undefined,
-    specs: data.specs && typeof data.specs === 'object' ? data.specs as Record<string, string> : undefined,
+    specs:
+      data.specs && typeof data.specs === 'object'
+        ? (data.specs as Record<string, string>)
+        : undefined,
     stockCount: data.stockCount != null ? Number(data.stockCount) : undefined,
     rating: data.rating != null ? Number(data.rating) : undefined,
     reviewCount: data.reviewCount != null ? Number(data.reviewCount) : undefined,
@@ -76,7 +88,9 @@ export async function readProducts(): Promise<Product[]> {
     return products.map(mapRow);
   } catch (error) {
     console.error('[readProducts] Failed:', error);
-    return []; // Return empty on error
+    // Keep the catalogue browseable during a transient database outage. Admin
+    // writes still fail loudly through their respective database operations.
+    return fallbackProducts.map((product) => mapRow(product));
   }
 }
 
@@ -116,15 +130,16 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
     const id = nextId(products);
     const productType = normalizeProductType(data.productType);
     const bundleItems = normalizeBundleItems(data.bundleItems);
-    
+
     if (!data.slug) throw new Error('slug required');
     if (!data.name) throw new Error('name required');
     if (!data.category) throw new Error('category required');
     if (data.price == null) throw new Error('price required');
     if (!data.description) throw new Error('description required');
     // Image is optional - can be added later via admin panel
-    if (productType === 'bundle' && bundleItems.length === 0) throw new Error('bundle items required');
-    
+    if (productType === 'bundle' && bundleItems.length === 0)
+      throw new Error('bundle items required');
+
     const product = {
       id,
       ...data,
@@ -137,9 +152,9 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
       tags: data.tags || [],
       createdAt: Date.now(),
     };
-    
+
     await saveProduct(product);
-    
+
     return mapRow(product);
   } catch (error) {
     console.error('[createProduct] Failed:', error);
@@ -158,7 +173,7 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
     if (productType === 'bundle' && bundleItems.length === 0) {
       throw new Error('bundle items required');
     }
-    
+
     const updated = {
       ...existing,
       ...data,
@@ -168,7 +183,7 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
       updatedAt: Date.now(),
     };
     await saveProduct(updated);
-    
+
     return mapRow(updated);
   } catch (error) {
     console.error('[updateProduct] Failed:', error);
@@ -187,10 +202,17 @@ export async function deleteProductById(id: string): Promise<boolean> {
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
-function sanitizeImportedProduct(data: ProductRecord, fallbackId: string, existingId?: string): Product {
+function sanitizeImportedProduct(
+  data: ProductRecord,
+  fallbackId: string,
+  existingId?: string,
+): Product {
   const name = String(data.name || '').trim();
   const slug = slugify(String(data.slug || name));
   const category = String(data.category || '').trim();
@@ -199,7 +221,8 @@ function sanitizeImportedProduct(data: ProductRecord, fallbackId: string, existi
   const price = typeof data.price === 'number' ? data.price : parseFloat(String(data.price));
   const productType = normalizeProductType(data.productType);
   const bundleItems = normalizeBundleItems(data.bundleItems);
-  const condition = data.condition === 'new' || data.condition === 'pre-owned' ? data.condition : undefined;
+  const condition =
+    data.condition === 'new' || data.condition === 'pre-owned' ? data.condition : undefined;
   const tags = Array.isArray(data.tags)
     ? data.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean)
     : String(data.tags || '')
@@ -235,7 +258,10 @@ function sanitizeImportedProduct(data: ProductRecord, fallbackId: string, existi
   };
 }
 
-export async function importProducts(data: ProductRecord[], mode: 'append' | 'replace' = 'replace'): Promise<Product[]> {
+export async function importProducts(
+  data: ProductRecord[],
+  mode: 'append' | 'replace' = 'replace',
+): Promise<Product[]> {
   const baseProducts = mode === 'append' ? await readProducts() : [];
   const importedProducts = [...baseProducts];
 
@@ -255,9 +281,15 @@ export async function importProducts(data: ProductRecord[], mode: 'append' | 're
 
   for (const item of data) {
     const slug = slugify(String(item?.slug || item?.name || ''));
-    const existingIndex = importedProducts.findIndex((product) => product.slug === slug || product.id === String(item?.id || ''));
+    const existingIndex = importedProducts.findIndex(
+      (product) => product.slug === slug || product.id === String(item?.id || ''),
+    );
     const fallbackId = existingIndex >= 0 ? importedProducts[existingIndex].id : findNextId();
-    const normalized = sanitizeImportedProduct(item, fallbackId, existingIndex >= 0 ? importedProducts[existingIndex].id : undefined);
+    const normalized = sanitizeImportedProduct(
+      item,
+      fallbackId,
+      existingIndex >= 0 ? importedProducts[existingIndex].id : undefined,
+    );
 
     usedIds.add(normalized.id);
 
@@ -286,11 +318,13 @@ export async function seedCategories() {
 
 export { getCategories };
 
-
-export async function updateProducts(ids: string[], changes: Partial<Record<string, unknown>>): Promise<number> {
+export async function updateProducts(
+  ids: string[],
+  changes: Partial<Record<string, unknown>>,
+): Promise<number> {
   const products = await readProducts();
   let updated = 0;
-  
+
   const updatedProducts = products.map((p) => {
     if (ids.includes(p.id)) {
       updated++;
@@ -298,10 +332,10 @@ export async function updateProducts(ids: string[], changes: Partial<Record<stri
     }
     return p;
   });
-  
+
   if (updated > 0) {
     await replaceProducts(updatedProducts);
   }
-  
+
   return updated;
 }

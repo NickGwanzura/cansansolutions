@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { formatInsightDate, getFeaturedInsights, getInsightHref } from '@/lib/articles';
@@ -28,60 +27,140 @@ export const metadata: Metadata = buildAbsoluteMetadata({
 
 const CATEGORY_ICONS: Record<string, ReactNode> = {
   laptop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="3" y="5" width="18" height="11" rx="1.5" />
       <path d="M2 19h20" />
     </svg>
   ),
   printer: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M6.5 8V4h11v4M6.5 17.5H5A2 2 0 0 1 3 15.5v-4A2 2 0 0 1 5 9.5h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1.5" />
       <rect x="6.5" y="13" width="11" height="7" rx="0.75" />
     </svg>
   ),
   network: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M4 9c4.8-4.7 11.2-4.7 16 0M7.5 12.5c2.9-2.8 6.1-2.8 9 0M11.2 16.2a1.1 1.1 0 1 1 1.6 1.6 1.1 1.1 0 0 1-1.6-1.6Z" />
     </svg>
   ),
   desktop: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="4" y="4" width="16" height="11" rx="1.5" />
       <path d="M9 20h6M12 15v5" />
     </svg>
   ),
   monitor: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="3.5" y="4.5" width="17" height="12" rx="1.5" />
       <path d="M9 20h6M12 16.5v3.5" />
     </svg>
   ),
   plug: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M8 4.5V7m8-2.5V7M12 7v4.5m0 0a3.5 3.5 0 1 0 3.5 3.5H12V11.5Zm0 0A3.5 3.5 0 1 1 8.5 15H12" />
     </svg>
   ),
   headphones: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
       <rect x="3" y="14" width="4.5" height="6" rx="1.5" />
       <rect x="16.5" y="14" width="4.5" height="6" rx="1.5" />
     </svg>
   ),
   cpu: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="7" y="7" width="10" height="10" rx="1.2" />
       <path d="M9.5 7V4m5 3V4m0 20v-3m-5 3v-3M7 9.5H4m3 5H4m16-5h-3m3 5h-3" />
     </svg>
   ),
   storage: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <ellipse cx="12" cy="5" rx="8.5" ry="2.5" />
       <path d="M20.5 12c0 1.4-3.8 2.5-8.5 2.5S3.5 13.4 3.5 12M3.5 5v14c0 1.4 3.8 2.5 8.5 2.5s8.5-1.1 8.5-2.5V5" />
     </svg>
   ),
   truck: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M3.5 7.5h11v8h-11z" />
       <path d="M14.5 10.5h3.5l2.5 2.5V15.5H14.5z" />
       <circle cx="7.5" cy="17.5" r="1.5" />
@@ -89,39 +168,47 @@ const CATEGORY_ICONS: Record<string, ReactNode> = {
     </svg>
   ),
   smartphone: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <rect x="7" y="3" width="10" height="18" rx="2" />
       <path d="M11 18h2" />
     </svg>
   ),
   'shield-camera': (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M2.5 12c1.2-3.6 4.6-6 8.8-6 4.1 0 7.5 2.4 8.7 6-1.2 3.6-4.6 6-8.7 6-4.2 0-7.6-2.4-8.8-6Z" />
       <circle cx="11.3" cy="12" r="2.7" />
     </svg>
   ),
   deals: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
       <path d="M11.5 3.5 4 11l8.5 9.5L20 13z" />
       <circle cx="9" cy="8" r="1.4" />
     </svg>
   ),
-};
-
-const CATEGORY_VISUALS: Record<string, string> = {
-  laptops: '/images/products/laptop-new.svg',
-  printing: '/images/products/placeholder.svg',
-  networking: '/images/products/promo-collection.svg',
-  desktops: '/images/products/desktop-new.svg',
-  monitors: '/images/products/imac.svg',
-  accessories: '/images/products/placeholder.svg',
-  audio: '/images/products/placeholder.svg',
-  'pc-parts': '/images/products/promo-collection.svg',
-  drives: '/images/products/promo-collection.svg',
-  'sa-imports': '/images/products/laptop-used.svg',
-  mobile: '/images/products/placeholder.svg',
-  cctv: '/images/products/promo-collection.svg',
-  bundles: '/images/products/promo-collection.svg',
 };
 
 const FEATURE_TILES = [
@@ -129,24 +216,95 @@ const FEATURE_TILES = [
     title: 'Genuine Products',
     stat: '100% Verified',
     description: 'No guesswork. Check current availability before paying or traveling.',
+    action: 'Shop verified stock',
+    href: '/products',
+    icon: (
+      <svg
+        aria-hidden="true"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m12 3 7 3v5c0 4.4-2.9 8.3-7 10-4.1-1.7-7-5.6-7-10V6l7-3Z"
+        />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8.5 11.5 2.2 2.2 4.8-4.8" />
+      </svg>
+    ),
   },
   {
     title: 'Fast Harare Delivery',
     stat: 'Same-Day in Harare',
     description: 'Same-day dispatch options in Harare and reliable courier nationwide.',
+    action: 'View delivery options',
+    href: '/delivery',
+    icon: (
+      <svg
+        aria-hidden="true"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h11v10H3zM14 10h3l3 3v3h-6z" />
+        <circle cx="7" cy="18" r="1.5" />
+        <circle cx="17" cy="18" r="1.5" />
+      </svg>
+    ),
   },
   {
     title: 'WhatsApp Ordering',
     stat: 'Reply in Minutes',
     description: 'Get setup guidance, warranty direction, and product advice from a local team.',
+    action: 'Chat now',
     href: `https://wa.me/${WA_NUMBER}`,
     external: true,
+    icon: (
+      <svg
+        aria-hidden="true"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.7 9.2c.2 2 2.1 4 4.1 4.2l1.2-1.1 1.8.8c.2.1.3.3.2.5-.3 1-1.2 1.5-2.2 1.3-3.3-.6-5.8-3.1-6-5.5-.1-.9.4-1.8 1.3-2.1.2-.1.4 0 .5.2l.8 1.8-1.1 1.2Z"
+        />
+      </svg>
+    ),
   },
   {
     title: 'Bulk & Institution Pricing',
     stat: 'Custom Quotes',
-    description: 'Strong value pricing for offices and schools, without disappearing after checkout.',
+    description:
+      'Strong value pricing for offices and schools, without disappearing after checkout.',
+    action: 'Get a quote',
     href: '/bulk-orders',
+    icon: (
+      <svg
+        aria-hidden="true"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 21h18M5 21V5h9v16M14 9h5v12M8 8h3M8 12h3M8 16h3"
+        />
+      </svg>
+    ),
   },
 ] as const;
 
@@ -301,7 +459,7 @@ function getDailyHomepageProducts(products: Product[]) {
       usedIds,
       dayKey,
       salt: 'laptops',
-    })
+    }),
   );
 
   const laptopsSelected = selected.filter((product) => isLaptopProduct(product)).length;
@@ -313,7 +471,7 @@ function getDailyHomepageProducts(products: Product[]) {
         usedIds,
         dayKey,
         salt: 'laptops-fallback',
-      })
+      }),
     );
   }
 
@@ -324,7 +482,7 @@ function getDailyHomepageProducts(products: Product[]) {
       usedIds,
       dayKey,
       salt: 'sa-imports',
-    })
+    }),
   );
 
   const saSelected = selected.filter((product) => isSaImportProduct(product)).length;
@@ -336,7 +494,7 @@ function getDailyHomepageProducts(products: Product[]) {
         usedIds,
         dayKey,
         salt: 'sa-imports-fallback',
-      })
+      }),
     );
   }
 
@@ -345,13 +503,14 @@ function getDailyHomepageProducts(products: Product[]) {
     selected.push(
       ...takeMixedByCategory({
         pool: sourcePool.filter(
-          (product) => !usedIds.has(product.id) && !isLaptopProduct(product) && !isSaImportProduct(product)
+          (product) =>
+            !usedIds.has(product.id) && !isLaptopProduct(product) && !isSaImportProduct(product),
         ),
         count: remainingCount,
         usedIds,
         dayKey,
         salt: 'mixed-categories',
-      })
+      }),
     );
   }
 
@@ -363,7 +522,7 @@ function getDailyHomepageProducts(products: Product[]) {
         usedIds,
         dayKey,
         salt: 'fallback',
-      })
+      }),
     );
   }
 
@@ -377,11 +536,16 @@ export default async function HomePage() {
   const homepageProducts = getDailyHomepageProducts(products);
 
   const discountedProducts = products
-    .filter((product) => product.inStock && product.originalPrice && product.originalPrice > product.price)
+    .filter(
+      (product) =>
+        product.inStock && product.originalPrice && product.originalPrice > product.price,
+    )
     .slice(0, 4);
 
   const trendingProducts = products
-    .filter((product) => product.inStock && !discountedProducts.some((deal) => deal.id === product.id))
+    .filter(
+      (product) => product.inStock && !discountedProducts.some((deal) => deal.id === product.id),
+    )
     .slice(0, 4);
 
   const heroSlideProducts = (() => {
@@ -399,7 +563,7 @@ export default async function HomePage() {
     return deduped;
   })();
 
-  const categoryShowcase = CATALOG_CATEGORIES.filter((category) => CATEGORY_VISUALS[category.slug]).slice(0, 7);
+  const categoryShowcase = CATALOG_CATEGORIES.slice(0, 7);
 
   return (
     <div className="overflow-x-hidden bg-[#f7f7f7] text-zinc-900">
@@ -409,59 +573,89 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-700">Shop by category</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-700">
+                Shop by category
+              </p>
               <h2 className="mt-1 text-2xl font-bold text-zinc-900">Find the right tech faster</h2>
             </div>
-            <Link href="#shop-categories" className="text-sm font-semibold text-red-700 hover:text-red-800">View all categories →</Link>
+            <Link
+              href="#shop-categories"
+              className="text-sm font-semibold text-red-700 hover:text-red-800"
+            >
+              View all categories →
+            </Link>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
             {categoryShowcase.map((category) => (
-              <Link key={category.id} href={getCategoryHref(category.slug)} className="group min-w-36 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 transition hover:border-red-300 hover:shadow-md sm:min-w-40">
-                <div className="relative aspect-[4/3] bg-white p-3">
-                  <Image src={CATEGORY_VISUALS[category.slug]} alt="" fill sizes="180px" className="object-contain p-3 transition duration-300 group-hover:scale-105 motion-reduce:transition-none" />
-                </div>
-                <p className="border-t border-zinc-100 bg-white px-3 py-3 text-center text-sm font-semibold text-zinc-800 group-hover:text-red-700">{category.label}</p>
+              <Link
+                key={category.id}
+                href={getCategoryHref(category.slug)}
+                className="group min-w-36 flex-1 rounded-2xl border border-zinc-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 sm:min-w-40"
+              >
+                <span
+                  aria-hidden="true"
+                  className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-700 transition group-hover:bg-red-600 group-hover:text-white"
+                >
+                  {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
+                </span>
+                <p className="mt-3 text-sm font-semibold text-zinc-800 transition group-hover:text-red-700">
+                  {category.label}
+                </p>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-y border-zinc-200 bg-zinc-50 px-6 py-10">
-        <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="border-y border-zinc-200 bg-zinc-50 px-4 py-6 sm:px-6 sm:py-10">
+        <div className="mx-auto grid max-w-7xl gap-3 md:grid-cols-2 xl:grid-cols-4">
           {FEATURE_TILES.map((tile) => {
             const content = (
               <>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-red-700">{tile.stat}</p>
-                <h3 className="mt-2 text-lg font-bold text-zinc-900">{tile.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-600">{tile.description}</p>
-                {'href' in tile ? (
-                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red-700">
-                    {tile.title === 'WhatsApp Ordering' ? 'Chat now' : 'Get a quote'}
-                    <span aria-hidden="true">→</span>
+                <div className="flex items-start justify-between gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-700 transition-colors group-hover:bg-red-600 group-hover:text-white">
+                    {tile.icon}
                   </span>
-                ) : null}
+                  <span className="rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700">
+                    {tile.stat}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-lg font-bold tracking-[-0.02em] text-zinc-900 sm:text-xl">
+                  {tile.title}
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600">
+                  {tile.description}
+                </p>
+                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-red-700">
+                  {tile.action}
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                    />
+                  </svg>
+                </span>
               </>
             );
 
-            if ('href' in tile) {
-              return (
-                <Link
-                  key={tile.title}
-                  href={tile.href}
-                  target={'external' in tile && tile.external ? '_blank' : undefined}
-                  rel={'external' in tile && tile.external ? 'noreferrer' : undefined}
-                  className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  {content}
-                </Link>
-              );
-            }
-
             return (
-              <article key={tile.title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <Link
+                key={tile.title}
+                href={tile.href}
+                target={'external' in tile && tile.external ? '_blank' : undefined}
+                rel={'external' in tile && tile.external ? 'noreferrer' : undefined}
+                className="group flex min-h-[220px] flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_2px_5px_rgba(24,24,27,0.06)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 sm:min-h-[232px] sm:p-6"
+              >
                 {content}
-              </article>
+              </Link>
             );
           })}
         </div>
@@ -471,11 +665,20 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Available in store</p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop the technology you need</h2>
-              <p className="mt-2 max-w-2xl text-sm text-zinc-600">Browse current ranges for work, learning, home entertainment and business setups.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                Available in store
+              </p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
+                Shop the technology you need
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-zinc-600">
+                Browse current ranges for work, learning, home entertainment and business setups.
+              </p>
             </div>
-            <Link href="/products" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700">
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
               View all products
               <span aria-hidden="true">→</span>
             </Link>
@@ -486,23 +689,17 @@ export default async function HomePage() {
               <Link
                 key={category.id}
                 href={getCategoryHref(category.slug)}
-                className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg"
+                className="group flex min-h-36 flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white px-3 py-5 text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
               >
-                <div className="relative aspect-[4/3] border-b border-zinc-100 bg-zinc-50">
-                  <Image
-                    src={CATEGORY_VISUALS[category.slug] ?? '/images/products/placeholder.svg'}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 50vw, 220px"
-                    className="object-contain p-4 transition duration-300 group-hover:scale-105 motion-reduce:transition-none"
-                  />
-                  <span aria-hidden="true" className="absolute left-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/90 text-red-700 shadow-sm transition group-hover:border-red-200 group-hover:bg-red-50">
-                    {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
-                  </span>
-                </div>
-                <div className="px-3 py-4">
-                  <span className="text-xs font-semibold leading-tight text-zinc-900">{category.label}</span>
-                </div>
+                <span
+                  aria-hidden="true"
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-100 bg-zinc-50 text-red-700 transition group-hover:border-red-100 group-hover:bg-red-50 group-hover:scale-105 motion-reduce:transition-none"
+                >
+                  {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
+                </span>
+                <span className="mt-3 text-xs font-semibold leading-tight text-zinc-900 transition group-hover:text-red-700">
+                  {category.label}
+                </span>
               </Link>
             ))}
           </div>
@@ -513,62 +710,30 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Featured Products</p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Top SSD, Laptop, Networking and CCTV Picks</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                Featured Products
+              </p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
+                Top SSD, Laptop, Networking and CCTV Picks
+              </h2>
               <p className="mt-2 text-sm text-zinc-600">
-                Daily-rotating mix: 2 laptops, 3 SA imports, plus 3 products from other categories for faster comparison.
+                Daily-rotating mix: 2 laptops, 3 SA imports, plus 3 products from other categories
+                for faster comparison.
               </p>
             </div>
-            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+            <Link
+              href="/products"
+              className="text-sm font-semibold text-red-700 hover:text-red-800"
+            >
               Browse full catalog →
             </Link>
           </div>
 
           {homepageProducts.length > 0 ? (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
-              <article className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-950 text-white shadow-sm">
-                <div className="relative h-full p-7">
-                  <div aria-hidden="true" className="absolute -right-10 top-0 h-48 w-48 rounded-full bg-red-500/30 blur-3xl" />
-                  <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.18em] text-red-300">Editor&apos;s pick</p>
-                  <h3 className="relative z-10 mt-3 max-w-sm text-3xl font-bold leading-tight">
-                    {homepageProducts[0]?.name ?? 'Top technology picks selected for today'}
-                  </h3>
-                  <p className="relative z-10 mt-3 max-w-md text-sm leading-relaxed text-white/70">
-                    A daily front-page spotlight built from in-stock laptops, SA imports and top-performing categories so your most important inventory gets seen first.
-                  </p>
-
-                  {homepageProducts[0] ? (
-                    <Link href={`/products/${homepageProducts[0].slug}`} className="relative z-10 mt-7 block overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-5">
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-white/95 p-4">
-                        <Image
-                          src={homepageProducts[0].image || '/images/products/placeholder.svg'}
-                          alt={homepageProducts[0].name}
-                          fill
-                          sizes="(max-width: 1280px) 100vw, 420px"
-                          className="object-contain p-5"
-                        />
-                      </div>
-                      <div className="mt-4 flex items-end justify-between gap-3">
-                        <div>
-                          <p className="text-xs text-white/60">Starting from</p>
-                          <p className="text-2xl font-bold text-white">
-                            {formatCurrency(homepageProducts[0].price, homepageProducts[0].currency)}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-zinc-950">
-                          View product
-                        </span>
-                      </div>
-                    </Link>
-                  ) : null}
-                </div>
-              </article>
-
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
-                {homepageProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {homepageProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
           ) : (
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center text-zinc-500">
@@ -582,10 +747,17 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Best Deals and Trending</p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Limited Offers and Fast-Selling Products</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                Best Deals and Trending
+              </p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
+                Limited Offers and Fast-Selling Products
+              </h2>
             </div>
-            <Link href="/products" className="text-sm font-semibold text-red-700 hover:text-red-800">
+            <Link
+              href="/products"
+              className="text-sm font-semibold text-red-700 hover:text-red-800"
+            >
               See all deals →
             </Link>
           </div>
@@ -594,14 +766,18 @@ export default async function HomePage() {
             <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-zinc-900">Best Deals</h3>
-                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">Discounted now</span>
+                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+                  Discounted now
+                </span>
               </div>
 
               {discountedProducts.length > 0 ? (
                 <ul className="space-y-3">
                   {discountedProducts.map((product) => {
                     const discount = product.originalPrice
-                      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                      ? Math.round(
+                          ((product.originalPrice - product.price) / product.originalPrice) * 100,
+                        )
                       : 0;
 
                     return (
@@ -611,9 +787,13 @@ export default async function HomePage() {
                           className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
                         >
                           <div className="min-w-0 pr-2">
-                            <p className="line-clamp-1 text-sm font-semibold text-zinc-900">{product.name}</p>
+                            <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
+                              {product.name}
+                            </p>
                             <p className="mt-1 text-xs text-zinc-500">
-                              {product.inStock ? 'In stock and fast moving' : 'Stock updates available'}
+                              {product.inStock
+                                ? 'In stock and fast moving'
+                                : 'Stock updates available'}
                             </p>
                             {product.dealLabel ? (
                               <span className="mt-1.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
@@ -622,7 +802,9 @@ export default async function HomePage() {
                             ) : null}
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</p>
+                            <p className="text-sm font-bold text-zinc-900">
+                              {formatCurrency(product.price, product.currency)}
+                            </p>
                             <p className="text-xs font-semibold text-red-700">Save {discount}%</p>
                           </div>
                         </Link>
@@ -632,7 +814,8 @@ export default async function HomePage() {
                 </ul>
               ) : (
                 <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-                  New deal products will appear here automatically once promotional pricing is added.
+                  New deal products will appear here automatically once promotional pricing is
+                  added.
                 </p>
               )}
             </article>
@@ -640,7 +823,9 @@ export default async function HomePage() {
             <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-zinc-900">More to Explore</h3>
-                <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">Fast selling</span>
+                <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
+                  Fast selling
+                </span>
               </div>
 
               {trendingProducts.length > 0 ? (
@@ -652,10 +837,16 @@ export default async function HomePage() {
                         className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-3 transition hover:border-red-300 hover:shadow-sm"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="line-clamp-1 text-sm font-semibold text-zinc-900">{product.name}</p>
-                          <p className="mt-1 text-xs text-zinc-500">Popular with home and business buyers</p>
+                          <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
+                            {product.name}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Popular with home and business buyers
+                          </p>
                         </div>
-                        <p className="text-sm font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</p>
+                        <p className="text-sm font-bold text-zinc-900">
+                          {formatCurrency(product.price, product.currency)}
+                        </p>
                       </Link>
                     </li>
                   ))}
@@ -674,25 +865,47 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">Buying Guides</p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">SEO Content That Captures Ready-to-Buy Traffic</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                Buying Guides
+              </p>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
+                SEO Content That Captures Ready-to-Buy Traffic
+              </h2>
               <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-                Educational content answers buyer questions early and routes high-intent visitors directly to relevant categories.
+                Educational content answers buyer questions early and routes high-intent visitors
+                directly to relevant categories.
               </p>
             </div>
-            <Link href="/insights" className="text-sm font-semibold text-red-700 hover:text-red-800">
+            <Link
+              href="/insights"
+              className="text-sm font-semibold text-red-700 hover:text-red-800"
+            >
               Read all guides
             </Link>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
             {featuredInsights.map((article) => (
-              <article key={article.slug} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-red-700">{article.categoryLabel}</p>
-                <h3 className="mt-2 line-clamp-2 text-lg font-bold text-zinc-900">{article.title}</h3>
-                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600">{article.excerpt}</p>
-                <p className="mt-4 text-xs text-zinc-500">{formatInsightDate(article.publishedAt)}</p>
-                <Link href={getInsightHref(article.slug)} className="mt-4 inline-flex text-sm font-semibold text-red-700 hover:text-red-800">
+              <article
+                key={article.slug}
+                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                  {article.categoryLabel}
+                </p>
+                <h3 className="mt-2 line-clamp-2 text-lg font-bold text-zinc-900">
+                  {article.title}
+                </h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600">
+                  {article.excerpt}
+                </p>
+                <p className="mt-4 text-xs text-zinc-500">
+                  {formatInsightDate(article.publishedAt)}
+                </p>
+                <Link
+                  href={getInsightHref(article.slug)}
+                  className="mt-4 inline-flex text-sm font-semibold text-red-700 hover:text-red-800"
+                >
                   Read guide
                 </Link>
               </article>

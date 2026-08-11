@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- standalone Node migration script */
 const { Pool } = require('pg');
 
 const pool = new Pool({

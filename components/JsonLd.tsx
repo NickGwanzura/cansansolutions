@@ -44,7 +44,9 @@ interface ServiceJsonLdProps {
 export function ProductJsonLd({ product, categoryName }: ProductJsonLdProps) {
   const brand = getBrandForProduct(product);
   const image = product.image
-    ? (product.image.startsWith('http') ? product.image : absoluteUrl(product.image))
+    ? product.image.startsWith('http')
+      ? product.image
+      : absoluteUrl(product.image)
     : absoluteUrl('/images/products/placeholder.svg');
   const additionalProperty = Object.entries(product.specs ?? {}).map(([name, value]) => ({
     '@type': 'PropertyValue',
@@ -72,9 +74,13 @@ export function ProductJsonLd({ product, categoryName }: ProductJsonLdProps) {
       priceCurrency: product.currency,
       price: product.price.toString(),
       priceValidUntil: DEFAULT_PRICE_VALID_UNTIL,
-      availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability: product.inStock
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
       itemCondition:
-        product.condition === 'pre-owned' ? 'https://schema.org/UsedCondition' : 'https://schema.org/NewCondition',
+        product.condition === 'pre-owned'
+          ? 'https://schema.org/UsedCondition'
+          : 'https://schema.org/NewCondition',
       seller: {
         '@type': 'Organization',
         name: SITE_NAME,
@@ -214,12 +220,7 @@ export function ArticleJsonLd({
   );
 }
 
-export function ServiceJsonLd({
-  name,
-  description,
-  path,
-  serviceType,
-}: ServiceJsonLdProps) {
+export function ServiceJsonLd({ name, description, path, serviceType }: ServiceJsonLdProps) {
   const url = absoluteUrl(path);
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -265,7 +266,7 @@ export function WebsiteJsonLd({ url = SITE_URL }: OrganizationJsonLdProps) {
     '@type': 'WebSite',
     name: SITE_NAME,
     url,
-    description: SITE_NAME + ' — Zimbabwe\'s trusted tech retailer.',
+    description: SITE_NAME + " - Zimbabwe's trusted tech retailer.",
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -291,7 +292,8 @@ export function OrganizationJsonLd({ url = SITE_URL }: OrganizationJsonLdProps) 
     name: SITE_NAME,
     url,
     logo: `${url}/favicon.svg`,
-    description: 'Zimbabwe\'s trusted tech retailer. Quality electronics, honest advice, and WhatsApp simple ordering.',
+    description:
+      "Zimbabwe's trusted tech retailer. Quality electronics, honest advice, and WhatsApp simple ordering.",
     address: {
       '@type': 'PostalAddress',
       ...SITE_ADDRESS,
@@ -327,7 +329,8 @@ export function LocalBusinessJsonLd({ url = SITE_URL }: LocalBusinessJsonLdProps
     url,
     logo: `${url}/favicon.svg`,
     image: `${url}/favicon.svg`,
-    description: 'Tech retail store offering laptops, desktops, networking gear, CCTV, audio equipment, and accessories in Harare, Zimbabwe.',
+    description:
+      'Tech retail store offering laptops, desktops, networking gear, CCTV, audio equipment, and accessories in Harare, Zimbabwe.',
     address: {
       '@type': 'PostalAddress',
       ...SITE_ADDRESS,

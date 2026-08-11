@@ -271,28 +271,29 @@ async function ensureSchema(): Promise<void> {
 
 function rowToProduct(row: Record<string, unknown>) {
   return {
-    id:            row.id as string,
-    slug:          row.slug as string,
-    name:          row.name as string,
-    category:      row.category as string,
-    productType:   row.product_type as string,
-    bundleItems:   (row.bundle_items as string[]) || [],
-    condition:     row.condition as string | undefined,
-    price:         parseFloat(row.price as string),
-    currency:      row.currency as string,
-    description:   row.description as string,
-    image:         row.image as string,
-    inStock:       row.in_stock as boolean,
-    featured:      row.featured as boolean,
-    tags:          (row.tags as string[]) || [],
-    originalPrice: row.original_price != null ? parseFloat(row.original_price as string) : undefined,
-    specs:         row.specs as Record<string, string> | undefined,
-    stockCount:    row.stock_count as number | undefined,
-    rating:        row.rating != null ? parseFloat(row.rating as string) : undefined,
-    reviewCount:   row.review_count as number | undefined,
-    dealLabel:     row.deal_label as string | undefined,
-    createdAt:     row.created_at as Date,
-    updatedAt:     row.updated_at as Date,
+    id: row.id as string,
+    slug: row.slug as string,
+    name: row.name as string,
+    category: row.category as string,
+    productType: row.product_type as string,
+    bundleItems: (row.bundle_items as string[]) || [],
+    condition: row.condition as string | undefined,
+    price: parseFloat(row.price as string),
+    currency: row.currency as string,
+    description: row.description as string,
+    image: row.image as string,
+    inStock: row.in_stock as boolean,
+    featured: row.featured as boolean,
+    tags: (row.tags as string[]) || [],
+    originalPrice:
+      row.original_price != null ? parseFloat(row.original_price as string) : undefined,
+    specs: row.specs as Record<string, string> | undefined,
+    stockCount: row.stock_count as number | undefined,
+    rating: row.rating != null ? parseFloat(row.rating as string) : undefined,
+    reviewCount: row.review_count as number | undefined,
+    dealLabel: row.deal_label as string | undefined,
+    createdAt: row.created_at as Date,
+    updatedAt: row.updated_at as Date,
   };
 }
 
@@ -366,7 +367,8 @@ async function seedBannersFromFile(): Promise<void> {
       `;
     }
   } catch (error) {
-    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
     if (code !== 'ENOENT') {
       console.error('[db] Failed to seed banners from file:', error);
     }
@@ -457,7 +459,8 @@ export async function getBrands(): Promise<Brand[]> {
 export async function getActiveBrands(): Promise<Brand[]> {
   if (!hasDatabase()) return [];
   await ensureSchema();
-  const rows = await sql()`SELECT * FROM brands WHERE active = true ORDER BY sort_order ASC, created_at ASC`;
+  const rows =
+    await sql()`SELECT * FROM brands WHERE active = true ORDER BY sort_order ASC, created_at ASC`;
   return rows.map(rowToBrand);
 }
 
@@ -509,7 +512,9 @@ export async function getProduct(id: string): Promise<ReturnType<typeof rowToPro
   return rows.length > 0 ? rowToProduct(rows[0]) : null;
 }
 
-export async function getProductBySlug(slug: string): Promise<ReturnType<typeof rowToProduct> | null> {
+export async function getProductBySlug(
+  slug: string,
+): Promise<ReturnType<typeof rowToProduct> | null> {
   await ensureSchema();
   const rows = await sql()`SELECT * FROM products WHERE slug = ${slug} LIMIT 1`;
   return rows.length > 0 ? rowToProduct(rows[0]) : null;
@@ -517,7 +522,7 @@ export async function getProductBySlug(slug: string): Promise<ReturnType<typeof 
 
 export async function saveProduct(product: Record<string, unknown>): Promise<void> {
   await ensureSchema();
-  const id  = (product.id as string) || String(Date.now());
+  const id = (product.id as string) || String(Date.now());
   const now = new Date();
 
   await sql()`
@@ -595,19 +600,19 @@ type Category = { id: string; label: string; icon: string; slug: string };
 
 function defaultCategories(): Category[] {
   return [
-    { id: 'laptops',      label: 'Laptops',                  icon: 'laptop',        slug: 'laptops' },
-    { id: 'printing',     label: 'Printers',                 icon: 'printer',       slug: 'printing' },
-    { id: 'networking',   label: 'WiFi & Networking',        icon: 'network',       slug: 'networking' },
-    { id: 'desktops',     label: 'Desktops',                 icon: 'desktop',       slug: 'desktops' },
-    { id: 'monitors',     label: 'Monitors & Displays',      icon: 'monitor',       slug: 'monitors' },
-    { id: 'accessories',  label: 'Accessories',              icon: 'plug',          slug: 'accessories' },
-    { id: 'audio',        label: 'Audio',                    icon: 'headphones',    slug: 'audio' },
-    { id: 'pc-parts',     label: 'PC Parts & Components',    icon: 'cpu',           slug: 'pc-parts' },
-    { id: 'drives',       label: 'Storage & Drives',         icon: 'hard-drive',    slug: 'drives' },
-    { id: 'sa-imports',   label: 'SA Imports',               icon: 'truck',         slug: 'sa-imports' },
-    { id: 'mobile',       label: 'Mobile & Accessories',     icon: 'smartphone',    slug: 'mobile' },
-    { id: 'cctv',         label: 'CCTV & Security',          icon: 'shield-camera', slug: 'cctv' },
-    { id: 'bundles',      label: 'Bundles & Deals',          icon: 'bundle',        slug: 'bundles' },
+    { id: 'laptops', label: 'Laptops', icon: 'laptop', slug: 'laptops' },
+    { id: 'printing', label: 'Printers', icon: 'printer', slug: 'printing' },
+    { id: 'networking', label: 'WiFi & Networking', icon: 'network', slug: 'networking' },
+    { id: 'desktops', label: 'Desktops', icon: 'desktop', slug: 'desktops' },
+    { id: 'monitors', label: 'Monitors & Displays', icon: 'monitor', slug: 'monitors' },
+    { id: 'accessories', label: 'Accessories', icon: 'plug', slug: 'accessories' },
+    { id: 'audio', label: 'Audio', icon: 'headphones', slug: 'audio' },
+    { id: 'pc-parts', label: 'PC Parts & Components', icon: 'cpu', slug: 'pc-parts' },
+    { id: 'drives', label: 'Storage & Drives', icon: 'hard-drive', slug: 'drives' },
+    { id: 'sa-imports', label: 'SA Imports', icon: 'truck', slug: 'sa-imports' },
+    { id: 'mobile', label: 'Mobile & Accessories', icon: 'smartphone', slug: 'mobile' },
+    { id: 'cctv', label: 'CCTV & Security', icon: 'shield-camera', slug: 'cctv' },
+    { id: 'bundles', label: 'Bundles & Deals', icon: 'bundle', slug: 'bundles' },
   ];
 }
 
@@ -621,9 +626,11 @@ export async function generateNextNumber(prefix: 'INV' | 'QTE'): Promise<string>
   try {
     let rows: Record<string, unknown>[];
     if (prefix === 'INV') {
-      rows = await sql()`SELECT number FROM invoices WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
+      rows =
+        await sql()`SELECT number FROM invoices WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
     } else {
-      rows = await sql()`SELECT number FROM quotes WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
+      rows =
+        await sql()`SELECT number FROM quotes WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
     }
     if (rows.length === 0) return `${prefix}-0001`;
     const last = String(rows[0].number);
@@ -942,9 +949,9 @@ function rowToCompanyProfile(row: Record<string, unknown>): CompanyProfile {
     phone: String(row.phone ?? ''),
     email: String(row.email ?? ''),
     website: String(row.website ?? ''),
-	    vatNumber: String(row.vat_number ?? ''),
-	    tinNumber: String(row.tin_number ?? ''),
-	    vendorNumber: String(row.vendor_number ?? ''),
+    vatNumber: String(row.vat_number ?? ''),
+    tinNumber: String(row.tin_number ?? ''),
+    vendorNumber: String(row.vendor_number ?? ''),
     logoUrl: String(row.logo_url ?? '/images/brand/cansan-logo.png'),
     updatedAt: toIsoString(row.updated_at),
   };
@@ -1020,7 +1027,9 @@ export async function getSitePreferences(): Promise<SitePreferences> {
   const defaults: SitePreferences = { currency: 'USD', lowStockThreshold: '5', itemsPerPage: '48' };
   try {
     const rows = await sql()`SELECT key, value FROM site_preferences`;
-    const map = Object.fromEntries(rows.map((r: Record<string, unknown>) => [r.key, String(r.value)]));
+    const map = Object.fromEntries(
+      rows.map((r: Record<string, unknown>) => [r.key, String(r.value)]),
+    );
     return {
       currency: map.currency || defaults.currency,
       lowStockThreshold: map.low_stock_threshold || defaults.lowStockThreshold,
@@ -1305,13 +1314,21 @@ export async function saveSeoEvent(event: SeoEventInput): Promise<void> {
   const eventType = event.eventType || 'page_view';
   const pathValue = normalizePath(event.path);
   const referrer = String(event.referrer || '').slice(0, 1024);
-  const source = String(event.source || 'direct').slice(0, 64).toLowerCase();
-  const medium = String(event.medium || '').slice(0, 64).toLowerCase();
+  const source = String(event.source || 'direct')
+    .slice(0, 64)
+    .toLowerCase();
+  const medium = String(event.medium || '')
+    .slice(0, 64)
+    .toLowerCase();
   const campaign = String(event.campaign || '').slice(0, 128);
   const searchTerm = String(event.searchTerm || '').slice(0, 160);
   const userAgent = String(event.userAgent || '').slice(0, 512);
-  const deviceType = String(event.deviceType || 'unknown').slice(0, 32).toLowerCase();
-  const country = String(event.country || '').slice(0, 64).toUpperCase();
+  const deviceType = String(event.deviceType || 'unknown')
+    .slice(0, 32)
+    .toLowerCase();
+  const country = String(event.country || '')
+    .slice(0, 64)
+    .toUpperCase();
   const city = String(event.city || '').slice(0, 96);
   const visitorId = String(event.visitorId || '').slice(0, 128);
 
@@ -1491,29 +1508,29 @@ export async function getSeoAnalyticsSummary(days?: number): Promise<SeoAnalytic
     brokenUrls,
     devices,
     dailyViews,
-	    lastTrackedAt: lastTrackedAt ? new Date(String(lastTrackedAt)).toISOString() : undefined,
-	  };
-	}
+    lastTrackedAt: lastTrackedAt ? new Date(String(lastTrackedAt)).toISOString() : undefined,
+  };
+}
 
-	/**
-	 * Delete seo_events older than the specified number of days.
-	 * Returns the number of deleted rows, or 0 if no DB is configured.
-	 *
-	 * Safe to call on every analytics fetch — DELETE overhead is negligible
-	 * with the INDEX on created_at, and keeps the table from growing unbounded.
-	 */
-	export async function cleanupSeoEvents(retentionDays = 90): Promise<number> {
-	  if (!hasDatabase()) return 0;
-	  try {
-	    await ensureSchema();
-	    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-		    await sql()`DELETE FROM seo_events WHERE created_at < ${cutoff}`;
-		    // Neon tagged template returns an array of rows; DELETE doesn't return rows,
-		    // so we use a follow-up SELECT to count what was deleted (approximate is fine).
-		    const count = 0; // We don't get row count from Neon DELETE in a simple way
-		    return count;
-	  } catch (error) {
-	    console.error('[db] Failed to cleanup seo_events:', error);
-	    return 0;
-	  }
-	}
+/**
+ * Delete seo_events older than the specified number of days.
+ * Returns the number of deleted rows, or 0 if no DB is configured.
+ *
+ * Safe to call on every analytics fetch - DELETE overhead is negligible
+ * with the INDEX on created_at, and keeps the table from growing unbounded.
+ */
+export async function cleanupSeoEvents(retentionDays = 90): Promise<number> {
+  if (!hasDatabase()) return 0;
+  try {
+    await ensureSchema();
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    await sql()`DELETE FROM seo_events WHERE created_at < ${cutoff}`;
+    // Neon tagged template returns an array of rows; DELETE doesn't return rows,
+    // so we use a follow-up SELECT to count what was deleted (approximate is fine).
+    const count = 0; // We don't get row count from Neon DELETE in a simple way
+    return count;
+  } catch (error) {
+    console.error('[db] Failed to cleanup seo_events:', error);
+    return 0;
+  }
+}

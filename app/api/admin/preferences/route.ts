@@ -1,21 +1,10 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-async function checkAuth(): Promise<boolean> {
-  try {
-    const store = await cookies();
-    return store.get('admin_auth')?.value === (ADMIN_PASSWORD || 'cansan2024');
-  } catch {
-    return false;
-  }
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/check-admin-auth';
 
 export async function GET() {
-  if (!(await checkAuth())) {
+  if (!(await checkAdminAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { getSitePreferences } = await import('@/lib/db');
@@ -23,8 +12,8 @@ export async function GET() {
   return NextResponse.json(prefs);
 }
 
-export async function PUT(req: Request) {
-  if (!(await checkAuth())) {
+export async function PUT(req: NextRequest) {
+  if (!(await checkAdminAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {

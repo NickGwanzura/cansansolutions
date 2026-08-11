@@ -7,7 +7,6 @@ import { useCartStore } from '@/lib/cart-store';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
-import { getBrandForProduct } from '@/lib/brands';
 import { useToast } from './Toast';
 
 type ProductCardProps = {
@@ -15,32 +14,11 @@ type ProductCardProps = {
   onQuickView?: (p: Product) => void;
 };
 
-const TYPE_BY_CATEGORY: Record<string, string> = {
-  drives: 'External SSD',
-  'sa-imports': 'Imported Tech Product',
-  laptops: 'Laptop',
-  networking: 'Networking Device',
-  cctv: 'Security System',
-  accessories: 'Accessory',
-  mobile: 'Smartphone',
-  monitors: 'Monitor',
-  desktops: 'Desktop PC',
-  printing: 'Printer',
-  bundles: 'Tech Bundle',
-};
-
-const USE_CASE_BY_CATEGORY: Record<string, string> = {
-  drives: 'Fast Backup',
-  'sa-imports': 'Special-Order Performance',
-  laptops: 'Work and Study',
-  networking: 'Stable Home and Office WiFi',
-  cctv: 'Home and Business Security',
-  accessories: 'Daily Productivity',
-  mobile: 'Everyday Productivity',
-  monitors: 'Office Productivity',
-  desktops: 'Business Performance',
-  printing: 'Office Printing',
-  bundles: 'Value Savings',
+const FALLBACK_IMAGE_BY_CATEGORY: Record<string, string> = {
+  laptops: '/images/products/laptop-new.svg',
+  desktops: '/images/products/desktop-new.svg',
+  monitors: '/images/products/imac.svg',
+  'sa-imports': '/images/products/laptop-used.svg',
 };
 
 const SPEC_PRIORITY_KEYS = [
@@ -64,44 +42,6 @@ function normalizeLabel(label: string) {
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function compactSpaces(value: string) {
-  return value.replace(/\s+/g, ' ').trim();
-}
-
-function extractNameSpec(name: string): string | null {
-  const patterns = [
-    /\b\d+\s?TB\b/i,
-    /\b\d+\s?GB\b/i,
-    /\bCore\s+i[3579]\b/i,
-    /\bRyzen\s+\d\b/i,
-    /\bUltra\s+\d\b/i,
-    /\bUSB[-\s]?C\b/i,
-    /\b\d{2,4}\s?MB\/s\b/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = name.match(pattern);
-    if (match) {
-      return compactSpaces(match[0]);
-    }
-  }
-
-  return null;
-}
-
-function getPrimarySpec(product: Product): string {
-  const entries = Object.entries(product.specs ?? {});
-
-  for (const priority of SPEC_PRIORITY_KEYS) {
-    const found = entries.find(([key]) => key.toLowerCase().includes(priority));
-    if (found) {
-      return compactSpaces(String(found[1]));
-    }
-  }
-
-  return extractNameSpec(product.name) ?? 'High Performance';
 }
 
 function getMicroSpecs(product: Product): string[] {
@@ -131,22 +71,16 @@ function getMicroSpecs(product: Product): string[] {
   return merged.length > 0 ? merged : ['Genuine product', 'Local support'];
 }
 
-function buildSeoTitle(product: Product): string {
-  const brand = getBrandForProduct(product)?.name ?? product.name.split(' ')[0] ?? 'Cansan';
-  const keySpec = getPrimarySpec(product);
-  const type = TYPE_BY_CATEGORY[product.category] ?? getCategoryLabel(product.category);
-  const useCase = USE_CASE_BY_CATEGORY[product.category] ?? 'Everyday Use';
-
-  return compactSpaces(`${brand} ${keySpec} ${type} for ${useCase}`);
-}
-
 function getStockText(product: Product): { label: string; tone: string } {
   if (!product.inStock) {
     return { label: 'Out of stock', tone: 'text-red-600 bg-red-50 border-red-200' };
   }
 
   if (typeof product.stockCount === 'number' && product.stockCount <= 5) {
-    return { label: `Only ${product.stockCount} left`, tone: 'text-amber-700 bg-amber-50 border-amber-200' };
+    return {
+      label: `Only ${product.stockCount} left`,
+      tone: 'text-amber-700 bg-amber-50 border-amber-200',
+    };
   }
 
   if (typeof product.stockCount === 'number' && product.stockCount <= 12) {
@@ -161,9 +95,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { showToast } = useToast();
   const [adding, setAdding] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const isBundle = isBundleProduct(product);
 
-  const seoTitle = useMemo(() => buildSeoTitle(product), [product]);
   const microSpecs = useMemo(() => getMicroSpecs(product), [product]);
   const stock = useMemo(() => getStockText(product), [product]);
   const saImport = useMemo(() => isSaImportProduct(product), [product]);
@@ -179,7 +113,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
 
-  const imageSrc = product.image || '/images/products/placeholder.svg';
+  const fallbackImage =
+    FALLBACK_IMAGE_BY_CATEGORY[product.category] ?? '/images/products/promo-collection.svg';
+  const imageSrc = !imageFailed && product.image ? product.image : fallbackImage;
 
   const handleAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -196,69 +132,94 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   };
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/products/${product.slug}`} className="relative block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-white p-5">
-          <Image
-            src={imageSrc}
-            alt={product.name}
-            fill
-            loading="lazy"
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-contain p-3 transition duration-500 group-hover:scale-105"
-          />
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl motion-reduce:transition-none">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(145deg,#fafafa,#f4f4f5)] p-5">
+        <Link
+          href={`/products/${product.slug}`}
+          aria-label={`View ${product.name}`}
+          className="absolute inset-0 z-0"
+        />
+        <Image
+          src={imageSrc}
+          alt={product.name}
+          fill
+          loading="lazy"
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          onError={() => setImageFailed(true)}
+          className="pointer-events-none object-contain p-4 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
+        />
 
-          {hasDiscount || product.dealLabel ? (
-            <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-              {hasDiscount ? (
-                <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
-                  -{discountPercent}%
-                </span>
-              ) : null}
-              {product.dealLabel ? (
-                <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
-                  {product.dealLabel}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+        {hasDiscount || product.dealLabel ? (
+          <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+            {hasDiscount ? (
+              <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                -{discountPercent}%
+              </span>
+            ) : null}
+            {product.dealLabel ? (
+              <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                {product.dealLabel}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
-          <span className={`absolute right-3 top-3 rounded-full border px-3 py-1 text-xs font-semibold ${stock.tone}`}>
-            {stock.label}
-          </span>
+        <span
+          className={`pointer-events-none absolute right-3 top-3 z-10 rounded-full border px-3 py-1 text-xs font-semibold ${stock.tone}`}
+        >
+          {stock.label}
+        </span>
 
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            setWishlisted((current) => !current);
+          }}
+          aria-label={
+            wishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`
+          }
+          aria-pressed={wishlisted}
+          className={`absolute bottom-3 left-3 z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 ${wishlisted ? 'border-red-200 bg-red-50 text-red-600' : 'border-zinc-200 bg-white text-zinc-500 hover:border-red-200 hover:text-red-600'}`}
+        >
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4"
+            fill={wishlisted ? 'currentColor' : 'none'}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.8}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"
+            />
+          </svg>
+        </button>
+
+        {onQuickView ? (
           <button
-            type="button"
             onClick={(event) => {
               event.preventDefault();
-              setWishlisted((current) => !current);
+              onQuickView(product);
             }}
-            aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-            aria-pressed={wishlisted}
-            className={`absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full border transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 ${wishlisted ? 'border-red-200 bg-red-50 text-red-600' : 'border-zinc-200 bg-white text-zinc-500 hover:border-red-200 hover:text-red-600'}`}
+            className="absolute bottom-3 right-3 z-10 inline-flex min-h-11 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-red-200 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
           >
-            <svg aria-hidden="true" className="h-4 w-4" fill={wishlisted ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
-            </svg>
+            Quick View
           </button>
-
-          {onQuickView ? (
-            <button
-              onClick={(event) => {
-                event.preventDefault();
-                onQuickView(product);
-              }}
-              className="absolute bottom-3 right-3 inline-flex min-h-10 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-            >
-              Quick View
-            </button>
-          ) : null}
-        </div>
-      </Link>
+        ) : null}
+      </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <Link href={`/products/${product.slug}`} className="text-sm font-semibold leading-snug text-zinc-900 transition hover:text-red-700">
-          <h3 className="line-clamp-2">{seoTitle}</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-500">
+          {getCategoryLabel(product.category)}
+        </p>
+        <Link
+          href={`/products/${product.slug}`}
+          className="mt-1 text-base font-bold leading-snug text-zinc-900 transition hover:text-red-700"
+        >
+          <h3 className="line-clamp-2">{product.name}</h3>
         </Link>
 
         <ul className="mt-3 space-y-1.5 text-sm text-zinc-600">
@@ -271,9 +232,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </ul>
 
         <div className="mt-4 flex items-end gap-2">
-          <p className="text-lg font-bold text-zinc-950">{formatCurrency(product.price, product.currency)}</p>
+          <p className="text-lg font-bold text-zinc-950">
+            {formatCurrency(product.price, product.currency)}
+          </p>
           {hasDiscount && product.originalPrice ? (
-            <p className="text-sm text-zinc-400 line-through">{formatCurrency(product.originalPrice, product.currency)}</p>
+            <p className="text-sm text-zinc-400 line-through">
+              {formatCurrency(product.originalPrice, product.currency)}
+            </p>
           ) : null}
         </div>
 

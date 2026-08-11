@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const BYPASS_COOKIE = 'maintenance_bypass';
+const SESSION_TTL_MS = 60 * 60 * 8 * 1000;
+const encoder = new TextEncoder();
 
 // Paths that are always accessible during maintenance
 const ALLOWED_PATHS = [
@@ -32,7 +34,46 @@ function isMaintenanceActive(): boolean {
   return true;
 }
 
-export function proxy(request: NextRequest) {
+function fromBase64Url(value: string): Uint8Array | null {
+  try {
+    const base64 = value
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(value.length / 4) * 4, '=');
+    return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+  } catch {
+    return null;
+  }
+}
+
+async function isValidMaintenanceSession(
+  session: string | undefined,
+  password: string,
+): Promise<boolean> {
+  if (!session) return false;
+  const [issuedAtRaw, nonce, signature, ...extra] = session.split('.');
+  const issuedAt = Number(issuedAtRaw);
+  if (extra.length > 0 || !nonce || !signature || !Number.isFinite(issuedAt)) return false;
+  if (issuedAt > Date.now() || Date.now() - issuedAt > SESSION_TTL_MS) return false;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  );
+  const signatureBytes = fromBase64Url(signature);
+  if (!signatureBytes) return false;
+  return crypto.subtle.verify(
+    'HMAC',
+    key,
+    signatureBytes as unknown as BufferSource,
+    encoder.encode(`cansan-session:v1:maintenance:${issuedAtRaw}.${nonce}`),
+  );
+}
+
+export async function proxy(request: NextRequest) {
   const maintenanceActive = isMaintenanceActive();
   const bypassPassword = process.env.MAINTENANCE_PASSWORD;
 
@@ -45,7 +86,7 @@ export function proxy(request: NextRequest) {
     }
     return NextResponse.next();
   }
-  
+
   // If maintenance mode is not enabled or has expired, allow all requests
   if (!maintenanceActive) {
     return NextResponse.next();
@@ -54,13 +95,13 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow access to static assets and API
-  if (ALLOWED_PATHS.some(path => pathname.startsWith(path))) {
+  if (ALLOWED_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
   // Check if user has bypass cookie
   const bypassCookie = request.cookies.get(BYPASS_COOKIE);
-  if (bypassCookie?.value === bypassPassword) {
+  if (await isValidMaintenanceSession(bypassCookie?.value, bypassPassword)) {
     return NextResponse.next();
   }
 
@@ -71,7 +112,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.svg$).*)'],
 };

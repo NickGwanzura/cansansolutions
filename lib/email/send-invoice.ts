@@ -24,13 +24,23 @@ export async function sendDocumentEmail(params: {
   vendorNumber?: string;
 }) {
   if (!resend) {
-    console.warn('[Email] RESEND_API_KEY not configured — skipping email');
+    console.warn('[Email] RESEND_API_KEY not configured - skipping email');
     return { success: false, error: 'Email service not configured' };
   }
 
   const {
-    to, documentType, documentNumber, customerName, total, currency,
-    pdfBase64, companyName, companyLogoUrl, tinNumber, vatNumber, vendorNumber,
+    to,
+    documentType,
+    documentNumber,
+    customerName,
+    total,
+    currency,
+    pdfBase64,
+    companyName,
+    companyLogoUrl,
+    tinNumber,
+    vatNumber,
+    vendorNumber,
   } = params;
 
   try {
@@ -115,11 +125,11 @@ export async function sendDocumentEmail(params: {
     });
 
     if (error) {
-	    console.error('[Email] Resend error:', error);
-	      return { success: false, error: error.message };
-	    }
+      console.error('[Email] Resend error:', error);
+      return { success: false, error: error.message };
+    }
 
-	    return { success: true, id: data?.id };
+    return { success: true, id: data?.id };
   } catch (err) {
     console.error('[Email] Failed to send:', err);
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };

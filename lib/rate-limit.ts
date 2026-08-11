@@ -41,7 +41,7 @@ export type RateLimitResult = {
 export function checkRateLimit(
   key: string,
   maxAttempts = 10,
-  windowSeconds = 300
+  windowSeconds = 300,
 ): RateLimitResult {
   cleanup();
 
@@ -49,7 +49,7 @@ export function checkRateLimit(
   const entry = store.get(key);
 
   if (!entry || now > entry.resetAt) {
-    // First request or window expired — reset
+    // First request or window expired - reset
     store.set(key, {
       count: 1,
       resetAt: now + windowSeconds * 1000,

@@ -41,7 +41,10 @@ const RichTextEditor = dynamic(() => import('../components/RichTextEditor'), {
 });
 
 function slugify(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function formatAdminCurrency(amount: number, currency: string = 'USD') {
@@ -65,17 +68,47 @@ function ImageGalleryUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [error, setError] = useState('');
+  const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 
-  const upload = async (file: File) => {
-    setUploading(true);
-    const fd = new FormData();
-    fd.append('image', file);
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
-    setUploading(false);
-    if (res.ok) {
-      const { url } = await res.json();
-      onChange([...images, url]);
+  const uploadFiles = async (files: File[]) => {
+    const validFiles = files.filter((file) => acceptedTypes.includes(file.type));
+    if (validFiles.length === 0) {
+      setError('Choose JPG, PNG, WebP, or AVIF images.');
+      return;
     }
+
+    setError('');
+    setUploading(true);
+    const nextImages = [...images];
+    try {
+      for (const file of validFiles) {
+        const fd = new FormData();
+        fd.append('image', file);
+        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Upload failed');
+        const { url } = await res.json();
+        nextImages.push(url);
+      }
+      onChange(nextImages);
+    } catch {
+      setError('One or more images could not be uploaded. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const addImageUrl = () => {
+    const url = imageUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setError('Enter a full image URL beginning with https://');
+      return;
+    }
+    setError('');
+    setImageUrl('');
+    onChange([...images, url]);
   };
 
   const removeImage = (index: number) => {
@@ -92,35 +125,126 @@ function ImageGalleryUpload({
 
   return (
     <div className="space-y-3">
-      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-        Product Images {images.length > 0 && `(${images.length})`}
-      </label>
+      <div className="flex items-center justify-between gap-3">
+        <label className="block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Product images {images.length > 0 && `(${images.length})`}
+        </label>
+        <span className="text-xs text-zinc-400">First image is the main photo</span>
+      </div>
+
+      <div
+        className={`rounded-2xl border-2 border-dashed p-5 text-center transition ${dragActive ? 'border-red-500 bg-red-50' : 'border-zinc-200 bg-zinc-50/70 hover:border-red-300 hover:bg-red-50/50'}`}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setDragActive(true);
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragActive(false);
+          void uploadFiles(Array.from(event.dataTransfer.files));
+        }}
+        onPaste={(event) => {
+          const files = Array.from(event.clipboardData.files);
+          if (files.length > 0) {
+            event.preventDefault();
+            void uploadFiles(files);
+          }
+        }}
+      >
+        <svg
+          aria-hidden="true"
+          className="mx-auto h-7 w-7 text-red-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3.75A1.75 1.75 0 0 0 6.75 20h10.5A1.75 1.75 0 0 0 19 18.25V14.5"
+          />
+        </svg>
+        <p className="mt-2 text-sm font-semibold text-zinc-900">
+          Drop photos here, paste, or browse
+        </p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          Upload several photos at once. JPG, PNG, WebP, or AVIF up to 10MB each.
+        </p>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {uploading ? 'Uploading photos...' : 'Choose photos'}
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={imageUrl}
+          onChange={(event) => setImageUrl(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addImageUrl();
+            }
+          }}
+          placeholder="Or paste an image URL"
+          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+        />
+        <button
+          type="button"
+          onClick={addImageUrl}
+          className="min-h-11 rounded-xl border border-zinc-200 px-3 text-sm font-semibold text-zinc-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+        >
+          Add URL
+        </button>
+      </div>
+      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {images.map((img, idx) => (
-            <div key={idx} className="relative group rounded-lg border border-zinc-200 overflow-hidden bg-zinc-50">
-              <img src={img} alt={`Product ${idx + 1}`} className="h-20 w-full object-contain p-1" />
+            <div
+              key={idx}
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white"
+            >
+              <img
+                src={img}
+                alt={`Product ${idx + 1}`}
+                className="h-28 w-full object-contain p-2"
+              />
               {idx === 0 && (
-                <span className="absolute top-1 left-1 text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded">
+                <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-1 text-[10px] font-semibold text-white shadow-sm">
                   Main
                 </span>
               )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1">
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-zinc-950/80 to-transparent px-2 pb-2 pt-7 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
                 <button
                   type="button"
                   onClick={() => moveImage(idx, idx - 1)}
                   disabled={idx === 0}
-                  className="p-1 bg-white rounded hover:bg-zinc-100 disabled:opacity-30"
+                  aria-label="Move image earlier"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-zinc-800 shadow-sm transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                   </svg>
                 </button>
                 <button
                   type="button"
                   onClick={() => removeImage(idx)}
-                  className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  aria-label="Remove image"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white shadow-sm transition hover:bg-red-700"
                 >
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -130,10 +254,15 @@ function ImageGalleryUpload({
                   type="button"
                   onClick={() => moveImage(idx, idx + 1)}
                   disabled={idx === images.length - 1}
-                  className="p-1 bg-white rounded hover:bg-zinc-100 disabled:opacity-30"
+                  aria-label="Move image later"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-zinc-800 shadow-sm transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                    />
                   </svg>
                 </button>
               </div>
@@ -142,22 +271,15 @@ function ImageGalleryUpload({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="w-full rounded-xl border-2 border-dashed border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
-      >
-        {uploading ? 'Uploading…' : '+ Add Image'}
-      </button>
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) upload(file);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length > 0) void uploadFiles(files);
           e.target.value = '';
         }}
       />
@@ -193,10 +315,16 @@ function ProductForm({
   const [enhancing, setEnhancing] = useState(false);
   const [enhancingSpecs, setEnhancingSpecs] = useState(false);
   const initialSerialized = useMemo(() => JSON.stringify(initial), [initial]);
-  const hasUnsavedChanges = useMemo(() => JSON.stringify(form) !== initialSerialized, [form, initialSerialized]);
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(form) !== initialSerialized,
+    [form, initialSerialized],
+  );
 
   const enhanceDescription = async () => {
-    if (!form.name.trim()) { setError('Enter a product name first'); return; }
+    if (!form.name.trim()) {
+      setError('Enter a product name first');
+      return;
+    }
     setEnhancing(true);
     try {
       const res = await fetch('/api/admin/enhance', {
@@ -278,7 +406,8 @@ function ProductForm({
       }
 
       const currentSpecs = parseSpecsText(form.specsText);
-      const generatedSpecs = data.specs && typeof data.specs === 'object' ? (data.specs as Record<string, string>) : {};
+      const generatedSpecs =
+        data.specs && typeof data.specs === 'object' ? (data.specs as Record<string, string>) : {};
       const mergedSpecs = { ...generatedSpecs, ...currentSpecs };
       set('specsText', stringifySpecs(mergedSpecs));
     } catch {
@@ -301,11 +430,26 @@ function ProductForm({
   };
 
   const validate = () => {
-    if (!form.name.trim()) { setError('Product name is required'); return false; }
-    if (!form.slug.trim()) { setError('Slug is required'); return false; }
-    if (!form.price || isNaN(parseFloat(String(form.price)))) { setError('Valid price is required'); return false; }
-    if (!form.description.trim()) { setError('Description is required'); return false; }
-    if (form.productType === 'bundle' && !String(form.bundleItems).trim()) { setError('Add at least one bundle item'); return false; }
+    if (!form.name.trim()) {
+      setError('Product name is required');
+      return false;
+    }
+    if (!form.slug.trim()) {
+      setError('Slug is required');
+      return false;
+    }
+    if (!form.price || isNaN(parseFloat(String(form.price)))) {
+      setError('Valid price is required');
+      return false;
+    }
+    if (!form.description.trim()) {
+      setError('Description is required');
+      return false;
+    }
+    if (form.productType === 'bundle' && !String(form.bundleItems).trim()) {
+      setError('Add at least one bundle item');
+      return false;
+    }
     return true;
   };
 
@@ -329,8 +473,12 @@ function ProductForm({
   };
 
   // Convert legacy single image to array
-  const images = form.images.length > 0 ? form.images : 
-    ((form as unknown as { image?: string }).image ? [(form as unknown as { image: string }).image] : []);
+  const images =
+    form.images.length > 0
+      ? form.images
+      : (form as unknown as { image?: string }).image
+        ? [(form as unknown as { image: string }).image]
+        : [];
 
   const updateImages = (newImages: string[]) => {
     set('images', newImages);
@@ -344,8 +492,18 @@ function ProductForm({
           <h2 className="font-heading text-sm font-bold text-zinc-900">
             {initial.name ? 'Edit Product' : 'Add Product'}
           </h2>
-          <button onClick={requestClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 transition">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <button
+            onClick={requestClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 transition"
+          >
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -369,7 +527,11 @@ function ProductForm({
           ))}
         </div>
 
-        <form ref={formRef} onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <form
+          ref={formRef}
+          onSubmit={submit}
+          className="flex-1 overflow-y-auto px-5 py-4 space-y-4"
+        >
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
               {error}
@@ -382,7 +544,9 @@ function ProductForm({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Product Name *</label>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Product Name *
+                  </label>
                   <input
                     required
                     value={form.name}
@@ -402,19 +566,25 @@ function ProductForm({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Category *</label>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Category *
+                  </label>
                   <select
                     value={form.category}
                     onChange={(e) => set('category', e.target.value)}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                   >
                     {CATEGORIES.map((c) => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Listing Type *</label>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Listing Type *
+                  </label>
                   <select
                     value={form.productType}
                     onChange={(e) => {
@@ -429,7 +599,9 @@ function ProductForm({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Condition</label>
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Condition
+                  </label>
                   <select
                     value={form.condition}
                     onChange={(e) => set('condition', e.target.value)}
@@ -481,15 +653,33 @@ function ProductForm({
                     {enhancing ? (
                       <>
                         <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          />
                         </svg>
                         Enhancing…
                       </>
                     ) : (
                       <>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
                         </svg>
                         Enhance with AI
                       </>
@@ -536,11 +726,15 @@ function ProductForm({
           {activeTab === 'details' && (
             <>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Deals & Details</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                  Deals & Details
+                </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Original Price</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                      Original Price
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -550,23 +744,31 @@ function ProductForm({
                       className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                       placeholder="1299.00"
                     />
-                    <p className="mt-0.5 text-[10px] text-zinc-400">Set higher than price to show discount badge</p>
+                    <p className="mt-0.5 text-[10px] text-zinc-400">
+                      Set higher than price to show discount badge
+                    </p>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Deal Label</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                      Deal Label
+                    </label>
                     <input
                       value={form.dealLabel}
                       onChange={(e) => set('dealLabel', e.target.value)}
                       className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                       placeholder="Top Laptop Deals"
                     />
-                    <p className="mt-0.5 text-[10px] text-zinc-400">Products with same label appear in a deal section</p>
+                    <p className="mt-0.5 text-[10px] text-zinc-400">
+                      Products with same label appear in a deal section
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Stock Count</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                      Stock Count
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -577,7 +779,9 @@ function ProductForm({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Rating (0-5)</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                      Rating (0-5)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -589,7 +793,9 @@ function ProductForm({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1">Review Count</label>
+                    <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                      Review Count
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -604,7 +810,8 @@ function ProductForm({
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <label className="block text-xs font-semibold text-zinc-500">
-                      Specifications <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
+                      Specifications{' '}
+                      <span className="font-normal text-zinc-400">(one per line, Key: Value)</span>
                     </label>
                     <button
                       type="button"
@@ -615,14 +822,32 @@ function ProductForm({
                       {enhancingSpecs ? (
                         <>
                           <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v8z"
+                            />
                           </svg>
                           Generating…
                         </>
                       ) : (
                         <>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
                           </svg>
                           Add Specs with AI
@@ -649,7 +874,9 @@ function ProductForm({
                     onClick={() => set('inStock', !form.inStock)}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.inStock ? 'bg-green-500' : 'bg-zinc-200'}`}
                   >
-                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.inStock ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.inStock ? 'translate-x-4' : 'translate-x-0.5'}`}
+                    />
                   </button>
                   <span className="text-xs font-semibold text-zinc-700">In Stock</span>
                 </label>
@@ -661,7 +888,9 @@ function ProductForm({
                     onClick={() => set('featured', !form.featured)}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.featured ? 'bg-red-500' : 'bg-zinc-200'}`}
                   >
-                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.featured ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${form.featured ? 'translate-x-4' : 'translate-x-0.5'}`}
+                    />
                   </button>
                   <span className="text-xs font-semibold text-zinc-700">Featured</span>
                 </label>
@@ -672,7 +901,9 @@ function ProductForm({
           {activeTab === 'variants' && (
             <div className="text-center py-8 text-zinc-500">
               <p>Product variants coming soon.</p>
-              <p className="text-sm mt-2">Use the description field to mention available sizes/colors for now.</p>
+              <p className="text-sm mt-2">
+                Use the description field to mention available sizes/colors for now.
+              </p>
             </div>
           )}
         </form>
@@ -694,25 +925,25 @@ function ProductForm({
             </button>
           )}
           <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={requestClose}
-                className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
-              >
-                Cancel
-              </button>
-              <button
+            <button
+              type="button"
+              onClick={requestClose}
+              className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Cancel
+            </button>
+            <button
               type="button"
               disabled={saving}
-                onClick={() => {
-                  setAddAnother(false);
-                  setTimeout(() => {
-                    formRef.current?.requestSubmit();
-                  }, 0);
-                }}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-              >
-                {saving && !addAnother ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
+              onClick={() => {
+                setAddAnother(false);
+                setTimeout(() => {
+                  formRef.current?.requestSubmit();
+                }, 0);
+              }}
+              className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+            >
+              {saving && !addAnother ? 'Saving…' : initial.name ? 'Save Changes' : 'Add Product'}
             </button>
           </div>
         </div>
@@ -724,7 +955,10 @@ function ProductForm({
         confirmLabel="Discard"
         cancelLabel="Keep editing"
         variant="default"
-        onConfirm={() => { setConfirmDiscard(false); onClose(); }}
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          onClose();
+        }}
         onCancel={() => setConfirmDiscard(false)}
       />
     </div>
@@ -763,10 +997,22 @@ function ImportProductsModal({
         <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
           <div>
             <h2 className="font-heading text-lg font-bold text-zinc-900">Import Your Products</h2>
-            <p className="mt-1 text-sm text-zinc-500">Paste a JSON array or load a `.json` file from your computer.</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Paste a JSON array or load a `.json` file from your computer.
+            </p>
           </div>
-          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-zinc-100 transition">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-zinc-100 transition"
+          >
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -774,7 +1020,8 @@ function ImportProductsModal({
 
         <div className="space-y-5 px-6 py-5">
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Use `replace current catalog` if you want only your products on the site. Use `add to current catalog` if you want to keep what is already there.
+            Use `replace current catalog` if you want only your products on the site. Use `add to
+            current catalog` if you want to keep what is already there.
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -812,7 +1059,9 @@ function ImportProductsModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">Products JSON</label>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Products JSON
+            </label>
             <textarea
               value={value}
               onChange={(e) => onChange(e.target.value)}
@@ -825,7 +1074,10 @@ function ImportProductsModal({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
-          <p className="text-xs text-zinc-400">Required fields: `name`, `category`, `price`, `description`. Images are optional and can be added later.</p>
+          <p className="text-xs text-zinc-400">
+            Required fields: `name`, `category`, `price`, `description`. Images are optional and can
+            be added later.
+          </p>
           <div className="flex gap-2">
             <button
               type="button"
@@ -879,13 +1131,25 @@ function FirstShopImportModal({
       <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
           <div>
-            <h2 className="font-heading text-lg font-bold text-zinc-900">Import FirstShop SA Products</h2>
+            <h2 className="font-heading text-lg font-bold text-zinc-900">
+              Import FirstShop SA Products
+            </h2>
             <p className="mt-1 text-sm text-zinc-500">
               Import by collection, or paste specific FirstShop product links.
             </p>
           </div>
-          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-zinc-100">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-zinc-100"
+          >
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -893,7 +1157,8 @@ function FirstShopImportModal({
 
         <div className="space-y-5 px-6 py-5">
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            Imported items are mapped to <strong>SA Imports</strong> and tagged for <strong>5-day delivery from SA</strong>.
+            Imported items are mapped to <strong>SA Imports</strong> and tagged for{' '}
+            <strong>5-day delivery from SA</strong>.
           </div>
 
           <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
@@ -909,7 +1174,9 @@ function FirstShopImportModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">Limit</label>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Limit
+              </label>
               <input
                 type="number"
                 min={1}
@@ -935,7 +1202,9 @@ function FirstShopImportModal({
                 className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                 placeholder="16.3104"
               />
-              <p className="mt-1 text-xs text-zinc-500">Leave blank to use live rate feed automatically.</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Leave blank to use live rate feed automatically.
+              </p>
             </div>
           </div>
 
@@ -951,13 +1220,16 @@ function FirstShopImportModal({
               className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              Paste one link per line. When links are provided, these products are imported directly.
+              Paste one link per line. When links are provided, these products are imported
+              directly.
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-6 py-4">
-          <p className="text-xs text-zinc-400">Supports FirstShop product URLs or direct handles.</p>
+          <p className="text-xs text-zinc-400">
+            Supports FirstShop product URLs or direct handles.
+          </p>
           <div className="flex gap-2">
             <button
               type="button"
@@ -1012,20 +1284,28 @@ function BulkEditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">Bulk Edit {selectedCount} Products</h3>
-        <p className="text-sm text-zinc-500 mb-5">Select fields to update on all selected products.</p>
+        <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">
+          Bulk Edit {selectedCount} Products
+        </h3>
+        <p className="text-sm text-zinc-500 mb-5">
+          Select fields to update on all selected products.
+        </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-500 mb-2">Change Category</label>
+            <label className="block text-xs font-semibold text-zinc-500 mb-2">
+              Change Category
+            </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
             >
-              <option value="">— Keep unchanged —</option>
+              <option value="">- Keep unchanged -</option>
               {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
               ))}
             </select>
           </div>
@@ -1037,7 +1317,9 @@ function BulkEditModal({
                 type="button"
                 onClick={() => setInStock(inStock === true ? '' : true)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
-                  inStock === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-zinc-200 hover:bg-zinc-50'
+                  inStock === true
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 Set In Stock
@@ -1046,7 +1328,9 @@ function BulkEditModal({
                 type="button"
                 onClick={() => setInStock(inStock === false ? '' : false)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
-                  inStock === false ? 'border-red-500 bg-red-50 text-red-700' : 'border-zinc-200 hover:bg-zinc-50'
+                  inStock === false
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 Set Out of Stock
@@ -1055,13 +1339,17 @@ function BulkEditModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-500 mb-2">Featured Status</label>
+            <label className="block text-xs font-semibold text-zinc-500 mb-2">
+              Featured Status
+            </label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setFeatured(featured === true ? '' : true)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
-                  featured === true ? 'border-red-500 bg-red-50 text-red-700' : 'border-zinc-200 hover:bg-zinc-50'
+                  featured === true
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 Set Featured
@@ -1070,7 +1358,9 @@ function BulkEditModal({
                 type="button"
                 onClick={() => setFeatured(featured === false ? '' : false)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
-                  featured === false ? 'border-zinc-500 bg-zinc-100 text-zinc-700' : 'border-zinc-200 hover:bg-zinc-50'
+                  featured === false
+                    ? 'border-zinc-500 bg-zinc-100 text-zinc-700'
+                    : 'border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 Remove Featured
@@ -1118,26 +1408,28 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  
+
   // Batch operations
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [batchDeleting, setBatchDeleting] = useState(false);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkEditing, setBulkEditing] = useState(false);
-  
+
   // Import
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
   const [importText, setImportText] = useState('');
   const [firstshopImportOpen, setFirstshopImportOpen] = useState(false);
-  const [firstshopCollectionHandle, setFirstshopCollectionHandle] = useState('external-solid-state-drive-ssd');
+  const [firstshopCollectionHandle, setFirstshopCollectionHandle] = useState(
+    'external-solid-state-drive-ssd',
+  );
   const [firstshopLimit, setFirstshopLimit] = useState('60');
   const [firstshopBankRate, setFirstshopBankRate] = useState('');
   const [firstshopProductLinks, setFirstshopProductLinks] = useState('');
@@ -1180,8 +1472,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         p.bundleItems.some((item) => item.toLowerCase().includes(query));
       const matchCat = !filterCat || p.category === filterCat;
       const matchStock = filterStock === 'all' || (filterStock === 'in' ? p.inStock : !p.inStock);
-      const matchFeatured = filterFeatured === 'all' || (filterFeatured === 'yes' ? p.featured : !p.featured);
-      const matchPrice = 
+      const matchFeatured =
+        filterFeatured === 'all' || (filterFeatured === 'yes' ? p.featured : !p.featured);
+      const matchPrice =
         (!priceRange.min || p.price >= parseFloat(priceRange.min)) &&
         (!priceRange.max || p.price <= parseFloat(priceRange.max));
       return matchSearch && matchCat && matchStock && matchFeatured && matchPrice;
@@ -1220,15 +1513,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const totalPages = Math.ceil(sortedFiltered.length / ITEMS_PER_PAGE);
   const paginatedProducts = sortedFiltered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
   const visibleStart = sortedFiltered.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const visibleEnd = Math.min(currentPage * ITEMS_PER_PAGE, sortedFiltered.length);
 
   // Batch selection helpers
-  const allSelected = paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.has(p.id));
+  const allSelected =
+    paginatedProducts.length > 0 && paginatedProducts.every((p) => selectedIds.has(p.id));
   const someSelected = selectedIds.size > 0 && !allSelected;
-  
+
   const toggleSelectAll = () => {
     if (allSelected) {
       const newSet = new Set(selectedIds);
@@ -1240,7 +1534,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setSelectedIds(newSet);
     }
   };
-  
+
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) newSet.delete(id);
@@ -1262,9 +1556,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     return sortDirection === 'asc' ? '↑' : '↓';
   };
 
-  const openAdd = () => { setEditTarget(null); setFormOpen(true); };
-  const openEdit = (p: Product) => { setEditTarget(p); setFormOpen(true); };
-  
+  const openAdd = () => {
+    setEditTarget(null);
+    setFormOpen(true);
+  };
+  const openEdit = (p: Product) => {
+    setEditTarget(p);
+    setFormOpen(true);
+  };
+
   const handleDuplicate = (p: Product) => {
     const duplicated: Product = {
       ...p,
@@ -1310,9 +1610,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       ...form,
       price: parseFloat(String(form.price)),
       originalPrice: form.originalPrice ? parseFloat(String(form.originalPrice)) : undefined,
-      condition: form.productType === 'bundle' ? undefined : (form.condition || undefined),
-      tags: String(form.tags).split(',').map((t) => t.trim()).filter(Boolean),
-      bundleItems: String(form.bundleItems).split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
+      condition: form.productType === 'bundle' ? undefined : form.condition || undefined,
+      tags: String(form.tags)
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+      bundleItems: String(form.bundleItems)
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+        .filter(Boolean),
       stockCount: form.stockCount ? parseInt(String(form.stockCount), 10) : undefined,
       rating: form.rating ? Math.min(5, Math.max(0, parseInt(String(form.rating), 10))) : undefined,
       reviewCount: form.reviewCount ? parseInt(String(form.reviewCount), 10) : undefined,
@@ -1321,7 +1627,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       // Use first image as main image for backward compatibility
       image: form.images[0] || '',
     };
-    
+
     if (editTarget && editTarget.id) {
       return fetch(`/api/admin/products/${editTarget.id}`, {
         method: 'PUT',
@@ -1359,7 +1665,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setFormOpen(false);
       setTimeout(() => setFormOpen(true), 0);
       fetchProducts();
-      showToast('Product added — ready for next');
+      showToast('Product added - ready for next');
     } else {
       const err = await res.json().catch(() => ({ error: 'Failed' }));
       showToast(err.error || err.message || 'Failed to save');
@@ -1378,13 +1684,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         showToast(err.error || 'Failed to delete');
       }
     } catch {
-      showToast('Network error — could not delete product');
+      showToast('Network error - could not delete product');
     }
   };
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return;
-    
+
     setBatchDeleting(true);
     const res = await fetch('/api/admin/products/batch', {
       method: 'DELETE',
@@ -1392,7 +1698,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       body: JSON.stringify({ ids: Array.from(selectedIds) }),
     });
     setBatchDeleting(false);
-    
+
     if (res.ok) {
       const result = await res.json();
       setSelectedIds(new Set());
@@ -1406,7 +1712,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const handleBulkEdit = async (changes: Partial<Product>) => {
     if (selectedIds.size === 0) return;
-    
+
     setBulkEditing(true);
     const res = await fetch('/api/admin/products/bulk-update', {
       method: 'POST',
@@ -1414,7 +1720,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       body: JSON.stringify({ ids: Array.from(selectedIds), changes }),
     });
     setBulkEditing(false);
-    
+
     if (res.ok) {
       const result = await res.json();
       setSelectedIds(new Set());
@@ -1436,7 +1742,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     const confirmed = window.confirm(
       ids && ids.length > 0
         ? `Generate AI specs for ${ids.length} selected products? Existing specs will be preserved.`
-        : `Generate AI specs across all ${products.length} products? Existing specs will be preserved.`
+        : `Generate AI specs across all ${products.length} products? Existing specs will be preserved.`,
     );
 
     if (!confirmed) {
@@ -1497,7 +1803,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setImportOpen(false);
       setImportText('');
       await fetchProducts();
-      showToast(importMode === 'replace' ? 'Catalog replaced successfully' : 'Products imported successfully');
+      showToast(
+        importMode === 'replace'
+          ? 'Catalog replaced successfully'
+          : 'Products imported successfully',
+      );
       return;
     }
 
@@ -1509,7 +1819,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     const parsedLimit = Number.parseInt(firstshopLimit, 10);
     const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(120, parsedLimit)) : 60;
     const parsedBankRate = Number.parseFloat(firstshopBankRate);
-    const bankRate = Number.isFinite(parsedBankRate) && parsedBankRate > 0 ? parsedBankRate : undefined;
+    const bankRate =
+      Number.isFinite(parsedBankRate) && parsedBankRate > 0 ? parsedBankRate : undefined;
     const links = firstshopProductLinks
       .split(/\r?\n/)
       .map((line) => line.trim())
@@ -1568,9 +1879,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             { label: 'In Stock', value: inStockCount, color: 'text-green-600' },
             { label: 'Out of Stock', value: products.length - inStockCount, color: 'text-red-500' },
             { label: 'Featured', value: featuredCount, color: 'text-red-600' },
-            { label: 'Categories', value: new Set(products.map((p) => p.category)).size, color: 'text-blue-600' },
+            {
+              label: 'Categories',
+              value: new Set(products.map((p) => p.category)).size,
+              color: 'text-blue-600',
+            },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div
+              key={stat.label}
+              className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+            >
               <p className="text-xs text-zinc-400">{stat.label}</p>
               <p className={`font-heading text-2xl font-bold mt-0.5 ${stat.color}`}>{stat.value}</p>
             </div>
@@ -1581,8 +1899,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="mb-4 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-[220px] flex-1">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                />
               </svg>
               <input
                 value={search}
@@ -1595,7 +1925,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onClick={openAdd}
               className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 shadow-sm"
             >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               Add Product
@@ -1609,7 +1946,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-300"
             >
               <option value="">All categories</option>
-              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              {CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
             </select>
 
             <select
@@ -1671,8 +2012,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => setBulkEditOpen(true)}
                   className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
                 >
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                  <svg
+                    width="14"
+                    height="14"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+                    />
                   </svg>
                   Edit {selectedIds.size}
                 </button>
@@ -1684,8 +2036,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   {enrichingSpecs ? (
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-700 border-t-transparent" />
                   ) : (
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    <svg
+                      width="14"
+                      height="14"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                      />
                     </svg>
                   )}
                   AI Specs {selectedIds.size}
@@ -1694,8 +2057,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => setBatchDeleteOpen(true)}
                   className="flex items-center gap-1.5 rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200"
                 >
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.668 0 0 0-7.5 0" />
+                  <svg
+                    width="14"
+                    height="14"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.668 0 0 0-7.5 0"
+                    />
                   </svg>
                   Delete {selectedIds.size}
                 </button>
@@ -1710,8 +2084,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               {enrichingSpecs ? (
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-700 border-t-transparent" />
               ) : (
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                  />
                 </svg>
               )}
               AI Specs All
@@ -1721,8 +2106,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onClick={() => setImportOpen(true)}
               className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
             >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15" />
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5 7.5 12m-3 6h15"
+                />
               </svg>
               Import
             </button>
@@ -1735,8 +2131,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               {importingFirstshop ? (
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-700 border-t-transparent" />
               ) : (
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h10.5v9H3.75zm10.5 2.25h3l3 3v3.75h-6zm-7.5 8.25a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm10.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 7.5h10.5v9H3.75zm10.5 2.25h3l3 3v3.75h-6zm-7.5 8.25a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm10.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"
+                  />
                 </svg>
               )}
               Import FirstShop SA
@@ -1746,8 +2153,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onClick={exportProducts}
               className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
             >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                />
               </svg>
               Export
             </button>
@@ -1757,7 +2175,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {/* Results count */}
         <div className="mb-4 flex items-center justify-between text-sm text-zinc-500">
           <span>
-            Showing {visibleStart}-{visibleEnd} of {sortedFiltered.length} filtered ({products.length} total)
+            Showing {visibleStart}-{visibleEnd} of {sortedFiltered.length} filtered (
+            {products.length} total)
           </span>
           {selectedIds.size > 0 && <span>{selectedIds.size} selected</span>}
         </div>
@@ -1772,13 +2191,26 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             {sortedFiltered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500">
-                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                    />
                   </svg>
                 </div>
                 <div>
                   <p className="text-base font-semibold text-zinc-900">No products found</p>
-                  <p className="mt-1 text-sm text-zinc-500">Try adjusting your filters or import your catalog.</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Try adjusting your filters or import your catalog.
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
@@ -1805,7 +2237,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <input
                             type="checkbox"
                             checked={allSelected}
-                            ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                            ref={(el) => {
+                              if (el) el.indeterminate = someSelected;
+                            }}
                             onChange={toggleSelectAll}
                             className="rounded border-zinc-300 text-red-600 focus:ring-red-500"
                           />
@@ -1856,7 +2290,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     </thead>
                     <tbody>
                       {paginatedProducts.map((p) => (
-                        <tr key={p.id} className={`border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors ${selectedIds.has(p.id) ? 'bg-red-50/30' : ''}`}>
+                        <tr
+                          key={p.id}
+                          className={`border-b border-zinc-50 last:border-0 hover:bg-zinc-50 transition-colors ${selectedIds.has(p.id) ? 'bg-red-50/30' : ''}`}
+                        >
                           <td className="px-4 py-3">
                             <input
                               type="checkbox"
@@ -1868,11 +2305,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <div className="h-10 w-10 shrink-0 rounded-lg border border-zinc-100 bg-zinc-50 overflow-hidden">
-                                <img 
-                                  src={p.image || '/images/products/placeholder.svg'} 
-                                  alt={p.name} 
-                                  className="h-full w-full object-contain p-1" 
-                                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/products/placeholder.svg'; }}
+                                <img
+                                  src={p.image || '/images/products/placeholder.svg'}
+                                  alt={p.name}
+                                  className="h-full w-full object-contain p-1"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src =
+                                      '/images/products/placeholder.svg';
+                                  }}
                                 />
                               </div>
                               <div>
@@ -1880,7 +2320,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <p className="text-[11px] text-zinc-400 font-mono">{p.slug}</p>
                                 {isBundleProduct(p) && p.bundleItems.length > 0 && (
                                   <p className="text-[11px] text-zinc-500 line-clamp-1">
-                                    {p.bundleItems.length} bundled item{p.bundleItems.length === 1 ? '' : 's'}
+                                    {p.bundleItems.length} bundled item
+                                    {p.bundleItems.length === 1 ? '' : 's'}
                                   </p>
                                 )}
                               </div>
@@ -1892,22 +2333,34 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                             </span>
                           </td>
                           <td className="px-4 py-3 hidden lg:table-cell">
-                            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${isBundleProduct(p) ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${isBundleProduct(p) ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}
+                            >
                               {isBundleProduct(p) ? 'Bundle' : 'Single'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="font-semibold text-zinc-900">{formatAdminCurrency(p.price, p.currency)}</p>
-                            <p className="text-[10px] font-medium uppercase text-zinc-400">{p.currency}</p>
+                            <p className="font-semibold text-zinc-900">
+                              {formatAdminCurrency(p.price, p.currency)}
+                            </p>
+                            <p className="text-[10px] font-medium uppercase text-zinc-400">
+                              {p.currency}
+                            </p>
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
                             <div className="flex items-center gap-1.5">
-                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${p.inStock ? 'bg-green-500' : 'bg-red-400'}`} />
-                              <span className={`text-xs font-medium ${p.inStock ? 'text-green-600' : 'text-red-500'}`}>
+                              <span
+                                className={`inline-block h-1.5 w-1.5 rounded-full ${p.inStock ? 'bg-green-500' : 'bg-red-400'}`}
+                              />
+                              <span
+                                className={`text-xs font-medium ${p.inStock ? 'text-green-600' : 'text-red-500'}`}
+                              >
                                 {p.inStock ? 'In Stock' : 'Out of Stock'}
                               </span>
                               {p.featured && (
-                                <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">Hot</span>
+                                <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                                  Hot
+                                </span>
                               )}
                             </div>
                           </td>
@@ -1918,8 +2371,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 className="rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 transition"
                                 title="Duplicate"
                               >
-                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5" />
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5"
+                                  />
                                 </svg>
                               </button>
                               <button
@@ -2005,7 +2469,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               ? {
                   ...editTarget,
                   price: String(editTarget.price),
-                  originalPrice: editTarget.originalPrice != null ? String(editTarget.originalPrice) : '',
+                  originalPrice:
+                    editTarget.originalPrice != null ? String(editTarget.originalPrice) : '',
                   tags: editTarget.tags.join(', '),
                   condition: editTarget.condition || '',
                   productType: editTarget.productType || 'single',
@@ -2015,7 +2480,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   reviewCount: editTarget.reviewCount != null ? String(editTarget.reviewCount) : '',
                   dealLabel: editTarget.dealLabel || '',
                   specsText: editTarget.specs
-                    ? Object.entries(editTarget.specs).map(([k, v]) => `${k}: ${v}`).join('\n')
+                    ? Object.entries(editTarget.specs)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join('\n')
                     : '',
                   images: editTarget.image ? [editTarget.image] : [],
                 }
@@ -2070,19 +2537,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-red-600">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                className="text-red-600"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                />
               </svg>
             </div>
             <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">Delete product?</h3>
             <p className="text-sm text-zinc-500 mb-5">
-              {products.find((p) => p.id === deleteId)?.name} will be permanently removed from the catalog.
+              {products.find((p) => p.id === deleteId)?.name} will be permanently removed from the
+              catalog.
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteId(null)} className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition"
+              >
                 Cancel
               </button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition">
+              <button
+                onClick={() => handleDelete(deleteId)}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition"
+              >
                 Delete
               </button>
             </div>
@@ -2095,23 +2581,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-red-600">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                className="text-red-600"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                />
               </svg>
             </div>
-            <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">Delete {selectedIds.size} products?</h3>
+            <h3 className="font-heading text-base font-bold text-zinc-900 mb-1">
+              Delete {selectedIds.size} products?
+            </h3>
             <p className="text-sm text-zinc-500 mb-5">
-              This will permanently remove {selectedIds.size} selected products from the catalog. This action cannot be undone.
+              This will permanently remove {selectedIds.size} selected products from the catalog.
+              This action cannot be undone.
             </p>
             <div className="flex gap-2">
-              <button 
-                onClick={() => setBatchDeleteOpen(false)} 
+              <button
+                onClick={() => setBatchDeleteOpen(false)}
                 className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleBatchDelete} 
+              <button
+                onClick={handleBatchDelete}
                 disabled={batchDeleting}
                 className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition disabled:opacity-60"
               >

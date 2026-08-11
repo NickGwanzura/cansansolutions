@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { createSignedSession } from '@/lib/check-admin-auth';
 
-const BYPASS_PASSWORD = process.env.MAINTENANCE_PASSWORD || 'cansan2024';
 const BYPASS_COOKIE = 'maintenance_bypass';
+
+function getMaintenancePassword(): string | null {
+  const password = process.env.MAINTENANCE_PASSWORD;
+  // A maintenance bypass must never be enabled by a shipped default password.
+  return password?.trim() || null;
+}
 
 function getClientIp(req: Request): string {
   const forwarded = (req.headers as Headers).get('x-forwarded-for');
@@ -15,6 +21,11 @@ function getClientIp(req: Request): string {
 
 export async function POST(req: Request) {
   try {
+    const maintenancePassword = getMaintenancePassword();
+    if (!maintenancePassword) {
+      return NextResponse.json({ error: 'Maintenance access is not configured.' }, { status: 503 });
+    }
+
     // Rate limit: 10 attempts per IP per 5 minutes
     const ip = getClientIp(req);
     const limitResult = checkRateLimit(`maintenance-auth:${ip}`, 10, 300);
@@ -22,19 +33,19 @@ export async function POST(req: Request) {
     if (!limitResult.allowed) {
       return NextResponse.json(
         { error: 'Too many attempts. Try again later.', retryAfter: limitResult.resetInSeconds },
-        { status: 429, headers: { 'Retry-After': String(limitResult.resetInSeconds) } }
+        { status: 429, headers: { 'Retry-After': String(limitResult.resetInSeconds) } },
       );
     }
 
     const { password } = await req.json();
 
-    if (password === BYPASS_PASSWORD) {
+    if (typeof password === 'string' && password === maintenancePassword) {
       const cookieStore = await cookies();
-      cookieStore.set(BYPASS_COOKIE, BYPASS_PASSWORD, {
+      cookieStore.set(BYPASS_COOKIE, createSignedSession(maintenancePassword, 'maintenance'), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 8,
         path: '/',
       });
 

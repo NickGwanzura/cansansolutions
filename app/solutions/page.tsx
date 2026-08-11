@@ -27,10 +27,16 @@ export default function SolutionsPage() {
       <div>
         <section className="bg-zinc-950 px-6 py-20 text-white">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">Popular Buying Paths</p>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Choose the solution that matches what you need</h1>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-red-400">
+              Popular Buying Paths
+            </p>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+              Choose the solution that matches what you need
+            </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400">
-              Some buyers need office laptops. Others need CCTV, stronger home Wi-Fi, or backup during load shedding. These pages help you go straight to the right conversation instead of browsing blindly.
+              Some buyers need office laptops. Others need CCTV, stronger home Wi-Fi, or backup
+              during load shedding. These pages help you go straight to the right conversation
+              instead of browsing blindly.
             </p>
           </div>
         </section>
@@ -41,17 +47,32 @@ export default function SolutionsPage() {
               <Link
                 key={solution.slug}
                 href={getSolutionHref(solution.slug)}
-                className="group rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-[0_2px_5px_rgba(24,24,27,0.06)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600"
               >
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">{solution.eyebrow}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                  {solution.eyebrow}
+                </p>
                 <h2 className="mt-3 text-2xl font-bold leading-tight text-zinc-900 group-hover:text-red-600">
                   {solution.title}
                 </h2>
-                <p className="mt-3 text-sm leading-relaxed text-zinc-600">{solution.shortDescription}</p>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-600">
+                  {solution.shortDescription}
+                </p>
                 <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-red-600 group-hover:underline">
                   Explore this solution
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <svg
+                    width="14"
+                    height="14"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
                   </svg>
                 </span>
               </Link>

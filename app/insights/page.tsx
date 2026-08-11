@@ -56,10 +56,16 @@ export default function InsightsPage() {
           description="These guides target the questions buyers ask before they commit: what to buy, what to avoid, and which options make sense for Harare and Zimbabwean buyers."
           actions={
             <>
-              <Link href="/products" className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50">
+              <Link
+                href="/products"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-red-50"
+              >
                 Browse products
               </Link>
-              <Link href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+              <Link
+                href="/contact"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
                 Ask for advice
               </Link>
             </>
@@ -72,10 +78,23 @@ export default function InsightsPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5 transition hover:-translate-y-1 hover:border-zinc-300 hover:bg-white"
+                className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_2px_5px_rgba(24,24,27,0.05)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600"
               >
                 <p className="text-sm font-semibold text-zinc-900">{item.label}</p>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-600">{item.description}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-red-600">
+                  Explore
+                  <svg
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" />
+                  </svg>
+                </span>
               </Link>
             ))}
           </div>
@@ -91,13 +110,20 @@ export default function InsightsPage() {
           <div className="mx-auto max-w-5xl rounded-3xl bg-red-600 px-8 py-10 text-white">
             <h2 className="text-2xl font-bold">Need help turning research into the right order?</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-red-100">
-              Read the guides, shortlist what fits, then ask Cansan for a quote. The goal is not vanity traffic. The goal is making the buying decision easier.
+              Read the guides, shortlist what fits, then ask Cansan for a quote. The goal is not
+              vanity traffic. The goal is making the buying decision easier.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/products" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50">
+              <Link
+                href="/products"
+                className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+              >
                 Browse products
               </Link>
-              <Link href="/contact" className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+              <Link
+                href="/contact"
+                className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
                 Contact Cansan
               </Link>
             </div>

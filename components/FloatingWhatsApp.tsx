@@ -14,7 +14,7 @@ export function FloatingWhatsApp() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     // Show tooltip briefly on first load
     const tooltipTimer = setTimeout(() => {
       setShowTooltip(true);
@@ -57,9 +57,9 @@ export function FloatingWhatsApp() {
         className="group flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-110 hover:bg-green-400 hover:shadow-xl hover:shadow-green-500/40"
         aria-label="Chat on WhatsApp"
       >
-        {/* Pulse animation ring — disabled for users who prefer reduced motion */}
+        {/* Pulse animation ring - disabled for users who prefer reduced motion */}
         <span className="absolute h-14 w-14 animate-ping rounded-full bg-green-500 opacity-20 motion-reduce:animate-none motion-reduce:opacity-0" />
-        
+
         {/* Icon */}
         <svg
           viewBox="0 0 24 24"

@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/check-admin-auth';
+import { checkAdminAuth, createAdminSession, getAdminPassword } from '@/lib/check-admin-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'cansan2024';
 
 function getClientIp(req: Request): string {
   const forwarded = (req.headers as Headers).get('x-forwarded-for');
@@ -15,6 +13,11 @@ function getClientIp(req: Request): string {
 }
 
 export async function POST(req: Request) {
+  const adminPassword = getAdminPassword();
+  if (!adminPassword) {
+    return NextResponse.json({ error: 'Admin login is not configured.' }, { status: 503 });
+  }
+
   // Rate limit: 10 attempts per IP per 5 minutes
   const ip = getClientIp(req);
   const limitResult = checkRateLimit(`admin-auth:${ip}`, 10, 300);
@@ -27,13 +30,14 @@ export async function POST(req: Request) {
   }
 
   const { password } = await req.json();
-  if (password === ADMIN_PASSWORD) {
+  if (typeof password === 'string' && password === adminPassword) {
     const res = NextResponse.json({ ok: true });
-    res.cookies.set('admin_auth', ADMIN_PASSWORD, {
+    res.cookies.set('admin_auth', createAdminSession(adminPassword), {
       httpOnly: true,
       sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 8,
+      secure: process.env.NODE_ENV === 'production',
     });
     return res;
   }

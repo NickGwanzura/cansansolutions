@@ -21,7 +21,9 @@ function buildOrderMessageLines(items: CartItem[], note = '') {
   const sym = currencySymbol(items[0]?.currency);
   const lines = [
     "Hi Cansan Solutions, I'd like to order:",
-    ...items.map((item) => `• ${item.name} ×${item.qty}  —  ${sym}${(item.price * item.qty).toFixed(2)}`),
+    ...items.map(
+      (item) => `• ${item.name} ×${item.qty}  -  ${sym}${(item.price * item.qty).toFixed(2)}`,
+    ),
   ];
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0).toFixed(2);
   lines.push(`\nTotal: ${sym}${total}`);

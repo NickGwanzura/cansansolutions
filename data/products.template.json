@@ -1,7 +1,7 @@
 [
   {
     "id": "fallback-laptop-new",
-    "name": "Business Laptop — 15.6-inch",
+    "name": "Business Laptop - 15.6-inch",
     "slug": "business-laptop-15-inch",
     "category": "laptops",
     "productType": "single",
@@ -68,7 +68,7 @@
   },
   {
     "id": "fallback-used-laptop",
-    "name": "Pre-Owned Laptop — Ready for Work",
+    "name": "Pre-Owned Laptop - Ready for Work",
     "slug": "pre-owned-laptop-ready-for-work",
     "category": "laptops",
     "productType": "single",

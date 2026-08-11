@@ -1,11 +1,11 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/check-admin-auth';
 import Groq from 'groq-sdk';
 
-export async function POST(req: Request) {
-  if (!(await checkAdminAuth())) {
+export async function POST(req: NextRequest) {
+  if (!(await checkAdminAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   const prompt = `You are a product copywriter for Cansan Solutions, a tech and electronics store in Zimbabwe.
 
-Write a compelling product description for the following product. Return ONLY the description as clean HTML (use <p>, <ul>, <li>, <strong> tags only — no headings, no divs, no extra wrapper). Keep it concise: 2–3 short paragraphs or a paragraph + bullet list. Focus on benefits, key features, and why a customer should buy it.
+Write a compelling product description for the following product. Return ONLY the description as clean HTML (use <p>, <ul>, <li>, <strong> tags only - no headings, no divs, no extra wrapper). Keep it concise: 2–3 short paragraphs or a paragraph + bullet list. Focus on benefits, key features, and why a customer should buy it.
 
 Product details:
 - Name: ${name}

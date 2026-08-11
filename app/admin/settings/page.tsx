@@ -10,12 +10,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  // Password change form
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [changingPassword, setChangingPassword] = useState(false);
-
   // Site settings
   const [currency, setCurrency] = useState('USD');
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
@@ -23,12 +17,23 @@ export default function SettingsPage() {
 
   // Company profile
   const [company, setCompany] = useState<CompanyProfile>({
-    id: 'default', name: '', tagline: '', addressLine1: '', addressLine2: '',
-    city: '', country: '', phone: '', email: '', website: '', vatNumber: '', tinNumber: '', vendorNumber: '',
+    id: 'default',
+    name: '',
+    tagline: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    country: '',
+    phone: '',
+    email: '',
+    website: '',
+    vatNumber: '',
+    tinNumber: '',
+    vendorNumber: '',
     logoUrl: '/images/brand/cansan-logo.png',
   });
   const [savingCompany, setSavingCompany] = useState(false);
-  const [_savingSettings, setSavingSettings] = useState(false);
+  const [, setSavingSettings] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -39,7 +44,9 @@ export default function SettingsPage() {
     try {
       const res = await fetch('/api/admin/company');
       if (res.ok) setCompany(await res.json());
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const saveCompanyProfile = async (e: React.FormEvent) => {
@@ -79,44 +86,6 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
     window.location.reload();
-  };
-
-  const changePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('');
-
-    if (newPassword !== confirmPassword) {
-      setMessage('New passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setMessage('Password must be at least 6 characters');
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      const res = await fetch('/api/admin/settings/password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      if (res.ok) {
-        setMessage('Password changed successfully');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        const err = await res.json();
-        setMessage(err.error || 'Failed to change password');
-      }
-    } catch {
-      setMessage('Error changing password');
-    } finally {
-      setChangingPassword(false);
-    }
   };
 
   const saveSettings = async (e: React.FormEvent) => {
@@ -170,13 +139,17 @@ export default function SettingsPage() {
         </div>
 
         {message && (
-          <div className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
-            message.includes('success') || message.includes('saved')
-              ? 'bg-green-50 border-green-200 text-green-700'
-              : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
+          <div
+            className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+              message.includes('success') || message.includes('saved')
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}
+          >
             {message}
-            <button onClick={() => setMessage('')} className="ml-2 hover:underline">Dismiss</button>
+            <button onClick={() => setMessage('')} className="ml-2 hover:underline">
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -197,63 +170,130 @@ export default function SettingsPage() {
                 </div>
                 {company.logoUrl && (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={company.logoUrl} alt="Logo preview" className="h-10 w-auto rounded border border-zinc-200" />
+                  <img
+                    src={company.logoUrl}
+                    alt="Logo preview"
+                    className="h-10 w-auto rounded border border-zinc-200"
+                  />
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Company Name</label>
-                  <input value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Company Name
+                  </label>
+                  <input
+                    value={company.name}
+                    onChange={(e) => setCompany({ ...company, name: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Tagline</label>
-                  <input value={company.tagline} onChange={(e) => setCompany({ ...company, tagline: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.tagline}
+                    onChange={(e) => setCompany({ ...company, tagline: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Address Line 1</label>
-                <input value={company.addressLine1} onChange={(e) => setCompany({ ...company, addressLine1: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Address Line 1
+                </label>
+                <input
+                  value={company.addressLine1}
+                  onChange={(e) => setCompany({ ...company, addressLine1: e.target.value })}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Address Line 2</label>
-                <input value={company.addressLine2} onChange={(e) => setCompany({ ...company, addressLine2: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Address Line 2
+                </label>
+                <input
+                  value={company.addressLine2}
+                  onChange={(e) => setCompany({ ...company, addressLine2: e.target.value })}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">City</label>
-                  <input value={company.city} onChange={(e) => setCompany({ ...company, city: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.city}
+                    onChange={(e) => setCompany({ ...company, city: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Country</label>
-                  <input value={company.country} onChange={(e) => setCompany({ ...company, country: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.country}
+                    onChange={(e) => setCompany({ ...company, country: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Phone</label>
-                  <input value={company.phone} onChange={(e) => setCompany({ ...company, phone: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.phone}
+                    onChange={(e) => setCompany({ ...company, phone: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Email</label>
-                  <input value={company.email} onChange={(e) => setCompany({ ...company, email: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.email}
+                    onChange={(e) => setCompany({ ...company, email: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 mb-1">Website</label>
-                  <input value={company.website} onChange={(e) => setCompany({ ...company, website: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
+                  <input
+                    value={company.website}
+                    onChange={(e) => setCompany({ ...company, website: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">TIN Number</label>
-                  <input value={company.tinNumber} onChange={(e) => setCompany({ ...company, tinNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="e.g. 2001360981" />
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    TIN Number
+                  </label>
+                  <input
+                    value={company.tinNumber}
+                    onChange={(e) => setCompany({ ...company, tinNumber: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    placeholder="e.g. 2001360981"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">VAT Number</label>
-                  <input value={company.vatNumber} onChange={(e) => setCompany({ ...company, vatNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="e.g. 220445061" />
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    VAT Number
+                  </label>
+                  <input
+                    value={company.vatNumber}
+                    onChange={(e) => setCompany({ ...company, vatNumber: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    placeholder="e.g. 220445061"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-1">Vendor Number</label>
-                  <input value={company.vendorNumber} onChange={(e) => setCompany({ ...company, vendorNumber: e.target.value })} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" placeholder="e.g. 723804" />
+                  <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                    Vendor Number
+                  </label>
+                  <input
+                    value={company.vendorNumber}
+                    onChange={(e) => setCompany({ ...company, vendorNumber: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                    placeholder="e.g. 723804"
+                  />
                 </div>
               </div>
               <button
@@ -266,49 +306,16 @@ export default function SettingsPage() {
             </form>
           </div>
 
-          {/* Change Password */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <h3 className="font-semibold text-zinc-900 mb-4">Change Admin Password</h3>
-            <form onSubmit={changePassword} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={changingPassword}
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-              >
-                {changingPassword ? 'Changing…' : 'Change Password'}
-              </button>
-            </form>
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <h3 className="font-semibold text-zinc-900">Admin password</h3>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              The admin password is managed through the{' '}
+              <code className="rounded bg-white px-1.5 py-0.5 text-xs font-semibold text-zinc-800">
+                ADMIN_PASSWORD
+              </code>{' '}
+              deployment environment variable. Update it in Dokploy, then redeploy the service to
+              apply the change.
+            </p>
           </div>
 
           {/* Site Settings */}
@@ -316,7 +323,9 @@ export default function SettingsPage() {
             <h3 className="font-semibold text-zinc-900 mb-4">Site Preferences</h3>
             <form onSubmit={saveSettings} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Default Currency</label>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Default Currency
+                </label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
@@ -329,7 +338,9 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Low Stock Alert Threshold</label>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Low Stock Alert Threshold
+                </label>
                 <input
                   type="number"
                   min={0}
@@ -337,10 +348,14 @@ export default function SettingsPage() {
                   onChange={(e) => setLowStockThreshold(e.target.value)}
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
                 />
-                <p className="mt-1 text-[10px] text-zinc-400">Products with stock count below this will be flagged</p>
+                <p className="mt-1 text-[10px] text-zinc-400">
+                  Products with stock count below this will be flagged
+                </p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-1">Products Per Page</label>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1">
+                  Products Per Page
+                </label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => setItemsPerPage(e.target.value)}
@@ -364,15 +379,27 @@ export default function SettingsPage() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
             <h3 className="font-semibold text-zinc-900 mb-2">Homepage Banner</h3>
             <p className="text-sm text-zinc-500">
-              The &quot;Premium Tech Collection&quot; banner image is managed from the Banners screen, not this settings page.
+              The &quot;Premium Tech Collection&quot; banner image is managed from the Banners
+              screen, not this settings page.
             </p>
             <Link
               href="/admin/banners"
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
             >
               Open Banners
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0-7.5 7.5M21 12H3" />
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5L21 12m0 0-7.5 7.5M21 12H3"
+                />
               </svg>
             </Link>
           </div>
@@ -381,7 +408,9 @@ export default function SettingsPage() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
             <h3 className="font-semibold text-zinc-900 mb-4">About</h3>
             <div className="space-y-2 text-sm text-zinc-600">
-              <p><span className="font-medium">Cansan Solutions</span> — Admin Panel</p>
+              <p>
+                <span className="font-medium">Cansan Solutions</span> - Admin Panel
+              </p>
               <p>Version: 2.0.0</p>
               <p>Features: Product Management, Categories, Banners, Analytics</p>
             </div>

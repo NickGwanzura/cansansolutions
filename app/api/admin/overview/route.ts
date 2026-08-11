@@ -28,22 +28,25 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [invoices, quotes, receipts, expenses, products, clients, deliveryNotes] = await Promise.all([
-      getInvoices(),
-      getQuotes(),
-      getReceipts(),
-      getExpenses(),
-      getProducts(),
-      getClients(),
-      getDeliveryNotes(),
-    ]);
+    const [invoices, quotes, receipts, expenses, products, clients, deliveryNotes] =
+      await Promise.all([
+        getInvoices(),
+        getQuotes(),
+        getReceipts(),
+        getExpenses(),
+        getProducts(),
+        getClients(),
+        getDeliveryNotes(),
+      ]);
 
     const now = new Date();
     const mtdKey = monthKey(now);
     const inMonth = (date: string) => (date ?? '').startsWith(mtdKey);
 
     const mtdReceived = receipts.filter((r) => inMonth(r.paidAt)).reduce((s, r) => s + r.total, 0);
-    const mtdInvoiced = invoices.filter((i) => inMonth(i.issueDate)).reduce((s, i) => s + i.total, 0);
+    const mtdInvoiced = invoices
+      .filter((i) => inMonth(i.issueDate))
+      .reduce((s, i) => s + i.total, 0);
     const mtdExpenses = expenses.filter((e) => inMonth(e.date)).reduce((s, e) => s + e.amount, 0);
     const netCashMtd = mtdReceived - mtdExpenses;
 
@@ -90,8 +93,13 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => (a._daysLeft as number) - (b._daysLeft as number));
 
     const outOfStockFeatured = products.filter((p) => p.featured && !p.inStock);
-    const lowStock = products
-      .filter((p) => p.inStock && typeof p.stockCount === 'number' && p.stockCount <= LOW_STOCK_THRESHOLD && p.stockCount > 0);
+    const lowStock = products.filter(
+      (p) =>
+        p.inStock &&
+        typeof p.stockCount === 'number' &&
+        p.stockCount <= LOW_STOCK_THRESHOLD &&
+        p.stockCount > 0,
+    );
 
     const attention = {
       overdueInvoices: overdueInvoices.slice(0, 5).map((i) => ({
@@ -132,8 +140,12 @@ export async function GET(req: NextRequest) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = monthKey(d);
       const label = d.toLocaleDateString('en-US', { month: 'short' });
-      const revenue = receipts.filter((r) => (r.paidAt ?? '').startsWith(key)).reduce((s, r) => s + r.total, 0);
-      const monthExpenses = expenses.filter((e) => (e.date ?? '').startsWith(key)).reduce((s, e) => s + e.amount, 0);
+      const revenue = receipts
+        .filter((r) => (r.paidAt ?? '').startsWith(key))
+        .reduce((s, r) => s + r.total, 0);
+      const monthExpenses = expenses
+        .filter((e) => (e.date ?? '').startsWith(key))
+        .reduce((s, e) => s + e.amount, 0);
       months.push({ key, label, revenue, expenses: monthExpenses });
     }
 
@@ -143,10 +155,18 @@ export async function GET(req: NextRequest) {
       const d = new Date(i.issueDate);
       return !Number.isNaN(d.getTime()) && d >= ninetyDaysAgo;
     });
-    const customerMap = new Map<string, { name: string; invoiceCount: number; totalInvoiced: number; totalPaid: number }>();
+    const customerMap = new Map<
+      string,
+      { name: string; invoiceCount: number; totalInvoiced: number; totalPaid: number }
+    >();
     for (const inv of recentInvoices) {
       const name = inv.customer.name || 'Unknown';
-      const row = customerMap.get(name) ?? { name, invoiceCount: 0, totalInvoiced: 0, totalPaid: 0 };
+      const row = customerMap.get(name) ?? {
+        name,
+        invoiceCount: 0,
+        totalInvoiced: 0,
+        totalPaid: 0,
+      };
       row.invoiceCount += 1;
       row.totalInvoiced += inv.total;
       if (inv.status === 'paid') row.totalPaid += inv.total;
@@ -161,7 +181,7 @@ export async function GET(req: NextRequest) {
       ...invoices.map((i) => ({
         type: 'invoice' as const,
         label: `Invoice ${i.number}`,
-        description: i.customer.name || '—',
+        description: i.customer.name || '-',
         amount: i.total,
         currency: i.currency,
         date: i.issueDate,
@@ -171,7 +191,7 @@ export async function GET(req: NextRequest) {
       ...quotes.map((q) => ({
         type: 'quote' as const,
         label: `Quote ${q.number}`,
-        description: q.customer.name || '—',
+        description: q.customer.name || '-',
         amount: q.total,
         currency: q.currency,
         date: q.issueDate,
@@ -181,7 +201,7 @@ export async function GET(req: NextRequest) {
       ...receipts.map((r) => ({
         type: 'receipt' as const,
         label: `Receipt ${r.number}`,
-        description: r.customer.name || '—',
+        description: r.customer.name || '-',
         amount: r.total,
         currency: r.currency,
         date: r.paidAt,
@@ -201,7 +221,7 @@ export async function GET(req: NextRequest) {
       ...deliveryNotes.map((d) => ({
         type: 'delivery' as const,
         label: `Delivery ${d.number}`,
-        description: d.customer.name || '—',
+        description: d.customer.name || '-',
         amount: d.total,
         currency: d.currency,
         date: d.issueDate,
