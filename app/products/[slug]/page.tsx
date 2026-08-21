@@ -4,9 +4,16 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ProductJsonLd } from '@/components/JsonLd';
 import { PageHero } from '@/components/PageHero';
+import { ProductGallery } from '@/components/ProductGallery';
+import { ProductImage } from '@/components/ProductImage';
 import { AddToCartButton } from './AddToCartButton';
 import { getProductBySlug, readProducts } from '@/lib/admin-data';
-import { getCategoryBySlug, getCategoryHref, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
+import {
+  getCategoryBySlug,
+  getCategoryHref,
+  isBundleProduct,
+  isSaImportProduct,
+} from '@/lib/catalog';
 import { truncateText, stripHtml, buildAbsoluteMetadata } from '@/lib/seo';
 import { formatCurrency } from '@/lib/utils';
 import { getBrandForProduct, getBrandHref } from '@/lib/brands';
@@ -28,7 +35,9 @@ function getCorpus(product: Pick<Product, 'name' | 'description' | 'tags' | 'spe
   return `${product.name} ${stripHtml(product.description)} ${product.tags.join(' ')} ${specsText} ${product.category}`.toLowerCase();
 }
 
-function isLikelyExternalSsd(product: Pick<Product, 'name' | 'description' | 'tags' | 'specs' | 'category'>) {
+function isLikelyExternalSsd(
+  product: Pick<Product, 'name' | 'description' | 'tags' | 'specs' | 'category'>,
+) {
   const corpus = getCorpus(product);
   const hasSsd = corpus.includes('ssd');
   const hasExternalSignal =
@@ -67,83 +76,199 @@ type UseCaseItem = {
 
 const CATEGORY_USE_CASES: Record<string, UseCaseItem[]> = {
   drives: [
-    { title: 'Gamers', body: 'Move large game libraries and updates faster with portable high-speed storage.' },
-    { title: 'Video Editors', body: 'Transfer footage and project files quickly for smoother client handoffs.' },
-    { title: 'Businesses', body: 'Keep reliable backup workflows for teams, branches, and off-site data copy.' },
-    { title: 'Everyday Users', body: 'Store photos, documents, and laptop backups in a compact daily-carry format.' },
+    {
+      title: 'Gamers',
+      body: 'Move large game libraries and updates faster with portable high-speed storage.',
+    },
+    {
+      title: 'Video Editors',
+      body: 'Transfer footage and project files quickly for smoother client handoffs.',
+    },
+    {
+      title: 'Businesses',
+      body: 'Keep reliable backup workflows for teams, branches, and off-site data copy.',
+    },
+    {
+      title: 'Everyday Users',
+      body: 'Store photos, documents, and laptop backups in a compact daily-carry format.',
+    },
   ],
   'sa-imports': [
-    { title: 'Gamers', body: 'Order higher-spec gear from South Africa when local options are limited.' },
-    { title: 'Creators', body: 'Access niche storage and performance products with a clear 5-day lead time.' },
-    { title: 'Businesses', body: 'Source specific models through a managed SA import route without procurement delays.' },
-    { title: 'Everyday Users', body: 'Buy trusted products not always available locally with transparent delivery expectations.' },
+    {
+      title: 'Gamers',
+      body: 'Order higher-spec gear from South Africa when local options are limited.',
+    },
+    {
+      title: 'Creators',
+      body: 'Access niche storage and performance products with a clear 5-day lead time.',
+    },
+    {
+      title: 'Businesses',
+      body: 'Source specific models through a managed SA import route without procurement delays.',
+    },
+    {
+      title: 'Everyday Users',
+      body: 'Buy trusted products not always available locally with transparent delivery expectations.',
+    },
   ],
   laptops: [
-    { title: 'Students', body: 'Handle classes, assignments, and research with dependable day-to-day performance.' },
-    { title: 'Professionals', body: 'Run office tools, meetings, and multitasking workflows without unnecessary slowdown.' },
-    { title: 'Businesses', body: 'Standardize team devices with clear specs, predictable support, and easier replacements.' },
-    { title: 'Home Users', body: 'Cover browsing, streaming, documents, and communication on one reliable machine.' },
+    {
+      title: 'Students',
+      body: 'Handle classes, assignments, and research with dependable day-to-day performance.',
+    },
+    {
+      title: 'Professionals',
+      body: 'Run office tools, meetings, and multitasking workflows without unnecessary slowdown.',
+    },
+    {
+      title: 'Businesses',
+      body: 'Standardize team devices with clear specs, predictable support, and easier replacements.',
+    },
+    {
+      title: 'Home Users',
+      body: 'Cover browsing, streaming, documents, and communication on one reliable machine.',
+    },
   ],
   networking: [
-    { title: 'Home Users', body: 'Improve Wi-Fi stability for streaming, browsing, and smart-home connections.' },
-    { title: 'Small Offices', body: 'Support more users and devices with consistent network uptime.' },
-    { title: 'Retail & SMB', body: 'Keep POS, CCTV, and cloud systems connected with stronger network reliability.' },
-    { title: 'Installers', body: 'Deploy practical networking solutions with clear compatibility and expansion paths.' },
+    {
+      title: 'Home Users',
+      body: 'Improve Wi-Fi stability for streaming, browsing, and smart-home connections.',
+    },
+    {
+      title: 'Small Offices',
+      body: 'Support more users and devices with consistent network uptime.',
+    },
+    {
+      title: 'Retail & SMB',
+      body: 'Keep POS, CCTV, and cloud systems connected with stronger network reliability.',
+    },
+    {
+      title: 'Installers',
+      body: 'Deploy practical networking solutions with clear compatibility and expansion paths.',
+    },
   ],
   cctv: [
-    { title: 'Homeowners', body: 'Increase visibility around gates, driveways, and key entry points.' },
+    {
+      title: 'Homeowners',
+      body: 'Increase visibility around gates, driveways, and key entry points.',
+    },
     { title: 'Shops', body: 'Monitor customer and stock areas with better incident traceability.' },
-    { title: 'Offices', body: 'Strengthen internal and perimeter security with scalable surveillance coverage.' },
-    { title: 'Schools & Sites', body: 'Support broader monitoring needs where safety and coverage consistency matter.' },
+    {
+      title: 'Offices',
+      body: 'Strengthen internal and perimeter security with scalable surveillance coverage.',
+    },
+    {
+      title: 'Schools & Sites',
+      body: 'Support broader monitoring needs where safety and coverage consistency matter.',
+    },
   ],
   accessories: [
-    { title: 'Remote Workers', body: 'Upgrade productivity with reliable everyday peripherals and adapters.' },
-    { title: 'Students', body: 'Add practical accessories for study, classes, and better device usability.' },
-    { title: 'Creators', body: 'Improve workflows with the right connectors, storage, and support gear.' },
-    { title: 'Businesses', body: 'Equip teams with dependable accessories that reduce setup and compatibility issues.' },
+    {
+      title: 'Remote Workers',
+      body: 'Upgrade productivity with reliable everyday peripherals and adapters.',
+    },
+    {
+      title: 'Students',
+      body: 'Add practical accessories for study, classes, and better device usability.',
+    },
+    {
+      title: 'Creators',
+      body: 'Improve workflows with the right connectors, storage, and support gear.',
+    },
+    {
+      title: 'Businesses',
+      body: 'Equip teams with dependable accessories that reduce setup and compatibility issues.',
+    },
   ],
   printing: [
-    { title: 'Home Offices', body: 'Handle routine printing and scanning with stable output quality.' },
-    { title: 'Schools', body: 'Support assignment and admin printing with practical consumable planning.' },
-    { title: 'SMBs', body: 'Keep daily document workflows moving with predictable operation costs.' },
-    { title: 'Teams', body: 'Add reliable print capacity for finance, admin, and front-office operations.' },
+    {
+      title: 'Home Offices',
+      body: 'Handle routine printing and scanning with stable output quality.',
+    },
+    {
+      title: 'Schools',
+      body: 'Support assignment and admin printing with practical consumable planning.',
+    },
+    {
+      title: 'SMBs',
+      body: 'Keep daily document workflows moving with predictable operation costs.',
+    },
+    {
+      title: 'Teams',
+      body: 'Add reliable print capacity for finance, admin, and front-office operations.',
+    },
   ],
   mobile: [
-    { title: 'Everyday Users', body: 'Manage calls, messaging, media, and apps with reliable daily performance.' },
-    { title: 'Professionals', body: 'Stay productive on the move with dependable speed and battery support.' },
-    { title: 'Content Users', body: 'Capture and share photos, video, and social content more smoothly.' },
-    { title: 'Businesses', body: 'Equip field teams with practical devices backed by local support.' },
+    {
+      title: 'Everyday Users',
+      body: 'Manage calls, messaging, media, and apps with reliable daily performance.',
+    },
+    {
+      title: 'Professionals',
+      body: 'Stay productive on the move with dependable speed and battery support.',
+    },
+    {
+      title: 'Content Users',
+      body: 'Capture and share photos, video, and social content more smoothly.',
+    },
+    {
+      title: 'Businesses',
+      body: 'Equip field teams with practical devices backed by local support.',
+    },
   ],
   desktops: [
     { title: 'Office Teams', body: 'Run core business applications on stable desktop hardware.' },
     { title: 'Schools', body: 'Support labs and admin desks with value-focused, durable setups.' },
     { title: 'Power Users', body: 'Handle heavier multitasking and workstation-style usage.' },
-    { title: 'Home Workspaces', body: 'Build dependable desk setups for consistent day-to-day productivity.' },
+    {
+      title: 'Home Workspaces',
+      body: 'Build dependable desk setups for consistent day-to-day productivity.',
+    },
   ],
   monitors: [
-    { title: 'Office Users', body: 'Increase productivity with clearer, larger workspace layouts.' },
-    { title: 'Design & Content Teams', body: 'Work with better visibility and improved visual consistency.' },
-    { title: 'Traders & Analysts', body: 'Support multi-window workflows and longer screen-on usage.' },
-    { title: 'Home Setups', body: 'Improve comfort for study, entertainment, and remote work sessions.' },
+    {
+      title: 'Office Users',
+      body: 'Increase productivity with clearer, larger workspace layouts.',
+    },
+    {
+      title: 'Design & Content Teams',
+      body: 'Work with better visibility and improved visual consistency.',
+    },
+    {
+      title: 'Traders & Analysts',
+      body: 'Support multi-window workflows and longer screen-on usage.',
+    },
+    {
+      title: 'Home Setups',
+      body: 'Improve comfort for study, entertainment, and remote work sessions.',
+    },
   ],
 };
 
 function getUseCasesForCategory(categorySlug: string): UseCaseItem[] {
   return (
     CATEGORY_USE_CASES[categorySlug] ?? [
-      { title: 'Businesses', body: 'Deploy dependable technology with local support and predictable availability.' },
-      { title: 'Teams', body: 'Improve productivity with practical specs and clearer purchasing decisions.' },
-      { title: 'Home Users', body: 'Choose reliable products that solve everyday tech needs without overpaying.' },
-      { title: 'Students', body: 'Get balanced value for learning, assignments, and daily digital use.' },
+      {
+        title: 'Businesses',
+        body: 'Deploy dependable technology with local support and predictable availability.',
+      },
+      {
+        title: 'Teams',
+        body: 'Improve productivity with practical specs and clearer purchasing decisions.',
+      },
+      {
+        title: 'Home Users',
+        body: 'Choose reliable products that solve everyday tech needs without overpaying.',
+      },
+      {
+        title: 'Students',
+        body: 'Get balanced value for learning, assignments, and daily digital use.',
+      },
     ]
   );
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: RouteParams;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: RouteParams }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
@@ -160,23 +285,23 @@ export async function generateMetadata({
   const category = getCategoryBySlug(product.category);
   const shortDescription = truncateText(stripHtml(product.description), 155);
   const isExternalSsd = isLikelyExternalSsd(product);
-  const isVerbatimPocketSsd = isExternalSsd && /verbatim/i.test(product.name) && /1tb/i.test(product.name);
+  const isVerbatimPocketSsd =
+    isExternalSsd && /verbatim/i.test(product.name) && /1tb/i.test(product.name);
 
   const readSpeed = getSpecValue(product, ['read speed']) ?? '1000 MB/s';
   const connector = getSpecValue(product, ['connector', 'usb']) ?? 'USB-C';
   const transferRate = getSpecValue(product, ['data transfer rate', 'transfer rate']) ?? '10Gbps';
 
-  const title =
-    isVerbatimPocketSsd
-      ? 'Verbatim 1TB Pocket SSD USB-C 10Gbps | Cansan Zimbabwe'
-      : category?.slug === 'mobile'
-        ? `${product.name} Price in Zimbabwe | Buy in Harare`
-        : `${product.name} | ${category?.label ?? 'Tech'} | Cansan`;
+  const title = isVerbatimPocketSsd
+    ? 'Verbatim 1TB Pocket SSD USB-C 10Gbps | Cansan Zimbabwe'
+    : category?.slug === 'mobile'
+      ? `${product.name} Price in Zimbabwe | Buy in Harare`
+      : `${product.name} | ${category?.label ?? 'Tech'} | Cansan`;
 
   const description = isExternalSsd
     ? truncateText(
         `Buy ${product.name} in Zimbabwe. Up to ${readSpeed} speed, ${connector} connectivity, ${transferRate} transfer rate, Harare delivery, and USD/EcoCash payment support.`,
-        155
+        155,
       )
     : shortDescription;
 
@@ -203,21 +328,34 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
   const isBundle = isBundleProduct(product);
   const isExternalSsd = isLikelyExternalSsd(product);
   const imageSrc = getProductImage(product.image);
+  const galleryImages = Array.from(new Set([...(product.images ?? []), imageSrc].filter(Boolean)));
   const brand = getBrandForProduct(product);
   const specEntries = Object.entries(product.specs ?? {});
 
-  const readSpeed = getSpecValue(product, ['read speed']) ?? (isExternalSsd ? '1000 MB/s' : undefined);
-  const writeSpeed = getSpecValue(product, ['write speed']) ?? (isExternalSsd ? '1000 MB/s' : undefined);
-  const transferRate = getSpecValue(product, ['data transfer rate', 'transfer rate']) ?? (isExternalSsd ? '10 Gbps' : undefined);
-  const connector = getSpecValue(product, ['connector', 'usb connector']) ?? (isExternalSsd ? 'USB-C' : undefined);
-  const interfaceVersion = getSpecValue(product, ['usb version', 'interface']) ?? (isExternalSsd ? 'USB 3.2 Gen 2' : undefined);
-  const capacity = getSpecValue(product, ['capacity']) ?? (/\b1tb\b/i.test(product.name) ? '1TB' : undefined);
+  const readSpeed =
+    getSpecValue(product, ['read speed']) ?? (isExternalSsd ? '1000 MB/s' : undefined);
+  const writeSpeed =
+    getSpecValue(product, ['write speed']) ?? (isExternalSsd ? '1000 MB/s' : undefined);
+  const transferRate =
+    getSpecValue(product, ['data transfer rate', 'transfer rate']) ??
+    (isExternalSsd ? '10 Gbps' : undefined);
+  const connector =
+    getSpecValue(product, ['connector', 'usb connector']) ?? (isExternalSsd ? 'USB-C' : undefined);
+  const interfaceVersion =
+    getSpecValue(product, ['usb version', 'interface']) ??
+    (isExternalSsd ? 'USB 3.2 Gen 2' : undefined);
+  const capacity =
+    getSpecValue(product, ['capacity']) ?? (/\b1tb\b/i.test(product.name) ? '1TB' : undefined);
   const formFactor = getSpecValue(product, ['form factor']) ?? (isExternalSsd ? 'M.2' : undefined);
   const weight = getSpecValue(product, ['weight']) ?? (isExternalSsd ? '58g' : undefined);
 
   const hasDiscount = Boolean(product.originalPrice && product.originalPrice > product.price);
-  const savingAmount = hasDiscount && product.originalPrice ? product.originalPrice - product.price : 0;
-  const savingPercent = hasDiscount && product.originalPrice ? Math.round((savingAmount / product.originalPrice) * 100) : 0;
+  const savingAmount =
+    hasDiscount && product.originalPrice ? product.originalPrice - product.price : 0;
+  const savingPercent =
+    hasDiscount && product.originalPrice
+      ? Math.round((savingAmount / product.originalPrice) * 100)
+      : 0;
 
   const stockCount = typeof product.stockCount === 'number' ? product.stockCount : undefined;
   const lowStock = product.inStock && stockCount !== undefined && stockCount <= 5;
@@ -241,8 +379,12 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
       ]
     : [
         'Genuine product sourced from verified suppliers',
-        isSaImport ? 'Imported from South Africa with a clear 5-day lead time' : 'Live stock confirmation before payment',
-        isSaImport ? 'Delivery target is about 5 days after order confirmation' : 'Harare delivery and nationwide courier support',
+        isSaImport
+          ? 'Imported from South Africa with a clear 5-day lead time'
+          : 'Live stock confirmation before payment',
+        isSaImport
+          ? 'Delivery target is about 5 days after order confirmation'
+          : 'Harare delivery and nationwide courier support',
         'Warranty and after-sales guidance from Cansan',
       ];
 
@@ -258,15 +400,10 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
 
   const performanceDetail = isExternalSsd
     ? `Built for speed with up to ${readSpeed} read and ${writeSpeed} write performance.`
-    : [processor, memory, storage, display]
-        .filter(Boolean)
-        .slice(0, 3)
-        .join(' • ') || 'Balanced everyday performance for practical work, study, and daily use.';
+    : [processor, memory, storage, display].filter(Boolean).slice(0, 3).join(' • ') ||
+      'Balanced everyday performance for practical work, study, and daily use.';
 
-  const portabilityDetail = [weight, dimensions, battery]
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(' • ');
+  const portabilityDetail = [weight, dimensions, battery].filter(Boolean).slice(0, 2).join(' • ');
 
   const compatibilityDetail = [connector, interfaceVersion, connectivity]
     .filter(Boolean)
@@ -299,8 +436,9 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
     },
   ];
 
-  const comparisonOptionLabel =
-    category?.label ? `Low-cost ${category.label.toLowerCase()} alternative` : 'Low-cost alternative option';
+  const comparisonOptionLabel = category?.label
+    ? `Low-cost ${category.label.toLowerCase()} alternative`
+    : 'Low-cost alternative option';
 
   const quickSpecChips = [
     capacity,
@@ -313,7 +451,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
 
   const waNumber = SITE_PHONE_E164.replace('+', '');
   const waText = encodeURIComponent(
-    `Hi Cansan Solutions, I'd like to order: ${product.name}${isBundle ? ' bundle' : ''} (${formatCurrency(product.price, product.currency)}). Please confirm live stock, delivery options, and payment methods.`
+    `Hi Cansan Solutions, I'd like to order: ${product.name}${isBundle ? ' bundle' : ''} (${formatCurrency(product.price, product.currency)}). Please confirm live stock, delivery options, and payment methods.`,
   );
 
   return (
@@ -346,13 +484,23 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
           </nav>
         }
         meta={[
-          <div key="price" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+          <div
+            key="price"
+            className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm"
+          >
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-red-200">Price</p>
-            <p className="mt-1 text-lg font-bold text-white">{formatCurrency(product.price, product.currency)}</p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {formatCurrency(product.price, product.currency)}
+            </p>
           </div>,
-          <div key="stock" className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
+          <div
+            key="stock"
+            className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm"
+          >
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-red-200">Stock</p>
-            <p className="mt-1 text-lg font-bold text-white">{product.inStock ? 'Available' : 'Check ETA'}</p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {product.inStock ? 'Available' : 'Check ETA'}
+            </p>
           </div>,
         ]}
         actions={
@@ -375,31 +523,28 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         }
       >
         {quickSpecChips.length > 0 ? (
-              <div className="flex flex-wrap gap-2 rounded-2xl border border-white/12 bg-white/10 p-4 backdrop-blur-sm">
-                {quickSpecChips.slice(0, 4).map((chip) => (
-              <span key={chip} className="inline-flex min-h-10 items-center rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">
-                    {chip}
-                  </span>
-                ))}
-              </div>
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-white/12 bg-white/10 p-4 backdrop-blur-sm">
+            {quickSpecChips.slice(0, 4).map((chip) => (
+              <span
+                key={chip}
+                className="inline-flex min-h-10 items-center rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
         ) : null}
       </PageHero>
 
       <div className="mx-auto max-w-7xl px-4 py-10 pb-32 sm:px-6 sm:pb-10">
-
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-              <div aria-hidden="true" className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(254,226,226,0.95),transparent_70%)]" />
-              <div className="relative flex items-center justify-center rounded-2xl border border-zinc-100 bg-zinc-50 p-10">
-              <Image
-                src={imageSrc}
-                alt={product.name}
-                width={720}
-                height={720}
-                className="max-h-72 w-full object-contain"
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(254,226,226,0.95),transparent_70%)]"
               />
-              </div>
+              <ProductGallery name={product.name} images={galleryImages} />
             </div>
             {quickSpecChips.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -455,13 +600,17 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               ) : null}
             </div>
 
-            <h2 className="text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">{seoHeadline}</h2>
+            <h2 className="text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">
+              {seoHeadline}
+            </h2>
 
             <p className="text-sm leading-relaxed text-zinc-600">{heroSummary}</p>
 
             {isBundle && product.bundleItems.length > 0 ? (
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">What&apos;s included</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  What&apos;s included
+                </p>
                 <ul className="mt-3 space-y-2 text-sm text-zinc-700">
                   {product.bundleItems.map((item) => (
                     <li key={item} className="flex items-start gap-2">
@@ -474,7 +623,9 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
             ) : null}
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-zinc-900">{formatCurrency(product.price, product.currency)}</span>
+              <span className="text-3xl font-bold text-zinc-900">
+                {formatCurrency(product.price, product.currency)}
+              </span>
               {hasDiscount && product.originalPrice ? (
                 <span className="text-lg text-zinc-400 line-through">
                   {formatCurrency(product.originalPrice, product.currency)}
@@ -496,7 +647,11 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
               {product.inStock ? (
                 <p
                   className={`text-sm font-semibold ${
-                    criticallyLowStock ? 'text-red-700' : lowStock ? 'text-amber-700' : 'text-emerald-700'
+                    criticallyLowStock
+                      ? 'text-red-700'
+                      : lowStock
+                        ? 'text-amber-700'
+                        : 'text-emerald-700'
                   }`}
                 >
                   {stockCount !== undefined
@@ -513,11 +668,13 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                 </p>
               )}
               <p className="mt-1 text-xs text-zinc-600">
-                Price indicative. Confirm final stock, delivery, and quote on WhatsApp before checkout.
+                Price indicative. Confirm final stock, delivery, and quote on WhatsApp before
+                checkout.
               </p>
               {isSaImport ? (
                 <p className="mt-1 text-xs font-semibold text-red-700">
-                  This item is sourced from South Africa and usually arrives within 5 days after confirmation.
+                  This item is sourced from South Africa and usually arrives within 5 days after
+                  confirmation.
                 </p>
               ) : null}
             </div>
@@ -563,7 +720,10 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                   body: 'Clear warranty process and post-purchase support directly with Cansan.',
                 },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+                <div
+                  key={item.title}
+                  className="rounded-xl border border-zinc-200 bg-white px-4 py-3"
+                >
                   <p className="text-xs font-semibold text-zinc-900">{item.title}</p>
                   <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.body}</p>
                 </div>
@@ -588,7 +748,10 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
 
             <div className="flex flex-wrap gap-2">
               {product.tags.map((tag) => (
-                <span key={tag} className="inline-flex min-h-9 items-center rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600">
+                <span
+                  key={tag}
+                  className="inline-flex min-h-9 items-center rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600"
+                >
                   {tag}
                 </span>
               ))}
@@ -609,10 +772,15 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         </section>
 
         <section className="mt-16">
-          <h2 className="text-2xl font-bold text-zinc-900">Performance, Durability, Portability & Compatibility</h2>
+          <h2 className="text-2xl font-bold text-zinc-900">
+            Performance, Durability, Portability & Compatibility
+          </h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {featureBlocks.map((item) => (
-              <article key={item.title} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
+              <article
+                key={item.title}
+                className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5"
+              >
                 <h3 className="text-base font-semibold text-zinc-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-600">{item.body}</p>
               </article>
@@ -641,14 +809,18 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         ) : null}
 
         <section className="mt-16">
-          <h2 className="text-2xl font-bold text-zinc-900">Why This Product Beats Cheaper Alternatives</h2>
+          <h2 className="text-2xl font-bold text-zinc-900">
+            Why This Product Beats Cheaper Alternatives
+          </h2>
           <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             <table className="min-w-full divide-y divide-zinc-200 text-sm">
               <thead className="bg-zinc-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-zinc-700">Option</th>
                   <th className="px-4 py-3 text-left font-semibold text-zinc-700">Performance</th>
-                  <th className="px-4 py-3 text-left font-semibold text-zinc-700">Support & Reliability</th>
+                  <th className="px-4 py-3 text-left font-semibold text-zinc-700">
+                    Support & Reliability
+                  </th>
                   <th className="px-4 py-3 text-left font-semibold text-zinc-700">Best For</th>
                 </tr>
               </thead>
@@ -658,7 +830,8 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                   <td className="px-4 py-3 text-zinc-600">
                     {isExternalSsd
                       ? `Up to ${readSpeed} / ${writeSpeed}`
-                      : [processor, memory, storage].filter(Boolean).slice(0, 2).join(' • ') || 'Balanced daily performance'}
+                      : [processor, memory, storage].filter(Boolean).slice(0, 2).join(' • ') ||
+                        'Balanced daily performance'}
                   </td>
                   <td className="px-4 py-3 text-zinc-600">
                     {product.condition === 'pre-owned'
@@ -666,31 +839,42 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                       : 'Genuine stock backed by local warranty support'}
                   </td>
                   <td className="px-4 py-3 text-zinc-600">
-                    {isBundle ? 'Buyers needing a ready-to-deploy package' : 'Buyers who need dependable long-term value'}
+                    {isBundle
+                      ? 'Buyers needing a ready-to-deploy package'
+                      : 'Buyers who need dependable long-term value'}
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-medium text-zinc-700">{comparisonOptionLabel}</td>
                   <td className="px-4 py-3 text-zinc-600">Basic baseline performance</td>
-                  <td className="px-4 py-3 text-zinc-600">Limited quality assurance or after-sales certainty</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    Limited quality assurance or after-sales certainty
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">Price-first buying with trade-offs</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-medium text-zinc-700">Older / Unknown Condition Option</td>
+                  <td className="px-4 py-3 font-medium text-zinc-700">
+                    Older / Unknown Condition Option
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">Inconsistent output under daily load</td>
-                  <td className="px-4 py-3 text-zinc-600">Higher risk of hidden wear or short lifespan</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    Higher risk of hidden wear or short lifespan
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">Short-term or temporary usage only</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="mt-3 text-sm text-zinc-600">
-            When uptime, speed, and support matter, this option reduces replacement risk and post-purchase friction.
+            When uptime, speed, and support matter, this option reduces replacement risk and
+            post-purchase friction.
           </p>
         </section>
 
         <section className="mt-16">
-          <h2 className="text-2xl font-bold text-zinc-900">Delivery, Payment & Warranty in Zimbabwe</h2>
+          <h2 className="text-2xl font-bold text-zinc-900">
+            Delivery, Payment & Warranty in Zimbabwe
+          </h2>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {[
               {
@@ -708,7 +892,10 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                 body: 'Cansan helps with warranty guidance and post-purchase support steps when needed.',
               },
             ].map((item) => (
-              <article key={item.title} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
+              <article
+                key={item.title}
+                className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5"
+              >
                 <h3 className="text-base font-semibold text-zinc-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-600">{item.body}</p>
               </article>
@@ -719,7 +906,9 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         {related.length > 0 ? (
           <section className="mt-16">
             <h2 className="mb-5 text-lg font-bold text-zinc-900">
-              {isExternalSsd ? 'Related Products & Upsells' : `More in ${category?.label ?? 'this category'}`}
+              {isExternalSsd
+                ? 'Related Products & Upsells'
+                : `More in ${category?.label ?? 'this category'}`}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {related.map((relatedProduct) => (
@@ -729,8 +918,8 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
                   className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 transition hover:shadow-md"
                 >
                   <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-zinc-50 p-3">
-                    <Image
-                      src={getProductImage(relatedProduct.image)}
+                    <ProductImage
+                      src={relatedProduct.image}
                       alt={relatedProduct.name}
                       width={220}
                       height={220}
@@ -757,7 +946,11 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-2">
-          <AddToCartButton product={product} label="Buy Now" className="min-h-12 rounded-xl px-4 py-3 text-sm" />
+          <AddToCartButton
+            product={product}
+            label="Buy Now"
+            className="min-h-12 rounded-xl px-4 py-3 text-sm"
+          />
           <a
             href={`https://wa.me/${waNumber}?text=${waText}`}
             target="_blank"

@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
 import { getWhatsAppOrderMessage, buildWhatsAppPreview, formatCurrency } from '@/lib/utils';
 import { WA_NUMBER } from '@/lib/site';
+import { ProductImage } from './ProductImage';
 
 type Props = { open: boolean; onClose: () => void };
 type Step = 'cart' | 'review';
@@ -20,18 +20,32 @@ const NOTE_SUGGESTIONS = [
 function StepDots({ step }: { step: Step }) {
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'cart' ? 'text-red-600' : 'text-zinc-500'}`}>
-        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'cart' ? 'bg-red-600 text-white' : 'bg-zinc-200 text-zinc-600'}`}>1</span>
+      <div
+        className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'cart' ? 'text-red-600' : 'text-zinc-500'}`}
+      >
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'cart' ? 'bg-red-600 text-white' : 'bg-zinc-200 text-zinc-600'}`}
+        >
+          1
+        </span>
         Cart
       </div>
       <div className={`h-px w-6 ${step === 'review' ? 'bg-green-400' : 'bg-zinc-200'}`} />
-      <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'review' ? 'text-green-600' : 'text-zinc-400'}`}>
-        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'review' ? 'bg-green-600 text-white' : 'bg-zinc-100 text-zinc-400'}`}>2</span>
+      <div
+        className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'review' ? 'text-green-600' : 'text-zinc-400'}`}
+      >
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${step === 'review' ? 'bg-green-600 text-white' : 'bg-zinc-100 text-zinc-400'}`}
+        >
+          2
+        </span>
         Review
       </div>
       <div className="h-px w-6 bg-zinc-200" />
       <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-bold text-zinc-400">3</span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-bold text-zinc-400">
+          3
+        </span>
         WhatsApp
       </div>
     </div>
@@ -54,13 +68,18 @@ export function CartDrawer({ open, onClose }: Props) {
   // Reset step when drawer closes
   useEffect(() => {
     if (!open) {
-      setTimeout(() => { setStep('cart'); setNote(''); }, 300);
+      setTimeout(() => {
+        setStep('cart');
+        setNote('');
+      }, 300);
     }
   }, [open]);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   const currentStep: Step = items.length === 0 ? 'cart' : step;
@@ -98,8 +117,20 @@ export function CartDrawer({ open, onClose }: Props) {
             <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+                    />
                   </svg>
                   <h2 className="font-heading text-sm font-bold text-zinc-900">Your Cart</h2>
                   {items.length > 0 && (
@@ -108,14 +139,22 @@ export function CartDrawer({ open, onClose }: Props) {
                     </span>
                   )}
                 </div>
-                  {items.length > 0 && <StepDots step={currentStep} />}
+                {items.length > 0 && <StepDots step={currentStep} />}
               </div>
               <button
                 onClick={onClose}
                 className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-zinc-100"
                 aria-label="Close cart"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -137,13 +176,29 @@ export function CartDrawer({ open, onClose }: Props) {
                     {items.length === 0 ? (
                       <div className="flex h-64 flex-col items-center justify-center gap-4 text-center">
                         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="28"
+                            height="28"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.4}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+                            />
                           </svg>
                         </div>
                         <div>
-                          <p className="font-heading text-sm font-semibold text-zinc-700">Your cart is empty</p>
-                          <p className="mt-1 text-sm text-zinc-500">Browse products and add items to get started</p>
+                          <p className="font-heading text-sm font-semibold text-zinc-700">
+                            Your cart is empty
+                          </p>
+                          <p className="mt-1 text-sm text-zinc-500">
+                            Browse products and add items to get started
+                          </p>
                         </div>
                         <button
                           onClick={onClose}
@@ -155,9 +210,13 @@ export function CartDrawer({ open, onClose }: Props) {
                     ) : (
                       <div className="space-y-4">
                         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-                          <p className="text-sm font-semibold text-emerald-800">What happens next</p>
+                          <p className="text-sm font-semibold text-emerald-800">
+                            What happens next
+                          </p>
                           <p className="mt-1 text-sm leading-relaxed text-emerald-700">
-                            Review your items, add any delivery or collection note, then send the order on WhatsApp. Cansan confirms stock, final pricing, and next steps before payment.
+                            Review your items, add any delivery or collection note, then send the
+                            order on WhatsApp. Cansan confirms stock, final pricing, and next steps
+                            before payment.
                           </p>
                         </div>
 
@@ -178,7 +237,7 @@ export function CartDrawer({ open, onClose }: Props) {
                                   onClick={onClose}
                                   className="block h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-white"
                                 >
-                                  <Image
+                                  <ProductImage
                                     src={item.image}
                                     alt={item.name}
                                     width={56}
@@ -194,7 +253,9 @@ export function CartDrawer({ open, onClose }: Props) {
                                   >
                                     {item.name}
                                   </Link>
-                                  <span className="text-sm text-zinc-500">{formatCurrency(item.price, item.currency)} each</span>
+                                  <span className="text-sm text-zinc-500">
+                                    {formatCurrency(item.price, item.currency)} each
+                                  </span>
                                   <div className="mt-0.5 flex items-center gap-1.5">
                                     <button
                                       onClick={() => updateQty(item.id, item.qty - 1)}
@@ -202,7 +263,9 @@ export function CartDrawer({ open, onClose }: Props) {
                                     >
                                       −
                                     </button>
-                                    <span className="w-7 text-center text-sm font-bold text-zinc-900">{item.qty}</span>
+                                    <span className="w-7 text-center text-sm font-bold text-zinc-900">
+                                      {item.qty}
+                                    </span>
                                     <button
                                       onClick={() => updateQty(item.id, item.qty + 1)}
                                       className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
@@ -250,7 +313,7 @@ export function CartDrawer({ open, onClose }: Props) {
                         {items.map((item) => (
                           <li key={item.id} className="flex items-center gap-2.5">
                             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-zinc-50 border border-zinc-100">
-                              <Image
+                              <ProductImage
                                 src={item.image}
                                 alt={item.name}
                                 width={36}
@@ -259,7 +322,9 @@ export function CartDrawer({ open, onClose }: Props) {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-zinc-800 line-clamp-1">{item.name}</p>
+                              <p className="text-sm font-semibold text-zinc-800 line-clamp-1">
+                                {item.name}
+                              </p>
                               <p className="text-sm text-zinc-500">Qty: {item.qty}</p>
                             </div>
                             <span className="shrink-0 text-sm font-bold text-zinc-900">
@@ -273,8 +338,12 @@ export function CartDrawer({ open, onClose }: Props) {
                     {/* Totals */}
                     <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-3 space-y-1.5">
                       <div className="flex justify-between text-sm text-zinc-600">
-                        <span>Subtotal ({totalItems} item{totalItems !== 1 ? 's' : ''})</span>
-                        <span className="font-semibold text-zinc-700">{formatCurrency(total, currency)}</span>
+                        <span>
+                          Subtotal ({totalItems} item{totalItems !== 1 ? 's' : ''})
+                        </span>
+                        <span className="font-semibold text-zinc-700">
+                          {formatCurrency(total, currency)}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm text-zinc-600">
                         <span>Delivery</span>
@@ -282,20 +351,29 @@ export function CartDrawer({ open, onClose }: Props) {
                       </div>
                       <div className="border-t border-zinc-200 pt-1.5 flex justify-between">
                         <span className="text-sm font-bold text-zinc-900">Total</span>
-                        <span className="font-heading text-base font-extrabold text-zinc-900">{formatCurrency(total, currency)}</span>
+                        <span className="font-heading text-base font-extrabold text-zinc-900">
+                          {formatCurrency(total, currency)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Note */}
                     <div>
                       <label className="mb-1.5 block font-heading text-xs font-bold uppercase tracking-wide text-zinc-700">
-                        Add a note <span className="font-normal text-zinc-400 normal-case">(optional)</span>
+                        Add a note{' '}
+                        <span className="font-normal text-zinc-400 normal-case">(optional)</span>
                       </label>
                       <div className="mb-2 flex flex-wrap gap-2">
                         {NOTE_SUGGESTIONS.map((suggestion) => (
                           <button
                             key={suggestion}
-                            onClick={() => setNote((current) => (current ? `${current.trim()}${current.trim().endsWith('.') ? ' ' : '. '}${suggestion}` : suggestion))}
+                            onClick={() =>
+                              setNote((current) =>
+                                current
+                                  ? `${current.trim()}${current.trim().endsWith('.') ? ' ' : '. '}${suggestion}`
+                                  : suggestion,
+                              )
+                            }
                             className="inline-flex min-h-10 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-red-300 hover:text-red-600"
                           >
                             {suggestion}
@@ -344,8 +422,19 @@ export function CartDrawer({ open, onClose }: Props) {
                       className="flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-900/20 transition hover:bg-red-700 active:scale-95"
                     >
                       Review Before WhatsApp
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                      <svg
+                        width="14"
+                        height="14"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                        />
                       </svg>
                     </motion.button>
                     <button
@@ -360,8 +449,13 @@ export function CartDrawer({ open, onClose }: Props) {
                 {currentStep === 'review' && (
                   <>
                     <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center">
-                      <p className="text-[11px] font-semibold text-zinc-700">Stock, delivery, and final price are confirmed before payment.</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">Use WhatsApp to complete the handoff. Cansan will respond with confirmation and the next step.</p>
+                      <p className="text-[11px] font-semibold text-zinc-700">
+                        Stock, delivery, and final price are confirmed before payment.
+                      </p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                        Use WhatsApp to complete the handoff. Cansan will respond with confirmation
+                        and the next step.
+                      </p>
                     </div>
                     <motion.a
                       href={waHref}

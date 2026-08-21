@@ -7,6 +7,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct } from '@/lib/catalog';
+import { ProductImage } from './ProductImage';
 
 const WA_NUMBER = '263773754747';
 
@@ -79,9 +80,11 @@ export function QuickPreview({ product, onClose }: Props) {
             <div className="grid max-h-[85dvh] overflow-y-auto sm:grid-cols-2 sm:overflow-hidden">
               {/* Image pane */}
               <div className="relative flex min-h-[220px] items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 p-6 sm:min-h-[240px] sm:p-8">
-                <img
+                <ProductImage
                   src={product.image}
                   alt={product.name}
+                  width={640}
+                  height={480}
                   className="max-h-44 w-full object-contain sm:max-h-48"
                 />
                 {/* Condition badge on image */}

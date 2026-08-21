@@ -25,6 +25,7 @@ type ProductRecord = {
   currency?: string;
   description?: string;
   image?: string;
+  images?: unknown;
   inStock?: boolean;
   in_stock?: boolean;
   featured?: boolean;
@@ -60,6 +61,11 @@ function mapRow(data: ProductRecord): Product {
     currency: String(data.currency || 'USD'),
     description: String(data.description || ''),
     image: String(data.image || ''),
+    images: Array.isArray(data.images)
+      ? data.images.map(String).filter(Boolean)
+      : data.image
+        ? [String(data.image)]
+        : [],
     inStock: Boolean(data.inStock ?? data.in_stock ?? true),
     featured: Boolean(data.featured ?? false),
     tags,

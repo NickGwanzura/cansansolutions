@@ -102,8 +102,19 @@ function ImageGalleryUpload({
 
   const addImageUrl = () => {
     const url = imageUrl.trim();
-    if (!/^https?:\/\//i.test(url)) {
-      setError('Enter a full image URL beginning with https://');
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      setError('Enter a valid image URL.');
+      return;
+    }
+    const allowedHosts = ['utfs.io', 'img.uploadthing.com', 'ufs.sh', 'cdn.shopify.com'];
+    if (
+      parsed.protocol !== 'https:' ||
+      !allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`))
+    ) {
+      setError('Use an HTTPS image hosted by UploadThing, UFS, or Shopify CDN.');
       return;
     }
     setError('');
@@ -1626,6 +1637,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       specs: Object.keys(specs).length > 0 ? specs : undefined,
       // Use first image as main image for backward compatibility
       image: form.images[0] || '',
+      images: form.images,
     };
 
     if (editTarget && editTarget.id) {

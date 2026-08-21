@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import { useCartStore } from '@/lib/cart-store';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { getCategoryLabel, isBundleProduct, isSaImportProduct } from '@/lib/catalog';
 import { useToast } from './Toast';
+import { ProductImage } from './ProductImage';
 
 type ProductCardProps = {
   product: Product;
@@ -139,14 +139,14 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           aria-label={`View ${product.name}`}
           className="absolute inset-0 z-0"
         />
-        <Image
+        <ProductImage
           src={imageSrc}
           alt={product.name}
           fill
           loading="lazy"
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           onError={() => setImageFailed(true)}
-          className="pointer-events-none object-contain p-4 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
+          className="pointer-events-none object-contain p-4 mix-blend-multiply transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
         />
 
         {hasDiscount || product.dealLabel ? (

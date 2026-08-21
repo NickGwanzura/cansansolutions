@@ -66,6 +66,7 @@ async function ensureSchema(): Promise<void> {
       currency      TEXT NOT NULL DEFAULT 'USD',
       description   TEXT NOT NULL DEFAULT '',
       image         TEXT NOT NULL DEFAULT '',
+      images        TEXT[] NOT NULL DEFAULT '{}',
       in_stock      BOOLEAN NOT NULL DEFAULT true,
       featured      BOOLEAN NOT NULL DEFAULT false,
       tags          TEXT[] NOT NULL DEFAULT '{}',
@@ -78,6 +79,9 @@ async function ensureSchema(): Promise<void> {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `;
+  await sql()`;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT[] NOT NULL DEFAULT '{}'
   `;
   await sql()`
     CREATE TABLE IF NOT EXISTS banners (
@@ -296,6 +300,12 @@ function rowToProduct(row: Record<string, unknown>) {
     currency: row.currency as string,
     description: row.description as string,
     image: row.image as string,
+    images:
+      Array.isArray(row.images) && row.images.length > 0
+        ? (row.images as string[])
+        : row.image
+          ? [row.image as string]
+          : [],
     inStock: row.in_stock as boolean,
     featured: row.featured as boolean,
     tags: (row.tags as string[]) || [],
@@ -542,7 +552,7 @@ export async function saveProduct(product: Record<string, unknown>): Promise<voi
   await sql()`
     INSERT INTO products (
       id, slug, name, category, product_type, bundle_items, condition,
-      price, currency, description, image, in_stock, featured, tags,
+      price, currency, description, image, images, in_stock, featured, tags,
       original_price, specs, stock_count, rating, review_count, deal_label,
       created_at, updated_at
     ) VALUES (
@@ -557,6 +567,7 @@ export async function saveProduct(product: Record<string, unknown>): Promise<voi
       ${(product.currency as string) || 'USD'},
       ${(product.description as string) || ''},
       ${(product.image as string) || ''},
+      ${(product.images as string[]) || ((product.image as string) ? [product.image as string] : [])},
       ${(product.inStock as boolean) ?? true},
       ${(product.featured as boolean) ?? false},
       ${(product.tags as string[]) || []},
@@ -580,6 +591,7 @@ export async function saveProduct(product: Record<string, unknown>): Promise<voi
       currency       = EXCLUDED.currency,
       description    = EXCLUDED.description,
       image          = EXCLUDED.image,
+      images         = EXCLUDED.images,
       in_stock       = EXCLUDED.in_stock,
       featured       = EXCLUDED.featured,
       tags           = EXCLUDED.tags,
@@ -608,7 +620,7 @@ export async function replaceProducts(products: Record<string, unknown>[]): Prom
       await transaction`
         INSERT INTO products (
           id, slug, name, category, product_type, bundle_items, condition,
-          price, currency, description, image, in_stock, featured, tags,
+          price, currency, description, image, images, in_stock, featured, tags,
           original_price, specs, stock_count, rating, review_count, deal_label,
           created_at, updated_at
         ) VALUES (
@@ -616,7 +628,9 @@ export async function replaceProducts(products: Record<string, unknown>[]): Prom
           ${(product.productType as string) || 'single'}, ${(product.bundleItems as string[]) || []},
           ${(product.condition as string) ?? null}, ${product.price as number},
           ${(product.currency as string) || 'USD'}, ${(product.description as string) || ''},
-          ${(product.image as string) || ''}, ${(product.inStock as boolean) ?? true},
+          ${(product.image as string) || ''},
+          ${(product.images as string[]) || ((product.image as string) ? [product.image as string] : [])},
+          ${(product.inStock as boolean) ?? true},
           ${(product.featured as boolean) ?? false}, ${(product.tags as string[]) || []},
           ${(product.originalPrice as number) ?? null}, ${product.specs ? JSON.stringify(product.specs) : null},
           ${(product.stockCount as number) ?? null}, ${(product.rating as number) ?? null},

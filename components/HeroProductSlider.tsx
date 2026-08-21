@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { Product } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { ProductImage as SafeProductImage } from './ProductImage';
 
 type HeroProductSliderProps = { products: Product[] };
 const AUTO_ADVANCE_MS = 6000;
@@ -26,12 +26,12 @@ function ArrowIcon() {
 
 function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
   return (
-    <Image
+    <SafeProductImage
       src={product.image || '/images/products/placeholder.svg'}
       alt={product.name}
       fill
       sizes={sizes}
-      className="object-contain p-4 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500"
+      className="object-contain p-6 mix-blend-multiply drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
     />
   );
 }
@@ -131,20 +131,20 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
               <Link
                 key={`${product.id}-${index}`}
                 href={`/products/${product.slug}`}
-                className={`group relative flex min-h-[205px] items-center overflow-hidden rounded-[1.75rem] px-6 py-6 transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 ${index === 0 ? 'bg-red-50' : 'bg-zinc-100'}`}
+                className={`group relative flex min-h-[205px] items-center overflow-hidden rounded-[1.75rem] px-6 py-6 pr-[46%] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 ${index === 0 ? 'bg-red-50' : 'bg-zinc-100'}`}
               >
-                <div className="relative z-10 max-w-[52%]">
+                <div className="relative z-10 min-w-0 max-w-full">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                     {index === 0 ? 'Popular this week' : 'Ready for your setup'}
                   </p>
-                  <h2 className="mt-3 text-xl font-bold leading-tight tracking-[-0.03em] text-zinc-950">
+                  <h2 className="mt-3 line-clamp-3 text-lg font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 sm:text-xl">
                     {product.name}
                   </h2>
                   <p className="mt-5 text-sm font-semibold text-red-700">
                     From {formatCurrency(product.price, product.currency)}
                   </p>
                 </div>
-                <div className="absolute inset-y-3 right-0 w-[58%] transition-transform duration-300 group-hover:scale-105">
+                <div className="absolute inset-y-0 right-0 z-0 w-[43%] bg-gradient-to-l from-white/80 via-white/45 to-transparent transition-transform duration-300 group-hover:scale-105">
                   <ProductImage product={product} sizes="(max-width: 1024px) 48vw, 300px" />
                 </div>
               </Link>

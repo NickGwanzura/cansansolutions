@@ -13,6 +13,7 @@ export type Product = {
   currency: string;
   description: string;
   image: string;
+  images?: string[];
   inStock: boolean;
   featured: boolean;
   tags: string[];
@@ -161,8 +162,16 @@ export type CompanyProfile = {
 };
 
 export type ExpenseCategory =
-  | 'rent' | 'utilities' | 'salaries' | 'inventory' | 'marketing'
-  | 'transport' | 'equipment' | 'maintenance' | 'taxes' | 'other';
+  | 'rent'
+  | 'utilities'
+  | 'salaries'
+  | 'inventory'
+  | 'marketing'
+  | 'transport'
+  | 'equipment'
+  | 'maintenance'
+  | 'taxes'
+  | 'other';
 
 export type Expense = {
   id: string;
