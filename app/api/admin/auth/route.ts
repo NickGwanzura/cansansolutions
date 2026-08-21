@@ -1,7 +1,12 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
-import { checkAdminAuth, createAdminSession, getAdminPassword } from '@/lib/check-admin-auth';
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  checkAdminAuth,
+  checkRequestOrigin,
+  createAdminSession,
+  getAdminPassword,
+} from '@/lib/check-admin-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 function getClientIp(req: Request): string {
@@ -12,7 +17,13 @@ function getClientIp(req: Request): string {
   return 'unknown';
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  if (!checkRequestOrigin(req)) {
+    return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
+  }
+  const contentLength = Number(req.headers.get('content-length') || 0);
+  if (contentLength > 16 * 1024)
+    return NextResponse.json({ error: 'Request too large' }, { status: 413 });
   const adminPassword = getAdminPassword();
   if (!adminPassword) {
     return NextResponse.json({ error: 'Admin login is not configured.' }, { status: 503 });
@@ -25,7 +36,7 @@ export async function POST(req: Request) {
   if (!limitResult.allowed) {
     return NextResponse.json(
       { error: 'Too many attempts. Try again later.', retryAfter: limitResult.resetInSeconds },
-      { status: 429, headers: { 'Retry-After': String(limitResult.resetInSeconds) } }
+      { status: 429, headers: { 'Retry-After': String(limitResult.resetInSeconds) } },
     );
   }
 
@@ -44,9 +55,18 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: false }, { status: 401 });
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  if (!checkRequestOrigin(req)) {
+    return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
+  }
   const res = NextResponse.json({ ok: true });
-  res.cookies.set('admin_auth', '', { maxAge: 0, path: '/' });
+  res.cookies.set('admin_auth', '', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 0,
+    path: '/',
+  });
   return res;
 }
 

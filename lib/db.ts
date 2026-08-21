@@ -22,6 +22,16 @@ function hasDatabase(): boolean {
   return Boolean(process.env.DATABASE_URL);
 }
 
+export async function checkDatabaseHealth(): Promise<{ configured: boolean; reachable: boolean }> {
+  if (!hasDatabase()) return { configured: false, reachable: false };
+  try {
+    await sql()`SELECT 1`;
+    return { configured: true, reachable: true };
+  } catch {
+    return { configured: true, reachable: false };
+  }
+}
+
 function sql(): postgres.Sql {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not configured');
@@ -30,6 +40,10 @@ function sql(): postgres.Sql {
     _sql = postgres(process.env.DATABASE_URL, {
       ssl: process.env.DATABASE_URL.includes('sslmode=require') ? 'require' : false,
       max: 10,
+      connect_timeout: 10,
+      idle_timeout: 20,
+      max_lifetime: 60 * 30,
+      onnotice: () => undefined,
     });
   }
   return _sql;
@@ -586,10 +600,32 @@ export async function deleteProduct(id: string): Promise<void> {
 
 export async function replaceProducts(products: Record<string, unknown>[]): Promise<void> {
   await ensureSchema();
-  await sql()`TRUNCATE TABLE products`;
-  for (const product of products) {
-    await saveProduct(product);
-  }
+  await sql().begin(async (transaction) => {
+    await transaction`TRUNCATE TABLE products`;
+    for (const product of products) {
+      const id = (product.id as string) || String(Date.now());
+      const now = new Date();
+      await transaction`
+        INSERT INTO products (
+          id, slug, name, category, product_type, bundle_items, condition,
+          price, currency, description, image, in_stock, featured, tags,
+          original_price, specs, stock_count, rating, review_count, deal_label,
+          created_at, updated_at
+        ) VALUES (
+          ${id}, ${product.slug as string}, ${product.name as string}, ${product.category as string},
+          ${(product.productType as string) || 'single'}, ${(product.bundleItems as string[]) || []},
+          ${(product.condition as string) ?? null}, ${product.price as number},
+          ${(product.currency as string) || 'USD'}, ${(product.description as string) || ''},
+          ${(product.image as string) || ''}, ${(product.inStock as boolean) ?? true},
+          ${(product.featured as boolean) ?? false}, ${(product.tags as string[]) || []},
+          ${(product.originalPrice as number) ?? null}, ${product.specs ? JSON.stringify(product.specs) : null},
+          ${(product.stockCount as number) ?? null}, ${(product.rating as number) ?? null},
+          ${(product.reviewCount as number) ?? null}, ${(product.dealLabel as string) ?? null},
+          ${product.createdAt ? new Date(product.createdAt as string | number | Date) : now}, ${now}
+        )
+      `;
+    }
+  });
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -624,19 +660,18 @@ export async function generateNextNumber(prefix: 'INV' | 'QTE'): Promise<string>
   await ensureSchema();
   const pattern = prefix + '-%';
   try {
-    let rows: Record<string, unknown>[];
-    if (prefix === 'INV') {
-      rows =
-        await sql()`SELECT number FROM invoices WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
-    } else {
-      rows =
-        await sql()`SELECT number FROM quotes WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
-    }
-    if (rows.length === 0) return `${prefix}-0001`;
-    const last = String(rows[0].number);
-    const num = parseInt(last.replace(`${prefix}-`, ''), 10);
-    const next = Number.isNaN(num) ? 1 : num + 1;
-    return `${prefix}-${String(next).padStart(4, '0')}`;
+    return await sql().begin(async (transaction) => {
+      await transaction`SELECT pg_advisory_xact_lock(hashtext(${prefix}))`;
+      const rows =
+        prefix === 'INV'
+          ? await transaction`SELECT number FROM invoices WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`
+          : await transaction`SELECT number FROM quotes WHERE number LIKE ${pattern} ORDER BY number DESC LIMIT 1`;
+      if (rows.length === 0) return `${prefix}-0001`;
+      const last = String(rows[0].number);
+      const num = parseInt(last.replace(`${prefix}-`, ''), 10);
+      const next = Number.isNaN(num) ? 1 : num + 1;
+      return `${prefix}-${String(next).padStart(4, '0')}`;
+    });
   } catch {
     return `${prefix}-0001`;
   }

@@ -1,21 +1,39 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-cansan}
+      POSTGRES_USER: ${DB_USER:-cansan}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - cansan-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATA_DIR=/app/data
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-cansan2024}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${DB_USER:-cansan}:${DB_PASSWORD}@db:5432/${DB_NAME:-cansan}}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
+      - UPLOADTHING_TOKEN=${UPLOADTHING_TOKEN:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+volumes:
+  cansan-postgres:

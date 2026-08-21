@@ -56,14 +56,24 @@ export function isValidSignedSession(
   );
 }
 
-function checkOrigin(req: NextRequest): boolean {
+export function checkRequestOrigin(req: NextRequest): boolean {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return true;
 
   const origin = req.headers.get('origin');
   const referer = req.headers.get('referer');
-  if (!origin && !referer) return true;
+  // State-changing browser requests must identify their origin. Allowing a
+  // missing header makes cookie-authenticated endpoints vulnerable to CSRF
+  // through form submissions and non-browser clients.
+  if (!origin && !referer) return false;
 
-  const allowedOrigins = [SITE_URL, 'http://localhost:3000', 'http://localhost:3001'];
+  const allowedOrigins = [
+    SITE_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+  ].filter(Boolean) as string[];
   try {
     const incomingOrigin = new URL(origin || referer || '').origin;
     return allowedOrigins.some((allowed) => incomingOrigin === new URL(allowed).origin);
@@ -74,7 +84,7 @@ function checkOrigin(req: NextRequest): boolean {
 
 export async function checkAdminAuth(req?: NextRequest): Promise<boolean> {
   try {
-    if (req && !checkOrigin(req)) return false;
+    if (req && !checkRequestOrigin(req)) return false;
     const session = req
       ? req.cookies.get('admin_auth')?.value
       : (await cookies()).get('admin_auth')?.value;

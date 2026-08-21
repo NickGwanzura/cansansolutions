@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     console.log('[API GET] Fetching products...');
-    const products = await readProducts();
+    const products = await readProducts({ allowFallback: false });
     console.log('[API GET] Success:', products.length, 'products');
 
     return NextResponse.json(products);
@@ -57,13 +57,13 @@ export async function POST(req: NextRequest) {
 
     console.log('[API POST] Data received:', JSON.stringify(data, null, 2));
 
-    if (!data.name?.trim())
+    if (!data.name?.trim() || data.name.length > 300)
       return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
-    if (!data.slug?.trim())
+    if (!data.slug?.trim() || data.slug.length > 180)
       return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
     if (!data.category)
       return NextResponse.json({ error: 'Category is required' }, { status: 400 });
-    if (data.price == null || isNaN(parseFloat(data.price)))
+    if (data.price == null || !Number.isFinite(Number(data.price)) || Number(data.price) < 0 || Number(data.price) > 100000000)
       return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
     if (!data.description?.trim())
       return NextResponse.json({ error: 'Description is required' }, { status: 400 });

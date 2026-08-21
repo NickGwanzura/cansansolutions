@@ -2,15 +2,14 @@ import type { Metadata } from 'next';
 import './globals.css';
 import PublicChrome from '@/components/PublicChrome';
 import { OrganizationJsonLd, LocalBusinessJsonLd, WebsiteJsonLd } from '@/components/JsonLd';
-import { Instrument_Sans } from 'next/font/google';
+import { Geist } from 'next/font/google';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { ToastProvider } from '@/components/Toast';
 
-const instrumentSans = Instrument_Sans({
+const geistSans = Geist({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-instrument-sans',
+  variable: '--font-geist-sans',
 });
 
 const HERO_TITLE = `Buy SSDs, Laptops & CCTV in Zimbabwe | ${SITE_NAME}`;
@@ -65,7 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <LocalBusinessJsonLd />
         <WebsiteJsonLd />
       </head>
-      <body className={`${instrumentSans.variable} font-sans antialiased bg-white text-zinc-900`}>
+      <body className={`${geistSans.variable} font-sans antialiased bg-white text-zinc-900`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-red-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"

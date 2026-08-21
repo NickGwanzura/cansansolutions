@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/check-admin-auth';
 import { importProducts } from '@/lib/admin-data';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_BASE_URL = 'https://www.firstshop.co.za';
 const DEFAULT_COLLECTION_HANDLE = 'external-solid-state-drive-ssd';
@@ -72,6 +73,9 @@ function normalizeBaseUrl(value?: string): string {
 
   try {
     const parsed = new URL(value.trim());
+    if (parsed.protocol !== 'https:' || !/(^|\.)firstshop\.co\.za$/i.test(parsed.hostname)) {
+      return fallback;
+    }
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
     return fallback;
@@ -179,9 +183,7 @@ function parseProductLinks(value: string[] | string | undefined): string[] {
 function normalizeTags(value: string[] | string | undefined): string[] {
   if (!value) return [];
   const base = Array.isArray(value) ? value : value.split(',');
-  return base
-    .map((item) => String(item).trim())
-    .filter(Boolean);
+  return base.map((item) => String(item).trim()).filter(Boolean);
 }
 
 function parsePrice(value: unknown): number | undefined {
@@ -211,7 +213,10 @@ function normalizeSpecValue(value: string): string {
   return value.replace(/;/g, ',').replace(/\s+/g, ' ').trim();
 }
 
-function parseSpecsFromTags(tags: string[], sku?: string | null): Record<string, string> | undefined {
+function parseSpecsFromTags(
+  tags: string[],
+  sku?: string | null,
+): Record<string, string> | undefined {
   const specs: Record<string, string> = {};
 
   for (const rawTag of tags) {
@@ -240,7 +245,11 @@ function pickImage(product: FirstShopProduct): string {
 
   if (typeof product.featured_image === 'string') {
     candidates.push(product.featured_image);
-  } else if (product.featured_image && typeof product.featured_image === 'object' && typeof product.featured_image.src === 'string') {
+  } else if (
+    product.featured_image &&
+    typeof product.featured_image === 'object' &&
+    typeof product.featured_image.src === 'string'
+  ) {
     candidates.push(product.featured_image.src);
   }
 
@@ -259,7 +268,9 @@ function pickImage(product: FirstShopProduct): string {
 }
 
 function buildDescription(sourceDescription: string | undefined, sourceUrl: string): string {
-  const base = (sourceDescription || '').trim() || '<p>Imported product listing from FirstShop South Africa.</p>';
+  const base =
+    (sourceDescription || '').trim() ||
+    '<p>Imported product listing from FirstShop South Africa.</p>';
   const importNote =
     '<p><strong>Delivery:</strong> This SA Import item is delivered in about 5 days after order confirmation.</p>';
   const sourceNote = `<p><strong>Source:</strong> <a href="${sourceUrl}" target="_blank" rel="nofollow noopener noreferrer">FirstShop South Africa listing</a></p>`;
@@ -267,7 +278,11 @@ function buildDescription(sourceDescription: string | undefined, sourceUrl: stri
   return `${base}\n${importNote}\n${sourceNote}`;
 }
 
-function mapFirstShopProduct(product: FirstShopProduct, baseUrl: string, conversion: ConversionOptions) {
+function mapFirstShopProduct(
+  product: FirstShopProduct,
+  baseUrl: string,
+  conversion: ConversionOptions,
+) {
   const title = (product.title || '').trim();
   const handle = (product.handle || '').trim();
   const productId = String(product.id || '').trim();
@@ -306,7 +321,7 @@ function mapFirstShopProduct(product: FirstShopProduct, baseUrl: string, convers
       `sa-markup-${Math.round(conversion.markupPercent)}`,
       toRateTag(conversion.usdToZarRate),
       'sa-bank-rate-converted',
-    ])
+    ]),
   );
 
   const sourceUrl = `${baseUrl}/products/${handle}`;
@@ -335,7 +350,11 @@ function mapFirstShopProduct(product: FirstShopProduct, baseUrl: string, convers
   };
 }
 
-async function fetchCollectionProducts(baseUrl: string, collectionHandle: string, limit: number): Promise<FirstShopProduct[]> {
+async function fetchCollectionProducts(
+  baseUrl: string,
+  collectionHandle: string,
+  limit: number,
+): Promise<FirstShopProduct[]> {
   const collected: FirstShopProduct[] = [];
   const maxPages = 6;
   let page = 1;
@@ -387,11 +406,11 @@ async function fetchCollectionProducts(baseUrl: string, collectionHandle: string
   return uniqueProducts;
 }
 
-async function fetchProductByHandle(baseUrl: string, handle: string): Promise<FirstShopProduct | null> {
-  const endpoints = [
-    `${baseUrl}/products/${handle}.js`,
-    `${baseUrl}/products/${handle}.json`,
-  ];
+async function fetchProductByHandle(
+  baseUrl: string,
+  handle: string,
+): Promise<FirstShopProduct | null> {
+  const endpoints = [`${baseUrl}/products/${handle}.js`, `${baseUrl}/products/${handle}.json`];
 
   for (const endpoint of endpoints) {
     const response = await fetch(endpoint, {
@@ -407,14 +426,14 @@ async function fetchProductByHandle(baseUrl: string, handle: string): Promise<Fi
     }
 
     const payload = (await response.json().catch(() => null)) as
-      | (FirstShopProduct & { product?: FirstShopProduct })
-      | null;
+      (FirstShopProduct & { product?: FirstShopProduct }) | null;
 
     if (!payload || typeof payload !== 'object') {
       continue;
     }
 
-    const product = payload.product && typeof payload.product === 'object' ? payload.product : payload;
+    const product =
+      payload.product && typeof payload.product === 'object' ? payload.product : payload;
 
     return {
       ...product,
@@ -425,10 +444,14 @@ async function fetchProductByHandle(baseUrl: string, handle: string): Promise<Fi
   return null;
 }
 
-async function fetchSpecificProducts(baseUrl: string, handles: string[], limit: number): Promise<FirstShopProduct[]> {
+async function fetchSpecificProducts(
+  baseUrl: string,
+  handles: string[],
+  limit: number,
+): Promise<FirstShopProduct[]> {
   const limitedHandles = Array.from(new Set(handles)).slice(0, limit);
   const products = await Promise.all(
-    limitedHandles.map((handle) => fetchProductByHandle(baseUrl, handle))
+    limitedHandles.map((handle) => fetchProductByHandle(baseUrl, handle)),
   );
 
   return products.filter((product): product is FirstShopProduct => Boolean(product));
@@ -448,9 +471,10 @@ async function fetchUsdToZarRate(): Promise<number | null> {
       return null;
     }
 
-    const payload = (await response.json().catch(() => null)) as
-      | { rates?: Record<string, number>; amount?: number }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      rates?: Record<string, number>;
+      amount?: number;
+    } | null;
     const rate = payload?.rates?.ZAR;
 
     if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
@@ -473,11 +497,23 @@ async function resolveUsdToZarRate(payloadRate?: number): Promise<number> {
   const fromFeed = await fetchUsdToZarRate();
   if (fromFeed) return fromFeed;
 
-  throw new Error('Unable to resolve USD/ZAR bank rate. Provide `bankRate` in request or set SA_BANK_USD_ZAR_RATE.');
+  throw new Error(
+    'Unable to resolve USD/ZAR bank rate. Provide `bankRate` in request or set SA_BANK_USD_ZAR_RATE.',
+  );
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const ip =
+      req.headers.get('x-real-ip') ||
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'unknown';
+    const rateLimit = checkRateLimit(`admin-import:${ip}`, 10, 300);
+    if (!rateLimit.allowed)
+      return NextResponse.json(
+        { error: 'Too many imports. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.resetInSeconds) } },
+      );
     const authorized = await checkAdminAuth(req);
     if (!authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -505,18 +541,20 @@ export async function POST(req: NextRequest) {
               ? 'No valid products found from the provided FirstShop product links'
               : 'No products found from FirstShop collection feed',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const mappedProducts = sourceProducts
       .map((product) => mapFirstShopProduct(product, baseUrl, { usdToZarRate, markupPercent }))
-      .filter((product): product is NonNullable<ReturnType<typeof mapFirstShopProduct>> => Boolean(product));
+      .filter((product): product is NonNullable<ReturnType<typeof mapFirstShopProduct>> =>
+        Boolean(product),
+      );
 
     if (mappedProducts.length === 0) {
       return NextResponse.json(
         { error: 'No valid products were mapped from FirstShop feed' },
-        { status: 422 }
+        { status: 422 },
       );
     }
 

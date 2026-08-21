@@ -3,29 +3,36 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/types';
+import { formatCurrency } from '@/lib/utils';
 
-type HeroProductSliderProps = {
-  products: Product[];
-};
-
+type HeroProductSliderProps = { products: Product[] };
 const AUTO_ADVANCE_MS = 6000;
 
-const TRUST_POINTS = ['Genuine stock', 'Harare delivery', 'Local warranty support'];
-
-function ArrowIcon({ className }: { className?: string }) {
+function ArrowIcon() {
   return (
     <svg
       aria-hidden="true"
-      className={className}
+      className="h-4 w-4"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
     </svg>
+  );
+}
+
+function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
+  return (
+    <Image
+      src={product.image || '/images/products/placeholder.svg'}
+      alt={product.name}
+      fill
+      sizes={sizes}
+      className="object-contain p-4 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500"
+    />
   );
 }
 
@@ -36,45 +43,31 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
 
   useEffect(() => {
     if (slides.length <= 1) return;
-
     const interval = window.setInterval(() => {
       if (!pausedRef.current) setActiveIndex((current) => (current + 1) % slides.length);
     }, AUTO_ADVANCE_MS);
-
     return () => window.clearInterval(interval);
   }, [slides.length]);
 
   if (slides.length === 0) {
     return (
-      <section className="relative isolate overflow-hidden bg-zinc-950 text-white">
-        <Image
-          src="/images/hero-tech-background.png"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-45"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(100deg,rgba(9,9,11,0.96),rgba(9,9,11,0.72)_55%,rgba(9,9,11,0.38)),linear-gradient(0deg,rgba(9,9,11,0.72),transparent_55%)]"
-        />
-        <div className="relative mx-auto flex min-h-[560px] max-w-[1920px] items-center px-5 py-16 sm:min-h-[680px] sm:px-8 sm:py-24 lg:min-h-[720px] lg:px-12 xl:px-16">
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-400">
+      <section className="bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-12">
+        <div className="mx-auto flex min-h-[420px] max-w-7xl items-center rounded-[2rem] bg-[radial-gradient(circle_at_70%_20%,rgba(220,38,38,0.35),transparent_45%),#09090b] px-6 py-14 sm:px-12">
+          <div className="max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
               Cansan Electronics
             </p>
-            <h1 className="mt-5 font-heading text-4xl font-extrabold leading-[0.94] tracking-[-0.055em] sm:text-6xl lg:text-8xl">
-              Technology that keeps moving.
+            <h1 className="mt-4 font-heading text-4xl font-extrabold leading-[0.94] tracking-[-0.05em] sm:text-6xl">
+              Tech that keeps your day moving.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/76">
-              Laptops, storage, CCTV and networking gear, backed by clear local support.
+            <p className="mt-5 text-base leading-relaxed text-white/70">
+              Laptops, storage, CCTV and networking gear with local support.
             </p>
             <Link
               href="/products"
-              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-bold text-white transition hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
+              className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-500"
             >
-              Browse the store <ArrowIcon className="h-4 w-4" />
+              Browse the store <ArrowIcon />
             </Link>
           </div>
         </div>
@@ -82,9 +75,13 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
     );
   }
 
+  const active = slides[activeIndex];
+  const secondary = slides[(activeIndex + 1) % slides.length];
+  const tertiary = slides[(activeIndex + 2) % slides.length];
+
   return (
     <section
-      className="relative isolate overflow-hidden bg-zinc-950 text-white"
+      className="bg-white px-4 pb-8 pt-5 sm:px-6 sm:pb-12 sm:pt-8"
       onMouseEnter={() => {
         pausedRef.current = true;
       }}
@@ -92,153 +89,86 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
         pausedRef.current = false;
       }}
     >
-      <Image
-        src="/images/hero-tech-background.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="pointer-events-none object-cover object-center opacity-40"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(100deg,rgba(9,9,11,0.97)_0%,rgba(9,9,11,0.9)_43%,rgba(9,9,11,0.5)_72%,rgba(9,9,11,0.7)_100%),linear-gradient(0deg,rgba(9,9,11,0.8),transparent_42%)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute right-[-12%] top-[12%] h-[34rem] w-[34rem] rounded-full bg-red-600/20 blur-[130px]"
-      />
-
-      <div className="relative mx-auto min-h-[650px] max-w-[1920px] px-5 pb-24 pt-8 sm:min-h-[810px] sm:px-8 sm:pb-40 sm:pt-14 lg:min-h-[720px] lg:px-12 lg:pb-28 lg:pt-16 xl:px-16">
-        <div
-          className="flex min-h-[550px] overflow-hidden sm:min-h-[590px] lg:min-h-[570px]"
-          style={{
-            transform: `translateX(-${activeIndex * 100}%)`,
-            transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-        >
-          {slides.map((product, index) => (
-            <article
-              key={product.id}
-              aria-hidden={index !== activeIndex}
-              className="grid min-w-full grid-cols-1 items-center gap-3 sm:gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)] lg:gap-12 xl:gap-20"
-            >
-              <div className="max-w-2xl pt-0 sm:pt-4 lg:pt-0">
-                <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-white/85 backdrop-blur-sm sm:min-h-10 sm:px-4 sm:text-xs sm:tracking-[0.18em]">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  Featured technology
-                </div>
-                <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-400 sm:mt-8 sm:text-sm sm:tracking-[0.18em]">
-                  {product.category}
-                </p>
-                <h1 className="mt-2 font-heading text-[clamp(2.35rem,11vw,3.2rem)] font-extrabold leading-[0.9] tracking-[-0.055em] text-white sm:mt-3 sm:text-[clamp(3rem,6.3vw,6.7rem)] sm:tracking-[-0.065em]">
-                  {product.name}
-                </h1>
-                <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:mt-6 sm:text-lg">
-                  The equipment you need, with transparent pricing and a local team to help you
-                  choose the right setup.
-                </p>
-
-                <div className="mt-5 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
-                  <Link
-                    href={`/products/${product.slug}`}
-                    tabIndex={index === activeIndex ? 0 : -1}
-                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-red-600 px-6 text-sm font-bold text-white transition hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:w-auto"
-                  >
-                    Shop this product <ArrowIcon className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/products"
-                    tabIndex={index === activeIndex ? 0 : -1}
-                    className="hidden min-h-12 items-center justify-center rounded-full border border-white/18 px-6 text-sm font-bold text-white transition hover:border-white/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:inline-flex"
-                  >
-                    Explore all products
-                  </Link>
-                </div>
-
-                <ul className="mt-6 hidden flex-wrap gap-x-5 gap-y-3 text-sm font-medium text-white/72 sm:flex">
-                  {TRUST_POINTS.map((point) => (
-                    <li key={point} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="relative mx-auto -mt-1 flex w-full max-w-[17rem] items-center justify-center sm:mt-0 sm:max-w-2xl lg:justify-end">
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-6 hidden rounded-full border border-white/10 bg-white/[0.035] sm:block"
-                />
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-14 hidden rounded-full border border-white/10 sm:block"
-                />
-                <div className="relative w-full max-w-[34rem]">
-                  <div className="relative aspect-[1.6] overflow-hidden sm:aspect-[1.08]">
-                    <Image
-                      src={product.image || '/images/products/placeholder.svg'}
-                      alt={product.name}
-                      fill
-                      priority={index === 0}
-                      sizes="(max-width: 1024px) 90vw, 620px"
-                      className="object-contain p-0 drop-shadow-[0_24px_32px_rgba(0,0,0,0.4)] transition duration-500 sm:p-4 sm:drop-shadow-[0_34px_44px_rgba(0,0,0,0.45)]"
-                    />
-                  </div>
-                  <Link
-                    href={`/products/${product.slug}`}
-                    tabIndex={index === activeIndex ? 0 : -1}
-                    className="absolute bottom-0 left-0 right-0 mx-auto flex max-w-md items-center justify-between gap-4 rounded-xl border border-white/15 bg-zinc-950/85 p-3 shadow-xl backdrop-blur-xl transition hover:border-red-400/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:rounded-2xl sm:p-5"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-400">
-                        Available now
-                      </p>
-                      <p className="mt-1 truncate text-lg font-extrabold text-white sm:text-2xl">
-                        {formatCurrency(product.price, product.currency)}
-                      </p>
-                    </div>
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-zinc-950 sm:h-11 sm:w-11">
-                      <ArrowIcon className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <div className="absolute bottom-3 left-5 right-5 flex items-end justify-between gap-4 sm:bottom-7 sm:left-8 sm:right-8 lg:bottom-9 lg:left-12 lg:right-12 xl:left-16 xl:right-16">
-          <div className="hidden text-xs font-bold uppercase tracking-[0.18em] text-white/52 sm:block">
-            Discover Cansan
-          </div>
-          <div
-            className="ml-auto flex items-center gap-2"
-            role="tablist"
-            aria-label="Featured products"
-          >
-            {slides.map((product, index) => (
-              <button
-                key={product.id}
-                type="button"
-                role="tab"
-                aria-selected={index === activeIndex}
-                aria-label={`Show ${product.name}`}
-                onClick={() => setActiveIndex(index)}
-                className={`flex min-h-11 items-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 ${index === activeIndex ? 'gap-2 bg-white px-4 text-zinc-950' : 'w-11 justify-center border border-white/15 bg-white/5 text-white hover:bg-white/15'}`}
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+          <article className="relative min-h-[430px] overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_78%_32%,rgba(239,68,68,0.26),transparent_35%),linear-gradient(135deg,#07070a,#17131a)] px-6 py-8 text-white sm:min-h-[520px] sm:px-10 sm:py-12">
+            <div className="relative z-10 max-w-[52%] sm:max-w-[50%]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
+                Featured technology
+              </p>
+              <h1 className="mt-4 font-heading text-4xl font-extrabold leading-[0.92] tracking-[-0.055em] sm:text-6xl">
+                {active.name}
+              </h1>
+              <p className="mt-5 text-sm leading-relaxed text-white/70 sm:text-base">
+                Reliable technology, clear pricing, and local support for the way you work, learn,
+                and connect.
+              </p>
+              <Link
+                href={`/products/${active.slug}`}
+                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300"
               >
-                <span
-                  className={`h-2 rounded-full ${index === activeIndex ? 'w-2 bg-red-600' : 'w-2 bg-white/60'}`}
+                Shop now <ArrowIcon />
+              </Link>
+            </div>
+            <div className="absolute inset-y-4 right-[-3%] w-[60%] sm:right-[3%] sm:w-[56%]">
+              <ProductImage product={active} sizes="(max-width: 640px) 62vw, 560px" />
+            </div>
+            <div className="absolute bottom-5 left-6 flex items-center gap-2 sm:left-10">
+              {slides.map((product, index) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  aria-label={`Show ${product.name}`}
+                  aria-current={index === activeIndex}
+                  className={`h-2 rounded-full transition-all ${index === activeIndex ? 'w-8 bg-red-500' : 'w-2 bg-white/45 hover:bg-white/80'}`}
                 />
-                {index === activeIndex ? (
-                  <span className="hidden text-xs font-bold sm:inline">
-                    {String(index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
-                  </span>
-                ) : null}
-              </button>
+              ))}
+            </div>
+          </article>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {[secondary, tertiary].map((product, index) => (
+              <Link
+                key={`${product.id}-${index}`}
+                href={`/products/${product.slug}`}
+                className={`group relative flex min-h-[205px] items-center overflow-hidden rounded-[1.75rem] px-6 py-6 transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 ${index === 0 ? 'bg-red-50' : 'bg-zinc-100'}`}
+              >
+                <div className="relative z-10 max-w-[52%]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                    {index === 0 ? 'Popular this week' : 'Ready for your setup'}
+                  </p>
+                  <h2 className="mt-3 text-xl font-bold leading-tight tracking-[-0.03em] text-zinc-950">
+                    {product.name}
+                  </h2>
+                  <p className="mt-5 text-sm font-semibold text-red-700">
+                    From {formatCurrency(product.price, product.currency)}
+                  </p>
+                </div>
+                <div className="absolute inset-y-3 right-0 w-[58%] transition-transform duration-300 group-hover:scale-105">
+                  <ProductImage product={product} sizes="(max-width: 1024px) 48vw, 300px" />
+                </div>
+              </Link>
             ))}
           </div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 sm:grid-cols-4 sm:px-6">
+          {[
+            ['Free local delivery', 'Harare orders'],
+            ['Genuine stock', 'Verified products'],
+            ['WhatsApp support', 'Fast replies'],
+            ['Secure checkout', 'Clear pricing'],
+          ].map(([title, detail]) => (
+            <div
+              key={title}
+              className="flex items-start gap-2.5 border-zinc-200 py-1 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:pl-5"
+            >
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-600" />
+              <div>
+                <p className="text-xs font-bold text-zinc-900 sm:text-sm">{title}</p>
+                <p className="mt-0.5 text-[11px] text-zinc-500">{detail}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

@@ -9,7 +9,6 @@ import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/ProductCard';
 import { HeroProductSlider } from '@/components/HeroProductSlider';
 import { WA_NUMBER } from '@/lib/site';
-import { formatCurrency } from '@/lib/utils';
 
 // Dynamic, not ISR: DATABASE_URL is only injected at container runtime (not
 // available during the Docker build), so static prerendering at build time
@@ -535,22 +534,9 @@ export default async function HomePage() {
 
   const homepageProducts = getDailyHomepageProducts(products);
 
-  const discountedProducts = products
-    .filter(
-      (product) =>
-        product.inStock && product.originalPrice && product.originalPrice > product.price,
-    )
-    .slice(0, 4);
-
-  const trendingProducts = products
-    .filter(
-      (product) => product.inStock && !discountedProducts.some((deal) => deal.id === product.id),
-    )
-    .slice(0, 4);
-
   const heroSlideProducts = (() => {
     const seen = new Set<string>();
-    const pool = [...discountedProducts, ...homepageProducts, ...trendingProducts];
+    const pool = [...homepageProducts, ...products.filter((product) => product.inStock)];
     const deduped: Product[] = [];
 
     for (const product of pool) {
@@ -569,14 +555,14 @@ export default async function HomePage() {
     <div className="overflow-x-hidden bg-[#f7f7f7] text-zinc-900">
       <HeroProductSlider products={heroSlideProducts} />
 
-      <section className="bg-white px-4 py-8 sm:px-6 sm:py-10">
+      <section id="shop-categories" className="bg-white px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-700">
-                Shop by category
+                Browse by category
               </p>
-              <h2 className="mt-1 text-2xl font-bold text-zinc-900">Find the right tech faster</h2>
+              <h2 className="mt-1 text-2xl font-bold text-zinc-900">Shop by category</h2>
             </div>
             <Link
               href="#shop-categories"
@@ -607,8 +593,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-zinc-200 bg-zinc-50 px-4 py-6 sm:px-6 sm:py-10">
-        <div className="mx-auto grid max-w-7xl gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="border-y border-zinc-200 bg-white px-4 py-5 sm:px-6 sm:py-6">
+        <div className="mx-auto grid max-w-7xl gap-0 sm:grid-cols-2 xl:grid-cols-4">
           {FEATURE_TILES.map((tile) => {
             const content = (
               <>
@@ -620,13 +606,13 @@ export default async function HomePage() {
                     {tile.stat}
                   </span>
                 </div>
-                <h3 className="mt-5 text-lg font-bold tracking-[-0.02em] text-zinc-900 sm:text-xl">
+                <h3 className="mt-3 text-base font-bold tracking-[-0.02em] text-zinc-900 sm:text-lg">
                   {tile.title}
                 </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600">
+                <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-zinc-600">
                   {tile.description}
                 </p>
-                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-red-700">
+                <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-red-700">
                   {tile.action}
                   <svg
                     aria-hidden="true"
@@ -652,7 +638,7 @@ export default async function HomePage() {
                 href={tile.href}
                 target={'external' in tile && tile.external ? '_blank' : undefined}
                 rel={'external' in tile && tile.external ? 'noreferrer' : undefined}
-                className="group flex min-h-[220px] flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_2px_5px_rgba(24,24,27,0.06)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 sm:min-h-[232px] sm:p-6"
+                className="group flex min-h-[108px] flex-col border-zinc-200 px-2 py-4 transition duration-200 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 sm:px-5 sm:[&:not(:first-child)]:border-l"
               >
                 {content}
               </Link>
@@ -661,61 +647,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="shop-categories" className="bg-zinc-50 px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
-                Available in store
-              </p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
-                Shop the technology you need
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm text-zinc-600">
-                Browse current ranges for work, learning, home entertainment and business setups.
-              </p>
-            </div>
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
-            >
-              View all products
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
-            {CATALOG_CATEGORIES.map((category) => (
-              <Link
-                key={category.id}
-                href={getCategoryHref(category.slug)}
-                className="group flex min-h-36 flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white px-3 py-5 text-center transition hover:-translate-y-1 hover:border-red-200 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-100 bg-zinc-50 text-red-700 transition group-hover:border-red-100 group-hover:bg-red-50 group-hover:scale-105 motion-reduce:transition-none"
-                >
-                  {CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS.deals}
-                </span>
-                <span className="mt-3 text-xs font-semibold leading-tight text-zinc-900 transition group-hover:text-red-700">
-                  {category.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section id="featured-products" className="bg-white px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
-                Featured Products
+                New arrivals
               </p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
-                Top SSD, Laptop, Networking and CCTV Picks
-              </h2>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Fresh tech for every setup</h2>
               <p className="mt-2 text-sm text-zinc-600">
                 Daily-rotating mix: 2 laptops, 3 SA imports, plus 3 products from other categories
                 for faster comparison.
@@ -730,7 +669,7 @@ export default async function HomePage() {
           </div>
 
           {homepageProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {homepageProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -743,138 +682,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-14 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
-                Best Deals and Trending
-              </p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
-                Limited Offers and Fast-Selling Products
-              </h2>
-            </div>
-            <Link
-              href="/products"
-              className="text-sm font-semibold text-red-700 hover:text-red-800"
-            >
-              See all deals →
-            </Link>
-          </div>
-
-          <div className="grid items-start gap-5 xl:grid-cols-2">
-            <article className="h-fit rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-[0_2px_5px_rgba(24,24,27,0.04)] sm:p-6">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-zinc-900">Best Deals</h3>
-                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-                  Discounted now
-                </span>
-              </div>
-
-              {discountedProducts.length > 0 ? (
-                <ul className="space-y-3">
-                  {discountedProducts.map((product) => {
-                    const discount = product.originalPrice
-                      ? Math.round(
-                          ((product.originalPrice - product.price) / product.originalPrice) * 100,
-                        )
-                      : 0;
-
-                    return (
-                      <li key={product.id}>
-                        <Link
-                          href={`/products/${product.slug}`}
-                          className="group flex min-h-[76px] items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition duration-200 hover:border-red-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                        >
-                          <div className="min-w-0 pr-2">
-                            <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
-                              {product.name}
-                            </p>
-                            <p className="mt-1 text-xs text-zinc-500">
-                              {product.inStock
-                                ? 'In stock and fast moving'
-                                : 'Stock updates available'}
-                            </p>
-                            {product.dealLabel ? (
-                              <span className="mt-1.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                                {product.dealLabel}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-zinc-900">
-                              {formatCurrency(product.price, product.currency)}
-                            </p>
-                            <p className="text-xs font-semibold text-red-700">Save {discount}%</p>
-                          </div>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-                  New deal products will appear here automatically once promotional pricing is
-                  added.
-                </p>
-              )}
-            </article>
-
-            <article className="h-fit rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-[0_2px_5px_rgba(24,24,27,0.04)] sm:p-6">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-zinc-900">More to Explore</h3>
-                <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
-                  Fast selling
-                </span>
-              </div>
-
-              {trendingProducts.length > 0 ? (
-                <ul className="space-y-3">
-                  {trendingProducts.map((product) => (
-                    <li key={product.id}>
-                      <Link
-                        href={`/products/${product.slug}`}
-                        className="group flex min-h-[76px] items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition duration-200 hover:border-red-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <p className="line-clamp-1 text-sm font-semibold text-zinc-900">
-                            {product.name}
-                          </p>
-                          <p className="mt-1 text-xs text-zinc-500">
-                            Popular with home and business buyers
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2 text-sm font-bold text-zinc-900">
-                          {formatCurrency(product.price, product.currency)}
-                          <svg
-                            aria-hidden="true"
-                            className="h-4 w-4 text-red-600 transition-transform duration-200 group-hover:translate-x-0.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                            />
-                          </svg>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-                  Trending products will show here after your first in-stock listings are published.
-                </p>
-              )}
-            </article>
-          </div>
-        </div>
-      </section>
-
       <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -882,13 +689,9 @@ export default async function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
                 Buying Guides
               </p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">
-                SEO Content That Captures Ready-to-Buy Traffic
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+                Guides for smarter buying
               </h2>
-              <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-                Educational content answers buyer questions early and routes high-intent visitors
-                directly to relevant categories.
-              </p>
             </div>
             <Link
               href="/insights"
@@ -902,8 +705,12 @@ export default async function HomePage() {
             {featuredInsights.map((article) => (
               <article
                 key={article.slug}
-                className="group flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_2px_5px_rgba(24,24,27,0.05)] transition duration-200 hover:border-zinc-300 hover:shadow-md focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-red-600 sm:p-6"
+                className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_8px_30px_rgba(24,24,27,0.05)] transition duration-200 hover:-translate-y-1 hover:border-red-200 hover:shadow-[0_16px_38px_rgba(220,38,38,0.10)] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-red-600 sm:p-7"
               >
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-red-600 via-red-400 to-transparent"
+                />
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
                   {article.categoryLabel}
                 </p>
@@ -913,7 +720,7 @@ export default async function HomePage() {
                 <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600">
                   {article.excerpt}
                 </p>
-                <p className="mt-4 text-xs text-zinc-500">
+                <p className="mt-5 inline-flex w-fit rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">
                   {formatInsightDate(article.publishedAt)}
                 </p>
                 <Link
@@ -942,15 +749,29 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-zinc-950 px-6 py-14 text-white">
-        <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-10">
+        <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICE_LINKS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+              className="group flex min-h-16 items-center justify-between rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-red-500/60 hover:bg-red-600/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
             >
-              {item.label}
+              <span>{item.label}</span>
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4 text-red-400 transition-transform group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                />
+              </svg>
             </Link>
           ))}
         </div>

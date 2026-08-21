@@ -75,11 +75,13 @@ function mapRow(data: ProductRecord): Product {
   };
 }
 
-export async function readProducts(): Promise<Product[]> {
+export async function readProducts(options: { allowFallback?: boolean } = {}): Promise<Product[]> {
+  const allowFallback = options.allowFallback ?? true;
   // A local catalogue keeps the storefront usable in development and preview
   // environments where DATABASE_URL has not been configured. A configured
   // database remains the only source used in production inventory workflows.
   if (!process.env.DATABASE_URL) {
+    if (!allowFallback) throw new Error('DATABASE_URL is not configured');
     return fallbackProducts.map((product) => mapRow(product));
   }
 
@@ -88,6 +90,7 @@ export async function readProducts(): Promise<Product[]> {
     return products.map(mapRow);
   } catch (error) {
     console.error('[readProducts] Failed:', error);
+    if (!allowFallback) throw error;
     // Keep the catalogue browseable during a transient database outage. Admin
     // writes still fail loudly through their respective database operations.
     return fallbackProducts.map((product) => mapRow(product));
@@ -126,7 +129,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export async function createProduct(data: Omit<Product, 'id'>): Promise<Product> {
   try {
-    const products = await readProducts();
+    const products = await readProducts({ allowFallback: false });
     const id = nextId(products);
     const productType = normalizeProductType(data.productType);
     const bundleItems = normalizeBundleItems(data.bundleItems);
@@ -134,7 +137,8 @@ export async function createProduct(data: Omit<Product, 'id'>): Promise<Product>
     if (!data.slug) throw new Error('slug required');
     if (!data.name) throw new Error('name required');
     if (!data.category) throw new Error('category required');
-    if (data.price == null) throw new Error('price required');
+    if (data.price == null || !Number.isFinite(Number(data.price)) || Number(data.price) < 0)
+      throw new Error('valid price required');
     if (!data.description) throw new Error('description required');
     // Image is optional - can be added later via admin panel
     if (productType === 'bundle' && bundleItems.length === 0)
@@ -262,7 +266,7 @@ export async function importProducts(
   data: ProductRecord[],
   mode: 'append' | 'replace' = 'replace',
 ): Promise<Product[]> {
-  const baseProducts = mode === 'append' ? await readProducts() : [];
+  const baseProducts = mode === 'append' ? await readProducts({ allowFallback: false }) : [];
   const importedProducts = [...baseProducts];
 
   const usedIds = new Set(importedProducts.map((product) => product.id));
@@ -322,7 +326,7 @@ export async function updateProducts(
   ids: string[],
   changes: Partial<Record<string, unknown>>,
 ): Promise<number> {
-  const products = await readProducts();
+  const products = await readProducts({ allowFallback: false });
   let updated = 0;
 
   const updatedProducts = products.map((p) => {

@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const onlyMissing = body.onlyMissing !== false;
     const overwrite = body.overwrite === true;
 
-    const products = await readProducts();
+    const products = await readProducts({ allowFallback: false });
     const targets = ids.length > 0 ? products.filter((product) => ids.includes(product.id)) : products;
 
     if (targets.length === 0) {

@@ -6,6 +6,15 @@ const SITE_URL = process.env.SITE_URL || 'https://cansansolutions.shop';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * Send an invoice (or quote/ receipt) as a branded HTML email to the customer.
  */
@@ -44,13 +53,22 @@ export async function sendDocumentEmail(params: {
   } = params;
 
   try {
+    const safeCompanyName = escapeHtml(companyName).slice(0, 160);
+    const safeCustomerName = escapeHtml(customerName).slice(0, 200);
+    const safeDocumentType = escapeHtml(documentType);
+    const safeDocumentNumber = escapeHtml(documentNumber).slice(0, 100);
+    const safeCurrency = escapeHtml(currency).slice(0, 12);
+    const safeTotal = escapeHtml(total).slice(0, 50);
+    const safeTin = escapeHtml(tinNumber);
+    const safeVat = escapeHtml(vatNumber);
+    const safeVendor = escapeHtml(vendorNumber);
     const { data, error } = await resend.emails.send({
-      from: `${companyName} <${FROM_EMAIL}>`,
+      from: `${safeCompanyName} <${FROM_EMAIL}>`,
       to: [to],
       subject: `${documentType} ${documentNumber} from ${companyName}`,
       attachments: [
         {
-          filename: `${documentType}-${documentNumber}.pdf`,
+          filename: `${documentType}-${String(documentNumber).replace(/[^a-z0-9_-]/gi, '_')}.pdf`,
           content: pdfBase64,
         },
       ],
@@ -70,21 +88,21 @@ export async function sendDocumentEmail(params: {
           <!-- Header -->
           <tr>
             <td style="background:#dc2626;padding:32px 40px 24px;text-align:center;">
-              ${companyLogoUrl ? `<img src="${SITE_URL}${companyLogoUrl}" alt="${companyName}" style="height:48px;width:auto;margin-bottom:16px;" />` : ''}
-              <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;">${documentType}</h1>
-              <p style="margin:4px 0 0;font-size:14px;color:#fca5a5;">${documentNumber}</p>
+              ${companyLogoUrl ? `<img src="${SITE_URL}${escapeHtml(companyLogoUrl)}" alt="${safeCompanyName}" style="height:48px;width:auto;margin-bottom:16px;" />` : ''}
+              <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;">${safeDocumentType}</h1>
+              <p style="margin:4px 0 0;font-size:14px;color:#fca5a5;">${safeDocumentNumber}</p>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
             <td style="padding:32px 40px;">
-              <p style="margin:0 0 24px;font-size:16px;color:#18181b;">Dear ${customerName},</p>
+              <p style="margin:0 0 24px;font-size:16px;color:#18181b;">Dear ${safeCustomerName},</p>
               <p style="margin:0 0 8px;font-size:14px;color:#52525b;">
-                Please find attached your ${documentType.toLowerCase()} <strong>${documentNumber}</strong> from ${companyName}.
+                Please find attached your ${safeDocumentType.toLowerCase()} <strong>${safeDocumentNumber}</strong> from ${safeCompanyName}.
               </p>
               <p style="margin:0 0 24px;font-size:14px;color:#52525b;">
-                Total amount: <strong style="color:#dc2626;">${currency} ${total}</strong>
+                Total amount: <strong style="color:#dc2626;">${safeCurrency} ${safeTotal}</strong>
               </p>
 
               <!-- Company details -->
@@ -92,9 +110,9 @@ export async function sendDocumentEmail(params: {
                 <tr>
                   <td style="font-size:12px;font-weight:600;color:#71717a;padding-bottom:8px;">Company Details</td>
                 </tr>
-                ${tinNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">TIN: ${tinNumber}</td></tr>` : ''}
-                ${vatNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">VAT: ${vatNumber}</td></tr>` : ''}
-                ${vendorNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">Vendor: ${vendorNumber}</td></tr>` : ''}
+                ${tinNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">TIN: ${safeTin}</td></tr>` : ''}
+                ${vatNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">VAT: ${safeVat}</td></tr>` : ''}
+                ${vendorNumber ? `<tr><td style="font-size:13px;color:#18181b;padding:2px 0;">Vendor: ${safeVendor}</td></tr>` : ''}
               </table>
 
               <p style="margin:0 0 8px;font-size:14px;color:#52525b;">
@@ -106,7 +124,7 @@ export async function sendDocumentEmail(params: {
           <!-- Footer -->
           <tr>
             <td style="background:#18181b;padding:24px 40px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#a1a1aa;">${companyName} &mdash; Zimbabwe Tech Store</p>
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">${safeCompanyName} &mdash; Zimbabwe Tech Store</p>
               <p style="margin:4px 0 0;font-size:12px;color:#71717a;">
                 ${tinNumber ? `TIN ${tinNumber} &bull; ` : ''}${vatNumber ? `VAT ${vatNumber} &bull; ` : ''}${vendorNumber ? `Vendor ${vendorNumber}` : ''}
               </p>

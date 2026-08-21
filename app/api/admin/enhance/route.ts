@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/check-admin-auth';
 import Groq from 'groq-sdk';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   if (!(await checkAdminAuth(req))) {
@@ -12,10 +13,20 @@ export async function POST(req: NextRequest) {
   if (!process.env.GROQ_API_KEY) {
     return NextResponse.json({ error: 'GROQ_API_KEY is not configured' }, { status: 503 });
   }
+  const ip =
+    req.headers.get('x-real-ip') ||
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  const limit = checkRateLimit(`admin-groq:${ip}`, 30, 300);
+  if (!limit.allowed)
+    return NextResponse.json(
+      { error: 'Too many AI requests. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(limit.resetInSeconds) } },
+    );
 
   const { name, category, price, tags, condition, currentDescription } = await req.json();
 
-  if (!name) {
+  if (!name || String(name).length > 200 || String(currentDescription || '').length > 12000) {
     return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
   }
 
