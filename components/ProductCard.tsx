@@ -141,6 +141,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         />
         <ProductImage
           src={imageSrc}
+          fallbackSrc={fallbackImage}
           alt={product.name}
           fill
           loading="lazy"

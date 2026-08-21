@@ -8,6 +8,12 @@ import { ProductImage as SafeProductImage } from './ProductImage';
 
 type HeroProductSliderProps = { products: Product[] };
 const AUTO_ADVANCE_MS = 6000;
+const FALLBACK_BY_CATEGORY: Record<string, string> = {
+  laptops: '/images/products/laptop-new.svg',
+  desktops: '/images/products/desktop-new.svg',
+  monitors: '/images/products/imac.svg',
+  'sa-imports': '/images/products/laptop-used.svg',
+};
 
 function ArrowIcon() {
   return (
@@ -28,6 +34,7 @@ function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
   return (
     <SafeProductImage
       src={product.image || '/images/products/placeholder.svg'}
+      fallbackSrc={FALLBACK_BY_CATEGORY[product.category] || '/images/products/placeholder.svg'}
       alt={product.name}
       fill
       sizes={sizes}
