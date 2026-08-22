@@ -284,6 +284,7 @@ async function ensureSchema(): Promise<void> {
   await sql()`CREATE INDEX IF NOT EXISTS idx_seo_events_path ON seo_events (path)`;
   await sql()`CREATE INDEX IF NOT EXISTS idx_seo_events_source ON seo_events (source)`;
   await seedBannersFromFile();
+  await seedProductsFromFile();
   schemaReady = true;
 }
 
@@ -396,6 +397,35 @@ async function seedBannersFromFile(): Promise<void> {
     if (code !== 'ENOENT') {
       console.error('[db] Failed to seed banners from file:', error);
     }
+  }
+}
+
+async function seedProductsFromFile(): Promise<void> {
+  const seedPath = path.join(process.cwd(), 'data', 'products.seed.json');
+  try {
+    const raw = await fs.readFile(seedPath, 'utf-8');
+    const products = JSON.parse(raw) as Array<Record<string, unknown>>;
+    for (const product of products) {
+      const now = new Date();
+      await sql()`
+        INSERT INTO products (
+          id, slug, name, category, product_type, bundle_items, condition,
+          price, currency, description, image, images, in_stock, featured, tags,
+          specs, created_at, updated_at
+        ) VALUES (
+          ${String(product.id)}, ${String(product.slug)}, ${String(product.name)}, ${String(product.category)},
+          ${String(product.productType || 'single')}, ${(product.bundleItems as string[]) || []},
+          ${(product.condition as string) || null}, ${Number(product.price)}, ${String(product.currency || 'USD')},
+          ${String(product.description || '')}, ${String(product.image || '')},
+          ${(product.images as string[]) || (product.image ? [String(product.image)] : [])},
+          ${product.inStock !== false}, ${product.featured === true}, ${(product.tags as string[]) || []},
+          ${product.specs ? JSON.stringify(product.specs) : null}, ${now}, ${now}
+        )
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  } catch (error) {
+    console.error('[db] Failed to seed products from file:', error);
   }
 }
 

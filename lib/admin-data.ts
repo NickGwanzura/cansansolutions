@@ -9,8 +9,11 @@ import {
   getActiveBanners,
 } from './db';
 import fallbackProducts from '@/data/products.template.json';
+import seededProducts from '@/data/products.seed.json';
 import type { Banner, Product } from './types';
 import { normalizeBundleItems, normalizeProductType } from './catalog';
+
+const fallbackCatalog = [...fallbackProducts, ...seededProducts];
 
 type ProductRecord = {
   id?: string;
@@ -88,7 +91,7 @@ export async function readProducts(options: { allowFallback?: boolean } = {}): P
   // database remains the only source used in production inventory workflows.
   if (!process.env.DATABASE_URL) {
     if (!allowFallback) throw new Error('DATABASE_URL is not configured');
-    return fallbackProducts.map((product) => mapRow(product));
+    return fallbackCatalog.map((product) => mapRow(product));
   }
 
   try {
@@ -99,7 +102,7 @@ export async function readProducts(options: { allowFallback?: boolean } = {}): P
     if (!allowFallback) throw error;
     // Keep the catalogue browseable during a transient database outage. Admin
     // writes still fail loudly through their respective database operations.
-    return fallbackProducts.map((product) => mapRow(product));
+    return fallbackCatalog.map((product) => mapRow(product));
   }
 }
 
