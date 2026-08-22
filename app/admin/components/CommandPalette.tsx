@@ -89,6 +89,16 @@ export default function CommandPalette() {
   }, [open]);
 
   useEffect(() => {
+    const openFromSidebar = () => {
+      setQuery('');
+      setSelected(0);
+      setOpen(true);
+    };
+    window.addEventListener('open-admin-search', openFromSidebar);
+    return () => window.removeEventListener('open-admin-search', openFromSidebar);
+  }, []);
+
+  useEffect(() => {
     if (open) {
       requestAnimationFrame(() => inputRef.current?.focus());
     }

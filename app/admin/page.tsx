@@ -448,7 +448,7 @@ function DashboardOverview({ onLogout }: { onLogout: () => void }) {
 
   return (
     <AdminLayout onLogout={onLogout}>
-      <main className="p-6 space-y-6">
+      <main className="mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="font-heading text-2xl font-bold text-zinc-900">Dashboard</h1>

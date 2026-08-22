@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
@@ -419,8 +420,8 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
                     onClick={onNavigate}
                     className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 ${
                       isActive
-                        ? 'bg-red-600 text-white'
-                        : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                        ? 'bg-red-600 text-white shadow-[0_8px_20px_rgba(220,38,38,0.2)]'
+                        : 'text-zinc-400 hover:bg-white/[0.08] hover:text-white'
                     }`}
                   >
                     <item.icon className={isActive ? 'text-white' : 'text-zinc-400'} />
@@ -464,24 +465,17 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
             />
           </svg>
         </button>
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-red-600 text-white">
-            <svg
-              width="14"
-              height="14"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z"
-              />
-            </svg>
-          </div>
-          <span className="font-heading text-sm font-bold text-zinc-900">Cansan Admin</span>
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/images/brand/cansan-logo.png"
+            alt="Cansan"
+            width={116}
+            height={31}
+            className="h-7 w-auto object-contain"
+          />
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
+            Admin
+          </span>
         </div>
         <a
           href="/"
@@ -503,7 +497,13 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           />
           <aside className="flex h-full w-72 flex-col bg-zinc-900 text-white shadow-xl">
             <div className="flex h-14 items-center justify-between border-b border-zinc-800 px-4">
-              <span className="font-heading text-sm font-bold">Cansan Admin</span>
+              <Image
+                src="/images/brand/cansan-logo.png"
+                alt="Cansan"
+                width={116}
+                height={31}
+                className="h-7 w-auto brightness-0 invert object-contain"
+              />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
@@ -540,25 +540,16 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
 
       <aside className="fixed left-0 top-0 z-40 hidden h-full w-60 flex-col bg-zinc-900 text-white lg:flex">
         <div className="flex h-14 items-center gap-3 border-b border-zinc-800 px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
-            <svg
-              width="16"
-              height="16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z"
-              />
-            </svg>
-          </div>
-          <div>
-            <span className="font-heading text-sm font-bold">Cansan Admin</span>
-          </div>
+          <Image
+            src="/images/brand/cansan-logo.png"
+            alt="Cansan"
+            width={116}
+            height={31}
+            className="h-7 w-auto brightness-0 invert object-contain"
+          />
+          <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+            Admin
+          </span>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
@@ -566,6 +557,18 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
         </nav>
 
         <div className="border-t border-zinc-800 p-3">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-admin-search'))}
+            className="mb-2 flex w-full items-center justify-between rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-left text-xs font-semibold text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-zinc-500">⌕</span> Quick search
+            </span>
+            <kbd className="rounded border border-zinc-600 px-1.5 py-0.5 text-[10px] text-zinc-500">
+              ⌘K
+            </kbd>
+          </button>
           <button
             onClick={onLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-white"

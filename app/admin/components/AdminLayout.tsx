@@ -11,9 +11,9 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, onLogout }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-[#f7f7f8] text-zinc-900 selection:bg-red-100 selection:text-red-900">
       <AdminSidebar onLogout={onLogout} />
-      <div className="pt-14 lg:ml-60 lg:pt-0">
+      <div className="min-w-0 pt-14 lg:ml-60 lg:pt-0">
         <ErrorBoundary>{children}</ErrorBoundary>
       </div>
       <CommandPalette />
