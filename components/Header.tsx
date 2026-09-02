@@ -103,9 +103,6 @@ export function Header() {
               <Link href="/contact" className="hover:text-white transition">
                 Help &amp; Support
               </Link>
-              <Link href="/admin" className="hover:text-white transition">
-                Admin Login
-              </Link>
             </div>
           </div>
         </div>
@@ -170,26 +167,6 @@ export function Header() {
           </form>
 
           <div className="ml-auto flex items-center gap-2">
-            <Link
-              href="/admin"
-              className="hidden min-h-11 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 xl:inline-flex"
-            >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z"
-                />
-              </svg>
-              Admin login
-            </Link>
             <Link
               href="/contact"
               className="hidden min-h-11 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 lg:inline-flex"
@@ -472,14 +449,6 @@ export function Header() {
                   {label}
                 </Link>
               ))}
-
-              <Link
-                href="/admin"
-                onClick={() => setMenuOpen(false)}
-                className="mt-1 rounded-lg px-3 py-2 text-xs font-medium text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-700"
-              >
-                Admin login
-              </Link>
             </nav>
           </div>
         )}

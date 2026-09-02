@@ -129,7 +129,7 @@ export function ProductsClient({
   return (
     <>
       <section className="border-b border-zinc-200 bg-zinc-50">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
           <nav aria-label="Breadcrumb" className="mb-6 text-sm text-zinc-500">
             <Link href="/" className="transition hover:text-red-600">
               Home
@@ -174,7 +174,7 @@ export function ProductsClient({
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="mt-6 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-5 text-sm text-zinc-600 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600 sm:grid-cols-3 sm:p-5">
           <div>
             <p className="font-semibold text-zinc-900">WhatsApp-first ordering</p>
             <p className="mt-1">
@@ -196,7 +196,7 @@ export function ProductsClient({
           </div>
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <div className="mt-6 grid gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
           <aside className="hidden h-fit rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm lg:block">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-950">Filters</h2>
@@ -525,7 +525,7 @@ export function ProductsClient({
 
             {/* Grid */}
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((product) => (
                   <ProductCard
                     key={product.id}

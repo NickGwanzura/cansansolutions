@@ -565,7 +565,7 @@ export default async function HomePage() {
               <h2 className="mt-1 text-2xl font-bold text-zinc-900">Shop by category</h2>
             </div>
             <Link
-              href="#shop-categories"
+              href="/products"
               className="text-sm font-semibold text-red-700 hover:text-red-800"
             >
               View all categories →
@@ -656,8 +656,8 @@ export default async function HomePage() {
               </p>
               <h2 className="mt-2 text-3xl font-bold text-zinc-900">Fresh tech for every setup</h2>
               <p className="mt-2 text-sm text-zinc-600">
-                Daily-rotating mix: 2 laptops, 3 SA imports, plus 3 products from other categories
-                for faster comparison.
+                Fresh arrivals selected across our most popular categories, with local support when
+                you need help choosing.
               </p>
             </div>
             <Link

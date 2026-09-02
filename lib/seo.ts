@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { SITE_NAME, SITE_URL } from './site';
 
 export function stripHtml(value: string) {
-  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function truncateText(value: string, maxLength: number) {
@@ -42,6 +45,9 @@ export function buildAbsoluteMetadata({
       images: [
         {
           url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
         },
       ],
     },

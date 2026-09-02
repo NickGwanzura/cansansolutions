@@ -114,7 +114,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       : 0;
 
   const fallbackImage =
-    FALLBACK_IMAGE_BY_CATEGORY[product.category] ?? '/images/products/promo-collection.svg';
+    FALLBACK_IMAGE_BY_CATEGORY[product.category] ?? '/images/products/placeholder.svg';
   const imageSrc = !imageFailed && product.image ? product.image : fallbackImage;
 
   const handleAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -147,7 +147,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           loading="lazy"
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           onError={() => setImageFailed(true)}
-          className="pointer-events-none object-contain p-4 mix-blend-multiply transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
+          className="pointer-events-none object-contain p-4 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
         />
 
         {hasDiscount || product.dealLabel ? (
@@ -198,18 +198,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             />
           </svg>
         </button>
-
-        {onQuickView ? (
-          <button
-            onClick={(event) => {
-              event.preventDefault();
-              onQuickView(product);
-            }}
-            className="absolute bottom-3 right-3 z-10 inline-flex min-h-11 items-center rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-red-200 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-          >
-            Quick View
-          </button>
-        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col p-4">
@@ -222,9 +210,21 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         >
           <h3 className="line-clamp-2">{product.name}</h3>
         </Link>
+        {onQuickView ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              onQuickView(product);
+            }}
+            className="mt-1 self-start text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-red-700"
+          >
+            Quick view
+          </button>
+        ) : null}
 
         <ul className="mt-3 space-y-1.5 text-sm text-zinc-600">
-          {microSpecs.slice(0, 3).map((spec) => (
+          {microSpecs.slice(0, 2).map((spec) => (
             <li key={spec} className="flex items-start gap-2">
               <span className="mt-1.5 h-1 w-1 rounded-full bg-red-500" />
               <span className="line-clamp-1">{spec}</span>
@@ -243,23 +243,31 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           ) : null}
         </div>
 
-        <p className={`mt-1 text-sm ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}>
+        <p
+          className={`mt-1 line-clamp-2 text-sm ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}
+        >
           {urgencyMicrocopy}
         </p>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-4">
           <Link
             href={`/products/${product.slug}`}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-red-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-700"
+            className="order-2 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 px-3 py-2.5 text-center text-sm font-semibold text-zinc-800 transition hover:border-red-300 hover:text-red-700"
           >
-            View Product
+            Details
           </Link>
           <button
             onClick={handleAdd}
             disabled={!product.inStock}
-            className="min-h-11 rounded-full border border-zinc-300 px-4 py-2.5 text-sm font-semibold text-zinc-800 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400"
+            className="order-1 flex min-h-11 flex-1 items-center justify-center rounded-full bg-red-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
           >
-            {product.inStock ? (adding ? 'Added' : isBundle ? 'Add Bundle' : 'Add') : 'Unavailable'}
+            {product.inStock
+              ? adding
+                ? 'Added'
+                : isBundle
+                  ? 'Add bundle'
+                  : 'Add to cart'
+              : 'Unavailable'}
           </button>
         </div>
       </div>

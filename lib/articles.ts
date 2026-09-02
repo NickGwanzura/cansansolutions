@@ -135,8 +135,7 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Need help choosing the right student laptop?',
-      body:
-        'Send your budget and intended use. Cansan can narrow the shortlist fast and avoid the common overspend traps.',
+      body: 'Send your budget and intended use. Cansan can narrow the shortlist fast and avoid the common overspend traps.',
       primaryHref: '/products/category/laptops',
       primaryLabel: 'Shop laptops',
       secondaryHref: '/contact',
@@ -227,8 +226,7 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Comparing HP and Dell for a real budget?',
-      body:
-        'Share your budget and whether the laptops are for school, business, or mixed use. That makes it easier to recommend the better fit.',
+      body: 'Share your budget and whether the laptops are for school, business, or mixed use. That makes it easier to recommend the better fit.',
       primaryHref: '/brands/hp',
       primaryLabel: 'View HP options',
       secondaryHref: '/brands/dell',
@@ -320,8 +318,7 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Need a CCTV quote for home or business?',
-      body:
-        'Send the number of cameras, your location, and what you want covered. That is enough to start building a realistic quote.',
+      body: 'Send the number of cameras, your location, and what you want covered. That is enough to start building a realistic quote.',
       primaryHref: '/services',
       primaryLabel: 'View services',
       secondaryHref: '/contact',
@@ -412,8 +409,7 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Need better Wi-Fi at home?',
-      body:
-        'Share the size of the property, internet type, and where the weak spots are. That makes router recommendations far more accurate.',
+      body: 'Share the size of the property, internet type, and where the weak spots are. That makes router recommendations far more accurate.',
       primaryHref: '/products/category/networking',
       primaryLabel: 'Browse networking',
       secondaryHref: '/services',
@@ -504,8 +500,7 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Need UPS advice for home or business?',
-      body:
-        'Send the device list and the runtime you want. That is the fastest way to avoid buying a UPS that is too small.',
+      body: 'Send the device list and the runtime you want. That is the fastest way to avoid buying a UPS that is too small.',
       primaryHref: '/bulk-orders',
       primaryLabel: 'Request a quote',
       secondaryHref: '/contact',
@@ -596,12 +591,367 @@ const INSIGHTS: InsightArticle[] = [
     ],
     cta: {
       title: 'Buying laptops for a team?',
-      body:
-        'Cansan can help group options by job role and budget so you do not overspend on the wrong machines.',
+      body: 'Cansan can help group options by job role and budget so you do not overspend on the wrong machines.',
       primaryHref: '/bulk-orders',
       primaryLabel: 'Request bulk pricing',
       secondaryHref: '/products/category/laptops',
       secondaryLabel: 'View laptop options',
+    },
+  },
+  {
+    slug: 'best-cctv-camera-for-home-zimbabwe',
+    categoryLabel: 'Security Guide',
+    intent: 'Commercial research',
+    title: 'Best CCTV Camera for Home Security in Zimbabwe: A Practical Buying Guide',
+    description:
+      'Compare CCTV camera types for homes in Zimbabwe, including night vision, storage, remote viewing, and installation decisions.',
+    excerpt:
+      'The right home CCTV setup depends on what you need to see, how much area must be covered, and whether you need reliable night footage or phone access.',
+    primaryKeyword: 'best cctv camera for home zimbabwe',
+    publishedAt: '2026-04-08',
+    updatedAt: '2026-04-08',
+    readTimeMinutes: 6,
+    intro:
+      'Home security buyers often start by counting cameras, but coverage and placement matter more than the number on the box. A smaller, well-planned system can protect key entrances better than a larger poorly positioned one.',
+    takeaways: [
+      'Choose cameras around the entrances, blind spots, and lighting conditions you actually have.',
+      'Night vision quality and recorder storage are as important as camera resolution.',
+      'Remote viewing needs stable internet and correct setup, not just a camera with an app.',
+    ],
+    sections: [
+      {
+        heading: 'Which camera type fits a home?',
+        paragraphs: [
+          'Bullet cameras are useful for visible outdoor coverage, while dome cameras are often tidier under eaves or inside entrances. The best option depends on weather exposure, viewing angle, and how easy the camera is to reach.',
+          'For a typical home, start with the gate, front door, driveway, and any rear access point. Add more only where there is a genuine blind spot.',
+        ],
+        bullets: [
+          'Outdoor weather protection',
+          'Wide-angle coverage',
+          'Night vision range',
+          'Power and cable route',
+        ],
+      },
+      {
+        heading: 'Storage and phone viewing',
+        paragraphs: [
+          'A camera system is only useful if footage can be reviewed when something happens. Recorder capacity determines how many days are retained, while internet quality affects whether remote phone viewing works smoothly.',
+          'Ask how the system behaves during an internet outage and whether footage continues recording locally. That distinction matters for homes with unreliable connectivity.',
+        ],
+      },
+      {
+        heading: 'Questions to ask before installation',
+        paragraphs: [
+          'Request a clear package that separates hardware, cabling, labour, setup, and any remote-viewing configuration. This makes quotes easier to compare and avoids surprises after installation.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'How many CCTV cameras does a house need?',
+        answer:
+          'There is no fixed number. Start with entrances, driveways, and blind spots, then add coverage based on the property layout.',
+      },
+      {
+        question: 'Do home CCTV cameras work without internet?',
+        answer:
+          'Most recorder-based systems can keep recording locally without internet, but remote phone viewing will not work until connectivity returns.',
+      },
+      {
+        question: 'Is 4MP or 5MP CCTV better for a home?',
+        answer:
+          'Higher resolution can improve detail, but placement, lighting, lens choice, and storage capacity also affect the result.',
+      },
+    ],
+    relatedLinks: [
+      {
+        href: '/products/category/cctv',
+        label: 'Browse CCTV Products',
+        description: 'Review current cameras and security bundles.',
+      },
+      {
+        href: '/services',
+        label: 'Installation Support',
+        description: 'Discuss setup, cabling, and remote viewing.',
+      },
+      {
+        href: '/contact',
+        label: 'Request a CCTV Quote',
+        description: 'Send your property and coverage requirements.',
+      },
+    ],
+    cta: {
+      title: 'Planning CCTV for your home?',
+      body: 'Share the entrances, property size, and whether you need phone viewing. Cansan can help shape a practical package.',
+      primaryHref: '/products/category/cctv',
+      primaryLabel: 'Browse CCTV',
+      secondaryHref: '/contact',
+      secondaryLabel: 'Ask for advice',
+    },
+  },
+  {
+    slug: 'how-much-ram-do-i-need-laptop-zimbabwe',
+    categoryLabel: 'Laptop Guide',
+    intent: 'Commercial research',
+    title: 'How Much RAM Do You Need in a Laptop? A Zimbabwe Buyer’s Guide',
+    description:
+      'Understand whether 4GB, 8GB, or 16GB RAM is right for school, office work, browsing, and creative tasks in Zimbabwe.',
+    excerpt:
+      'RAM affects how comfortably a laptop handles multiple apps and browser tabs. Choosing the right amount helps buyers avoid both sluggish machines and unnecessary overspending.',
+    primaryKeyword: 'how much ram do i need laptop zimbabwe',
+    publishedAt: '2026-04-06',
+    updatedAt: '2026-04-06',
+    readTimeMinutes: 5,
+    intro:
+      'RAM is one of the easiest laptop specifications to misunderstand. Buyers should match it to the way they work today and the amount of useful life they expect from the machine.',
+    takeaways: [
+      '8GB is the practical minimum for most everyday laptop buyers in 2026.',
+      '16GB makes more sense for heavier multitasking, programming, creative tools, and longer ownership.',
+      'RAM cannot compensate for a very old processor or slow storage on its own.',
+    ],
+    sections: [
+      {
+        heading: '4GB, 8GB, or 16GB?',
+        paragraphs: [
+          '4GB can handle basic documents and light browsing, but it becomes restrictive quickly. 8GB is a safer floor for students, office staff, and home users who keep several tabs and apps open.',
+          '16GB is worthwhile when the laptop will handle heavier spreadsheets, coding, design software, virtual meetings, or many applications at once.',
+        ],
+        bullets: [
+          '4GB: light, occasional use',
+          '8GB: school, office, and everyday use',
+          '16GB: heavier multitasking and creative work',
+        ],
+      },
+      {
+        heading: 'RAM versus storage',
+        paragraphs: [
+          'RAM controls how many active tasks the laptop can handle comfortably. Storage controls how quickly it starts and how much data it can hold. A laptop should ideally have enough of both, with an SSD preferred over an old mechanical drive.',
+        ],
+      },
+      {
+        heading: 'Check upgrade options',
+        paragraphs: [
+          'Some laptops allow a RAM upgrade while others have memory soldered to the board. Ask before buying if future expansion matters, especially when choosing a lower-cost machine.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is 8GB RAM enough for university?',
+        answer:
+          'For Office, research, online classes, and normal browsing, 8GB is usually enough. Students using design, engineering, or development tools may benefit from 16GB.',
+      },
+      {
+        question: 'Does more RAM make a laptop faster?',
+        answer:
+          'It can improve multitasking and reduce slowdowns, but processor speed and SSD storage also matter.',
+      },
+      {
+        question: 'Can laptop RAM be upgraded later?',
+        answer: 'Sometimes. Check the exact model because some modern laptops have fixed memory.',
+      },
+    ],
+    relatedLinks: [
+      {
+        href: '/products/category/laptops',
+        label: 'Shop Laptops',
+        description: 'Compare current laptop specifications and prices.',
+      },
+      {
+        href: '/insights/best-laptops-for-students-zimbabwe',
+        label: 'Student Laptop Guide',
+        description: 'Choose a balanced laptop for school and university.',
+      },
+      {
+        href: '/bulk-orders',
+        label: 'Office Laptop Quotes',
+        description: 'Get quantity pricing for a team or school.',
+      },
+    ],
+    cta: {
+      title: 'Not sure how much RAM you need?',
+      body: 'Tell us what apps you use, your budget, and how long you want the laptop to last.',
+      primaryHref: '/products/category/laptops',
+      primaryLabel: 'Browse laptops',
+      secondaryHref: '/contact',
+      secondaryLabel: 'Ask Cansan',
+    },
+  },
+  {
+    slug: 'fibre-vs-lte-router-zimbabwe',
+    categoryLabel: 'Networking Guide',
+    intent: 'Commercial comparison',
+    title: 'Fibre vs LTE Router in Zimbabwe: Which Internet Setup Fits Your Home?',
+    description:
+      'Compare fibre and LTE router setups for home and small-office internet in Zimbabwe, including coverage, reliability, and backup planning.',
+    excerpt:
+      'Fibre and LTE solve different connectivity problems. The better choice depends on coverage, installation availability, mobility, and how much consistency your household needs.',
+    primaryKeyword: 'fibre vs lte router zimbabwe',
+    publishedAt: '2026-04-04',
+    updatedAt: '2026-04-04',
+    readTimeMinutes: 5,
+    intro:
+      'A router cannot fix an internet connection that does not suit the property. Buyers should choose the connection first, then select networking hardware that can deliver stable coverage to the rooms that matter.',
+    takeaways: [
+      'Fibre is usually the stronger primary connection where it is available and installed well.',
+      'LTE is useful when mobility, fast setup, or fibre availability is limited.',
+      'Homes that depend on connectivity for work may benefit from a planned backup connection.',
+    ],
+    sections: [
+      {
+        heading: 'When fibre makes sense',
+        paragraphs: [
+          'Fibre is a strong fit for homes and offices that need stable video calls, streaming, cloud work, and multiple connected devices. It usually offers more consistent performance than a busy mobile network.',
+        ],
+      },
+      {
+        heading: 'When LTE is the better option',
+        paragraphs: [
+          'LTE can be easier to deploy and move, making it useful for renters, temporary sites, backup internet, or areas where fibre is not yet available. Performance depends heavily on local signal and network congestion.',
+        ],
+        bullets: [
+          'Check signal strength at the intended router location',
+          'Confirm the SIM and data plan options',
+          'Use an external antenna when the setup supports it',
+        ],
+      },
+      {
+        heading: 'Do not forget Wi-Fi coverage',
+        paragraphs: [
+          'Even a fast fibre or LTE connection can feel poor if the router is hidden in a corner. Larger homes may need a second access point, wired backhaul, or mesh system for reliable room-to-room coverage.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is fibre always faster than LTE in Zimbabwe?',
+        answer:
+          'Not in every location or at every moment, but fibre is generally more consistent where the installation and provider service are reliable.',
+      },
+      {
+        question: 'Can an LTE router be used as fibre backup?',
+        answer:
+          'Yes. Many homes and offices use LTE as a backup when their work depends on staying connected.',
+      },
+      {
+        question: 'Do I need a new router for fibre?',
+        answer:
+          'It depends on the provider equipment and the features you need. Ask whether the supplied device covers the property adequately before buying another one.',
+      },
+    ],
+    relatedLinks: [
+      {
+        href: '/products/category/networking',
+        label: 'Shop Networking',
+        description: 'Browse routers and Wi-Fi hardware.',
+      },
+      {
+        href: '/services',
+        label: 'Wi-Fi Setup',
+        description: 'Get help with placement and coverage.',
+      },
+      {
+        href: '/insights/best-router-home-wifi-zimbabwe',
+        label: 'Home Wi-Fi Guide',
+        description: 'Choose a router for your property size and usage.',
+      },
+    ],
+    cta: {
+      title: 'Choosing fibre, LTE, or both?',
+      body: 'Share your location, property size, and internet use so we can recommend the right router setup.',
+      primaryHref: '/products/category/networking',
+      primaryLabel: 'Browse routers',
+      secondaryHref: '/contact',
+      secondaryLabel: 'Get advice',
+    },
+  },
+  {
+    slug: 'best-printer-small-business-zimbabwe',
+    categoryLabel: 'Printer Guide',
+    intent: 'Commercial research',
+    title: 'Best Printer for a Small Business in Zimbabwe: Inkjet or Laser?',
+    description:
+      'A practical printer buying guide for Zimbabwean small businesses comparing inkjet, laser, running cost, speed, and support.',
+    excerpt:
+      'The cheapest printer is rarely the cheapest to operate. Small businesses should compare expected page volume, colour needs, consumables, and service support before deciding.',
+    primaryKeyword: 'best printer for small business zimbabwe',
+    publishedAt: '2026-04-02',
+    updatedAt: '2026-04-02',
+    readTimeMinutes: 6,
+    intro:
+      'A printer becomes expensive when the running cost, downtime, or replacement cartridges are ignored. The right choice starts with what the business prints every week, not just the purchase price.',
+    takeaways: [
+      'Laser printers suit regular document-heavy work and faster office output.',
+      'Inkjet and tank printers can be useful when colour, photos, or lower entry cost matter.',
+      'Check cartridge availability, warranty, and power protection before committing.',
+    ],
+    sections: [
+      {
+        heading: 'Laser versus inkjet',
+        paragraphs: [
+          'Laser is often a strong fit for offices printing invoices, letters, reports, and forms regularly. Inkjet can make more sense for colour-heavy work, occasional printing, or buyers who need a lower initial price.',
+        ],
+      },
+      {
+        heading: 'Calculate the real running cost',
+        paragraphs: [
+          'Ask how many pages the cartridge or tank is expected to produce and how easy replacement supplies are to find locally. A low-priced printer with scarce consumables can create more disruption than a slightly more expensive model.',
+        ],
+        bullets: [
+          'Expected monthly page volume',
+          'Black-and-white versus colour ratio',
+          'Cartridge or toner availability',
+          'Duplex and scanning requirements',
+        ],
+      },
+      {
+        heading: 'Features that save office time',
+        paragraphs: [
+          'Automatic duplex printing, a document feeder, network connectivity, and scanning can save staff time every day. Choose these features based on the workflow, not because they sound impressive on a specification sheet.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is laser or inkjet cheaper for a small business?',
+        answer:
+          'Laser is often cheaper for regular document volumes, while inkjet or tank systems can suit lower-volume colour work. Compare consumables for the exact model.',
+      },
+      {
+        question: 'Should a business buy a multifunction printer?',
+        answer:
+          'If the office scans, copies, and prints regularly, a multifunction model can save space and reduce the need for separate devices.',
+      },
+      {
+        question: 'Can a printer run safely during load shedding?',
+        answer:
+          'Use appropriate power protection and avoid abrupt shutdowns where possible. Ask about UPS sizing if printing is business-critical.',
+      },
+    ],
+    relatedLinks: [
+      {
+        href: '/products/category/printing',
+        label: 'Browse Printers',
+        description: 'Review current printer options and prices.',
+      },
+      {
+        href: '/payments',
+        label: 'Payment Options',
+        description: 'See payment and quote guidance for business purchases.',
+      },
+      {
+        href: '/bulk-orders',
+        label: 'Business Quotes',
+        description: 'Request pricing for multiple printers or office equipment.',
+      },
+    ],
+    cta: {
+      title: 'Need a printer for your office workflow?',
+      body: 'Tell us your monthly print volume, colour needs, and whether scanning is required. We can narrow the options quickly.',
+      primaryHref: '/products/category/printing',
+      primaryLabel: 'Browse printers',
+      secondaryHref: '/bulk-orders',
+      secondaryLabel: 'Request a quote',
     },
   },
 ];
@@ -612,7 +962,7 @@ export function getInsightHref(slug: string) {
 
 export function getAllInsights() {
   return [...INSIGHTS].sort(
-    (left, right) => new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime()
+    (left, right) => new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime(),
   );
 }
 

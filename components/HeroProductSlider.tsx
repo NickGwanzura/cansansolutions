@@ -38,7 +38,7 @@ function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
       alt={product.name}
       fill
       sizes={sizes}
-      className="object-contain p-6 mix-blend-multiply drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
+      className="object-contain p-6 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
     />
   );
 }
@@ -103,7 +103,7 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
                 Featured technology
               </p>
-              <h1 className="mt-4 font-heading text-4xl font-extrabold leading-[0.92] tracking-[-0.055em] sm:text-6xl">
+              <h1 className="mt-4 line-clamp-4 font-heading text-3xl font-extrabold leading-[0.94] tracking-[-0.055em] sm:text-5xl lg:text-6xl">
                 {active.name}
               </h1>
               <p className="mt-5 text-sm leading-relaxed text-white/70 sm:text-base">
@@ -128,8 +128,12 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
                   onClick={() => setActiveIndex(index)}
                   aria-label={`Show ${product.name}`}
                   aria-current={index === activeIndex}
-                  className={`h-2 rounded-full transition-all ${index === activeIndex ? 'w-8 bg-red-500' : 'w-2 bg-white/45 hover:bg-white/80'}`}
-                />
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+                >
+                  <span
+                    className={`block rounded-full transition-all ${index === activeIndex ? 'h-2 w-8 bg-red-500' : 'h-2 w-2 bg-white/45 hover:bg-white/80'}`}
+                  />
+                </button>
               ))}
             </div>
           </article>

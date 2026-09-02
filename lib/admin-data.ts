@@ -128,10 +128,18 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
+    if (!process.env.DATABASE_URL) {
+      const fallback = fallbackCatalog.find((product) => String(product.slug) === slug);
+      return fallback ? mapRow(fallback) : null;
+    }
     const data = await dbGetProductBySlug(slug);
     return data ? mapRow(data as unknown as ProductRecord) : null;
   } catch (error) {
     console.error('[getProductBySlug] Failed:', error);
+    // Keep detail links usable during a transient database outage, matching
+    // the browse-page fallback behavior.
+    const fallback = fallbackCatalog.find((product) => String(product.slug) === slug);
+    if (fallback) return mapRow(fallback);
     return null;
   }
 }
