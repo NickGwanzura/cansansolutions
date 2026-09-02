@@ -148,14 +148,18 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                     {index === 0 ? 'Popular this week' : 'Ready for your setup'}
                   </p>
-                  <h2 className="mt-3 line-clamp-3 text-lg font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 sm:text-xl">
+                  <h2 className="mt-3 line-clamp-2 text-lg font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 sm:text-xl">
                     {product.name}
                   </h2>
-                  <p className="mt-5 text-sm font-semibold text-red-700">
+                  <p className="mt-4 text-sm font-semibold text-red-700">
                     From {formatCurrency(product.price, product.currency)}
                   </p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-zinc-600 transition group-hover:text-red-700">
+                    View product
+                    <ArrowIcon />
+                  </span>
                 </div>
-                <div className="absolute inset-y-0 right-0 z-0 w-[43%] bg-gradient-to-l from-white/80 via-white/45 to-transparent transition-transform duration-300 group-hover:scale-105">
+                <div className="absolute inset-y-4 right-4 z-0 w-[40%] overflow-hidden rounded-2xl border border-white/80 bg-white/75 shadow-sm transition-transform duration-300 group-hover:scale-105 sm:right-5 sm:w-[39%]">
                   <ProductImage product={product} sizes="(max-width: 1024px) 48vw, 300px" />
                 </div>
               </Link>
