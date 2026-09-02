@@ -38,7 +38,7 @@ function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
       alt={product.name}
       fill
       sizes={sizes}
-      className="object-contain p-6 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
+      className="object-contain p-6 mix-blend-multiply drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
     />
   );
 }
@@ -99,11 +99,11 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
           <article className="relative min-h-[430px] overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_78%_32%,rgba(239,68,68,0.26),transparent_35%),linear-gradient(135deg,#07070a,#17131a)] px-6 py-8 text-white sm:min-h-[520px] sm:px-10 sm:py-12">
-            <div className="relative z-10 max-w-[52%] sm:max-w-[50%]">
+            <div className="relative z-10 max-w-[44%] sm:max-w-[44%]">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
                 Featured technology
               </p>
-              <h1 className="mt-4 line-clamp-4 font-heading text-3xl font-extrabold leading-[0.94] tracking-[-0.055em] sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 line-clamp-3 font-heading text-3xl font-extrabold leading-[0.94] tracking-[-0.055em] sm:text-5xl lg:text-5xl">
                 {active.name}
               </h1>
               <p className="mt-5 text-sm leading-relaxed text-white/70 sm:text-base">
@@ -117,7 +117,7 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
                 Shop now <ArrowIcon />
               </Link>
             </div>
-            <div className="absolute inset-y-4 right-[-3%] w-[60%] sm:right-[3%] sm:w-[56%]">
+            <div className="absolute inset-y-4 right-[2%] w-[54%] sm:right-[3%] sm:w-[52%]">
               <ProductImage product={active} sizes="(max-width: 640px) 62vw, 560px" />
             </div>
             <div className="absolute bottom-5 left-6 flex items-center gap-2 sm:left-10">
