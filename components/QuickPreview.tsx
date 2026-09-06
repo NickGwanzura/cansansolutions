@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
@@ -22,6 +22,7 @@ export function QuickPreview({ product, onClose }: Props) {
   const addToCart = useCartStore((s) => s.addToCart);
   const items = useCartStore((s) => s.items);
   const [added, setAdded] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const isBundle = product ? isBundleProduct(product) : false;
 
   const qtyInCart = product ? (items.find((i) => i.id === product.id)?.qty ?? 0) : 0;
@@ -29,8 +30,14 @@ export function QuickPreview({ product, onClose }: Props) {
   useEffect(() => {
     if (!product) return;
     document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [product]);
 
@@ -76,6 +83,10 @@ export function QuickPreview({ product, onClose }: Props) {
             transition={{ type: 'spring', stiffness: 340, damping: 32 }}
             className="fixed inset-x-3 bottom-3 top-auto z-50 mx-auto w-auto max-h-[85dvh] overflow-hidden rounded-2xl bg-white shadow-2xl sm:inset-x-4 sm:top-1/2 sm:w-full sm:max-w-2xl sm:-translate-y-1/2 sm:bottom-auto"
             style={{ left: '50%', transform: 'translateX(-50%)' }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quick-preview-title"
+            aria-describedby="quick-preview-description"
           >
             <div className="grid max-h-[85dvh] overflow-y-auto sm:grid-cols-2 sm:overflow-hidden">
               {/* Image pane */}
@@ -113,9 +124,11 @@ export function QuickPreview({ product, onClose }: Props) {
               <div className="flex flex-col gap-3 p-5 sm:p-6">
                 {/* Close button */}
                 <button
+                  ref={closeRef}
+                  type="button"
                   onClick={onClose}
                   className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow transition hover:bg-zinc-100"
-                  aria-label="Close"
+                  aria-label="Close product preview"
                 >
                   <svg
                     width="14"
@@ -133,12 +146,13 @@ export function QuickPreview({ product, onClose }: Props) {
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-red-500">
                     {getCategoryLabel(product.category)}
                   </p>
-                  <h2 className="pr-10 font-heading text-lg font-bold leading-snug text-zinc-900">
+                  <h2 id="quick-preview-title" className="pr-10 font-heading text-lg font-bold leading-snug text-zinc-900">
                     {product.name}
                   </h2>
                 </div>
 
                 <div
+                  id="quick-preview-description"
                   className="text-sm leading-relaxed text-zinc-500 line-clamp-3 prose prose-sm max-w-none prose-p:my-0 prose-ul:my-0"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
@@ -184,7 +198,7 @@ export function QuickPreview({ product, onClose }: Props) {
                 {/* CTA buttons */}
                 <div className="mt-auto flex flex-col gap-2 pt-1">
                   <motion.button
-                    disabled={!product.inStock}
+                    disabled={!product.inStock || added}
                     onClick={handleAdd}
                     whileTap={product.inStock ? { scale: 0.97 } : {}}
                     className={`flex min-h-12 items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all

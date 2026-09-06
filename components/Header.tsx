@@ -226,9 +226,12 @@ export function Header() {
             </button>
 
             <button
+              type="button"
               onClick={() => setMenuOpen(!menuOpen)}
               className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-zinc-900 shadow-sm transition hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 md:hidden"
               aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-navigation"
             >
               {menuOpen ? (
                 <svg
@@ -383,7 +386,7 @@ export function Header() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="border-t border-zinc-100 bg-white px-4 py-4 shadow-lg shadow-zinc-900/5 md:hidden">
+          <div id="mobile-navigation" className="border-t border-zinc-100 bg-white px-4 py-4 shadow-lg shadow-zinc-900/5 md:hidden">
             <form onSubmit={handleSearch} className="mb-3">
               <div className="relative">
                 <svg
@@ -406,7 +409,7 @@ export function Header() {
                   onChange={(event) => setSearchValue(event.target.value)}
                   placeholder="Search products..."
                   aria-label="Search products"
-                  className="w-full rounded-full border border-zinc-200 bg-zinc-50 py-2.5 pl-11 pr-4 text-sm text-zinc-900 placeholder-zinc-400 focus:border-red-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-red-100"
+                  className="min-h-11 w-full rounded-full border border-zinc-200 bg-zinc-50 py-2.5 pl-11 pr-4 text-sm text-zinc-900 placeholder-zinc-400 focus:border-red-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-red-100"
                 />
               </div>
             </form>
@@ -430,7 +433,7 @@ export function Header() {
                     key={category.id}
                     href={getCategoryHref(category.slug)}
                     onClick={() => setMenuOpen(false)}
-                    className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                    className="inline-flex min-h-11 items-center rounded-full border border-zinc-200 px-3 py-2 text-xs text-zinc-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
                   >
                     {category.label}
                   </Link>

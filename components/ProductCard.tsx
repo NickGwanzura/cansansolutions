@@ -217,7 +217,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               event.preventDefault();
               onQuickView(product);
             }}
-            className="mt-1 self-start text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-red-700"
+            className="mt-1 inline-flex min-h-11 items-center rounded-lg text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
           >
             Quick view
           </button>
@@ -250,15 +250,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </p>
 
         <div className="mt-auto flex gap-2 pt-4">
-          <Link
-            href={`/products/${product.slug}`}
-            className="order-2 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 px-3 py-2.5 text-center text-sm font-semibold text-zinc-800 transition hover:border-red-300 hover:text-red-700"
-          >
-            Details
-          </Link>
           <button
+            type="button"
             onClick={handleAdd}
-            disabled={!product.inStock}
+            disabled={!product.inStock || adding}
             className="order-1 flex min-h-11 flex-1 items-center justify-center rounded-full bg-red-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
           >
             {product.inStock

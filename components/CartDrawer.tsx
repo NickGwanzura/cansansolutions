@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/lib/cart-store';
@@ -60,6 +60,7 @@ export function CartDrawer({ open, onClose }: Props) {
 
   const [step, setStep] = useState<Step>('cart');
   const [note, setNote] = useState('');
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const totalItems = items.reduce((a, i) => a + i.qty, 0);
@@ -72,6 +73,17 @@ export function CartDrawer({ open, onClose }: Props) {
         setStep('cart');
         setNote('');
       }, 300);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      closeRef.current?.focus();
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') onClose();
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [open]);
 
@@ -142,6 +154,8 @@ export function CartDrawer({ open, onClose }: Props) {
                 {items.length > 0 && <StepDots step={currentStep} />}
               </div>
               <button
+                ref={closeRef}
+                type="button"
                 onClick={onClose}
                 className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-zinc-100"
                 aria-label="Close cart"
@@ -200,12 +214,13 @@ export function CartDrawer({ open, onClose }: Props) {
                             Browse products and add items to get started
                           </p>
                         </div>
-                        <button
+                        <Link
+                          href="/products"
                           onClick={onClose}
                           className="inline-flex min-h-11 items-center rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
                         >
                           Browse Products
-                        </button>
+                        </Link>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -259,6 +274,7 @@ export function CartDrawer({ open, onClose }: Props) {
                                   <div className="mt-0.5 flex items-center gap-1.5">
                                     <button
                                       onClick={() => updateQty(item.id, item.qty - 1)}
+                                      aria-label={`Decrease ${item.name} quantity`}
                                       className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
                                     >
                                       −
@@ -268,6 +284,7 @@ export function CartDrawer({ open, onClose }: Props) {
                                     </span>
                                     <button
                                       onClick={() => updateQty(item.id, item.qty + 1)}
+                                      aria-label={`Increase ${item.name} quantity`}
                                       className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-bold transition hover:border-red-300 hover:text-red-600 active:scale-90"
                                     >
                                       +
@@ -280,6 +297,8 @@ export function CartDrawer({ open, onClose }: Props) {
                                   </span>
                                   <button
                                     onClick={() => removeFromCart(item.id)}
+                                    type="button"
+                                    aria-label={`Remove ${item.name} from cart`}
                                     className="inline-flex min-h-10 items-center text-sm text-zinc-500 transition-colors hover:text-red-500"
                                   >
                                     Remove

@@ -347,7 +347,10 @@ export function ProductsClient({
 
             <div className="mb-4 flex items-center justify-between gap-3 sm:hidden">
               <button
+                type="button"
                 onClick={() => setShowMobileFilters((value) => !value)}
+                aria-expanded={showMobileFilters}
+                aria-controls="mobile-filters-panel"
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-800"
               >
                 <svg
@@ -370,6 +373,7 @@ export function ProductsClient({
             </div>
 
             <div
+              id="mobile-filters-panel"
               className={`${showMobileFilters ? 'block' : 'hidden'} rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none lg:hidden`}
             >
               {/* Filters row */}
@@ -393,6 +397,8 @@ export function ProductsClient({
                   ).map(({ value, label }) => (
                     <button
                       key={value}
+                      type="button"
+                      aria-pressed={activeType === value}
                       onClick={() => {
                         setActiveType(value);
                         if (value === 'bundle') setActiveCondition('all');
@@ -447,6 +453,8 @@ export function ProductsClient({
                   ).map(({ value, label }) => (
                     <button
                       key={value}
+                      type="button"
+                      aria-pressed={activeCondition === value}
                       onClick={() => setActiveCondition(value)}
                       className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                         activeCondition === value
@@ -525,7 +533,7 @@ export function ProductsClient({
 
             {/* Grid */}
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((product) => (
                   <ProductCard
                     key={product.id}
