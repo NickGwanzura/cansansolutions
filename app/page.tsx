@@ -533,9 +533,7 @@ export default async function HomePage() {
   const featuredInsights = getFeaturedInsights(3);
 
   const homepageProducts = getDailyHomepageProducts(products);
-  const preOwnedProducts = products
-    .filter((product) => product.condition === 'pre-owned' && product.inStock)
-    .slice(0, 4);
+  const homepageDisplayProducts = homepageProducts.filter((product) => product.image.trim().length > 0);
 
   const heroSlideProducts = (() => {
     const seen = new Set<string>();
@@ -655,9 +653,9 @@ export default async function HomePage() {
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
-                New arrivals
+                Latest products
               </p>
-              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Fresh tech for every setup</h2>
+              <h2 className="mt-2 text-3xl font-bold text-zinc-900">Shop our latest products</h2>
               <p className="mt-2 text-sm text-zinc-600">
                 Fresh arrivals selected across our most popular categories, with local support when
                 you need help choosing.
@@ -671,48 +669,19 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {homepageProducts.length > 0 ? (
+          {homepageDisplayProducts.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {homepageProducts.map((product) => (
+              {homepageDisplayProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center text-zinc-500">
-              Featured products will appear here as soon as inventory is loaded.
+              Latest products with images will appear here as soon as inventory is loaded.
             </div>
           )}
         </div>
       </section>
-
-      {preOwnedProducts.length > 0 ? (
-        <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
-                  Value picks
-                </p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
-                  Pre-owned, checked and ready
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm text-zinc-600">
-                  Get more performance for your budget with carefully selected pre-owned devices.
-                  Confirm condition, stock, and delivery with our team before you order.
-                </p>
-              </div>
-              <Link href="/products?condition=pre-owned" className="text-sm font-semibold text-red-700 hover:text-red-800">
-                Shop pre-owned deals →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {preOwnedProducts.map((product) => (
-                <ProductCard key={`preowned-${product.id}`} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
 
       <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-7xl">

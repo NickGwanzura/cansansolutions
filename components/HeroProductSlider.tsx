@@ -1,54 +1,30 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Product } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
-import { ProductImage as SafeProductImage } from './ProductImage';
 
 type HeroProductSliderProps = { products: Product[] };
-const AUTO_ADVANCE_MS = 6000;
-const FALLBACK_BY_CATEGORY: Record<string, string> = {
-  laptops: '/images/products/laptop-new.svg',
-  desktops: '/images/products/desktop-new.svg',
-  monitors: '/images/products/imac.svg',
-  'sa-imports': '/images/products/laptop-used.svg',
-};
+const AUTO_ADVANCE_MS = 6500;
+
+const CATEGORY_SLIDES = [
+  { key: 'laptops', eyebrow: 'Work, study, create', title: 'Laptops that keep up with your day.', description: 'Business-ready, student-friendly, and performance laptops with local support.', href: '/products/category/laptops', image: '/images/hero/laptops-hero.png', imageAlt: 'Laptops arranged on a bright modern workspace' },
+  { key: 'printing', eyebrow: 'Print with confidence', title: 'Printers for home, school, and office.', description: 'Reliable inkjet and laser options, plus the advice to choose the right one.', href: '/products/category/printing', image: '/images/hero/printers-hero.png', imageAlt: 'Modern printers arranged in a contemporary office' },
+  { key: 'desktops', eyebrow: 'Build your workstation', title: 'Desktops made for serious work.', description: 'Dependable desktop systems and monitors for productive home and business setups.', href: '/products/category/desktops', image: '/images/hero/desktops-hero.png', imageAlt: 'Desktop computer and monitor in a modern office' },
+  { key: 'accessories', eyebrow: 'Complete your setup', title: 'Small upgrades. Big difference.', description: 'Keyboards, mice, hubs, stands, storage, and everyday essentials that make tech work better.', href: '/products/category/accessories', image: '/images/hero/accessories-hero.png', imageAlt: 'Computer accessories arranged on a clean desk' },
+] as const;
 
 function ArrowIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-    </svg>
-  );
-}
-
-function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
-  return (
-    <SafeProductImage
-      src={product.image || '/images/products/placeholder.svg'}
-      fallbackSrc={FALLBACK_BY_CATEGORY[product.category] || '/images/products/placeholder.svg'}
-      alt={product.name}
-      fill
-      priority
-      sizes={sizes}
-      className="object-contain p-6 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
-    />
-  );
+  return <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>;
 }
 
 export function HeroProductSlider({ products }: HeroProductSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const pausedRef = useRef(false);
-  const slides = products.slice(0, 6);
+  const active = CATEGORY_SLIDES[activeIndex];
+  const productCounts = useMemo(() => new Map(CATEGORY_SLIDES.map((slide) => [slide.key, products.filter((product) => product.category === slide.key).length])), [products]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -59,150 +35,40 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
   }, []);
 
   useEffect(() => {
-    if (slides.length <= 1 || reducedMotion) return;
+    if (reducedMotion) return;
     const interval = window.setInterval(() => {
-      if (!pausedRef.current) setActiveIndex((current) => (current + 1) % slides.length);
+      if (!pausedRef.current) setActiveIndex((current) => (current + 1) % CATEGORY_SLIDES.length);
     }, AUTO_ADVANCE_MS);
     return () => window.clearInterval(interval);
-  }, [slides.length, reducedMotion]);
-
-  if (slides.length === 0) {
-    return (
-      <section className="bg-zinc-950 px-4 py-8 text-white sm:px-6 sm:py-12">
-        <div className="mx-auto flex min-h-[420px] max-w-7xl items-center rounded-[2rem] bg-[radial-gradient(circle_at_70%_20%,rgba(220,38,38,0.35),transparent_45%),#09090b] px-6 py-14 sm:px-12">
-          <div className="max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
-              Cansan Electronics
-            </p>
-            <h1 className="mt-4 font-heading text-4xl font-extrabold leading-[0.94] tracking-[-0.05em] sm:text-6xl">
-              Tech that keeps your day moving.
-            </h1>
-            <p className="mt-5 text-base leading-relaxed text-white/70">
-              Laptops, storage, CCTV and networking gear with local support.
-            </p>
-            <Link
-              href="/products"
-              className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-500"
-            >
-              Browse the store <ArrowIcon />
-            </Link>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const active = slides[activeIndex];
-  const secondary = slides[(activeIndex + 1) % slides.length];
-  const tertiary = slides[(activeIndex + 2) % slides.length];
+  }, [reducedMotion]);
 
   return (
-    <section
-      className="bg-white px-4 pb-8 pt-5 sm:px-6 sm:pb-12 sm:pt-8"
-      onMouseEnter={() => {
-        pausedRef.current = true;
-      }}
-      onMouseLeave={() => {
-        pausedRef.current = false;
-      }}
-      onFocus={() => {
-        pausedRef.current = true;
-      }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          pausedRef.current = false;
-        }
-      }}
-    >
+    <section className="bg-white px-4 pb-8 pt-5 sm:px-6 sm:pb-12 sm:pt-8" onMouseEnter={() => { pausedRef.current = true; }} onMouseLeave={() => { pausedRef.current = false; }} onFocus={() => { pausedRef.current = true; }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) pausedRef.current = false; }}>
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
-          <article className="relative min-h-[430px] overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_78%_32%,rgba(239,68,68,0.26),transparent_35%),linear-gradient(135deg,#07070a,#17131a)] px-6 py-8 text-white sm:min-h-[520px] sm:px-10 sm:py-12">
-            <div className="relative z-10 max-w-[44%] sm:max-w-[44%]">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
-                Featured technology
-              </p>
-              <h1 className="mt-4 line-clamp-3 font-heading text-3xl font-extrabold leading-[0.94] tracking-[-0.055em] sm:text-5xl lg:text-5xl">
-                {active.name}
-              </h1>
-              <p className="mt-5 text-sm leading-relaxed text-white/70 sm:text-base">
-                Reliable technology, clear pricing, and local support for the way you work, learn,
-                and connect.
-              </p>
-              <Link
-                href={`/products/${active.slug}`}
-                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300"
-              >
-                Shop now <ArrowIcon />
-              </Link>
+        <article className="relative isolate min-h-[460px] overflow-hidden rounded-[2rem] bg-zinc-950 text-white shadow-[0_24px_70px_rgba(24,24,27,0.18)] sm:min-h-[560px]">
+          <Image key={active.key} src={active.image} alt={active.imageAlt} fill priority={activeIndex === 0} sizes="(max-width: 640px) 100vw, 1280px" className="object-cover object-center transition-opacity duration-500 motion-reduce:transition-none" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,11,0.94)_0%,rgba(9,9,11,0.76)_34%,rgba(9,9,11,0.18)_72%,rgba(9,9,11,0.04)_100%)]" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(0deg,rgba(9,9,11,0.72),transparent_42%)]" />
+
+          <div className="relative z-10 flex min-h-[460px] max-w-xl flex-col justify-center px-6 py-12 sm:min-h-[560px] sm:px-12 sm:py-16">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-300">{active.eyebrow}</p>
+            <h1 className="mt-4 max-w-lg font-heading text-4xl font-extrabold leading-[0.96] tracking-[-0.055em] sm:text-6xl">{active.title}</h1>
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-white/75 sm:text-base">{active.description}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <Link href={active.href} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-bold text-white transition hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300">Shop {active.key === 'printing' ? 'printers' : active.key} <ArrowIcon /></Link>
+              <span className="text-xs font-semibold text-white/65">{productCounts.get(active.key) || 0} products to explore</span>
             </div>
-            <div className="absolute inset-y-4 right-[2%] w-[54%] sm:right-[3%] sm:w-[52%]">
-              <ProductImage product={active} sizes="(max-width: 640px) 62vw, 560px" />
-            </div>
-            <div className="absolute bottom-5 left-6 flex items-center gap-2 sm:left-10">
-              {slides.map((product, index) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={`Show ${product.name}`}
-                  aria-current={index === activeIndex}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
-                >
-                  <span
-                    className={`block rounded-full transition-all ${index === activeIndex ? 'h-2 w-8 bg-red-500' : 'h-2 w-2 bg-white/45 hover:bg-white/80'}`}
-                  />
-                </button>
+          </div>
+
+          <div className="absolute bottom-5 left-6 right-6 z-10 flex items-center justify-between gap-4 sm:bottom-8 sm:left-12 sm:right-12">
+            <div className="flex items-center gap-1">
+              {CATEGORY_SLIDES.map((slide, index) => (
+                <button key={slide.key} type="button" onClick={() => setActiveIndex(index)} aria-label={`Show ${slide.key} hero`} aria-current={index === activeIndex} className="inline-flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"><span className={`block rounded-full transition-all motion-reduce:transition-none ${index === activeIndex ? 'h-2 w-8 bg-red-500' : 'h-2 w-2 bg-white/45 hover:bg-white/80'}`} /></button>
               ))}
             </div>
-          </article>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            {[secondary, tertiary].map((product, index) => (
-              <Link
-                key={`${product.id}-${index}`}
-                href={`/products/${product.slug}`}
-                className={`group relative flex min-h-[205px] items-center overflow-hidden rounded-[1.75rem] px-6 py-6 pr-[46%] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-600 ${index === 0 ? 'bg-red-50' : 'bg-zinc-100'}`}
-              >
-                <div className="relative z-10 min-w-0 max-w-full">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                    {index === 0 ? 'Popular this week' : 'Ready for your setup'}
-                  </p>
-                  <h2 className="mt-3 line-clamp-2 text-lg font-bold leading-[1.08] tracking-[-0.03em] text-zinc-950 sm:text-xl">
-                    {product.name}
-                  </h2>
-                  <p className="mt-4 text-sm font-semibold text-red-700">
-                    From {formatCurrency(product.price, product.currency)}
-                  </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-zinc-600 transition group-hover:text-red-700">
-                    View product
-                    <ArrowIcon />
-                  </span>
-                </div>
-                <div className="absolute inset-y-4 right-4 z-0 w-[40%] overflow-hidden rounded-2xl border border-white/80 bg-white/75 shadow-sm transition-transform duration-300 group-hover:scale-105 sm:right-5 sm:w-[39%]">
-                  <ProductImage product={product} sizes="(max-width: 1024px) 48vw, 300px" />
-                </div>
-              </Link>
-            ))}
+            <span className="hidden text-xs font-bold uppercase tracking-[0.16em] text-white/55 sm:block">{String(activeIndex + 1).padStart(2, '0')} / 04</span>
           </div>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 sm:grid-cols-4 sm:px-6">
-          {[
-            ['Free local delivery', 'Harare orders'],
-            ['Genuine stock', 'Verified products'],
-            ['WhatsApp support', 'Fast replies'],
-            ['Clear pricing', 'Confirm before you pay'],
-          ].map(([title, detail]) => (
-            <div
-              key={title}
-              className="flex items-start gap-2.5 border-zinc-200 py-1 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:pl-5"
-            >
-              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-600" />
-              <div>
-                <p className="text-xs font-bold text-zinc-900 sm:text-sm">{title}</p>
-                <p className="mt-0.5 text-[11px] text-zinc-500">{detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        </article>
       </div>
     </section>
   );
