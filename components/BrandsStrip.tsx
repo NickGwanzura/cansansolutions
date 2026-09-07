@@ -190,6 +190,9 @@ export function BrandsStrip() {
           0% { transform: translateX(0); }
           100% { transform: translateX(-33.333%); }
         }
+        @media (prefers-reduced-motion: reduce) {
+          .logo-scroll-track { animation: none; }
+        }
         .logo-scroll-track:hover {
           animation-play-state: paused;
         }

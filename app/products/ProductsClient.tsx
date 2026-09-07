@@ -174,7 +174,7 @@ export function ProductsClient({
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="mt-4 grid gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600 sm:grid-cols-3 sm:p-5">
+        <div className="mt-4 hidden gap-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600 sm:grid sm:grid-cols-3 sm:p-5">
           <div>
             <p className="font-semibold text-zinc-900">WhatsApp-first ordering</p>
             <p className="mt-1">

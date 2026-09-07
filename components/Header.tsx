@@ -8,6 +8,7 @@ import { BrandLogo } from './BrandLogo';
 import { CartDrawer } from './CartDrawer';
 import { WA_NUMBER, SITE_PHONE } from '@/lib/site';
 import { CATALOG_CATEGORIES, getCategoryHref } from '@/lib/catalog';
+import { STORE_BRANDS, getBrandHref } from '@/lib/brands';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -18,6 +19,14 @@ const navLinks = [
 ];
 
 const QUICK_CATEGORY_SLUGS = ['laptops', 'networking', 'cctv'];
+const SALES_CHAT_HREF = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+  'Hi Cansan Solutions, I need help choosing a product. My budget and use case are:',
+)}`;
+const CATEGORY_GROUPS = [
+  { label: 'Computers', slugs: ['laptops', 'desktops', 'monitors', 'pc-parts'] },
+  { label: 'Connectivity & security', slugs: ['networking', 'cctv', 'sa-imports'] },
+  { label: 'Everyday tech', slugs: ['mobile', 'printing', 'accessories', 'audio', 'drives', 'bundles'] },
+] as const;
 
 export function Header() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -118,25 +127,6 @@ export function Header() {
           >
             <BrandLogo priority className="w-28 sm:w-32" />
           </Link>
-
-          <button
-            type="button"
-            onClick={() => setCategoriesOpen((value) => !value)}
-            className="hidden min-h-12 items-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 xl:inline-flex"
-            aria-expanded={categoriesOpen}
-          >
-            <svg
-              aria-hidden="true"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            Browse departments
-          </button>
 
           {/* Search */}
           <form onSubmit={handleSearch} className="hidden flex-1 max-w-2xl md:block">
@@ -292,26 +282,52 @@ export function Header() {
                 </button>
 
                 {categoriesOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-1 w-[680px] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl">
-                    <div className="grid grid-cols-3 gap-1">
-                      {CATALOG_CATEGORIES.map((category) => (
-                        <Link
-                          key={category.id}
-                          href={getCategoryHref(category.slug)}
-                          onClick={() => setCategoriesOpen(false)}
-                          className="rounded-lg px-3 py-2 text-sm text-zinc-700 transition hover:bg-red-50 hover:text-red-700"
-                        >
-                          {category.label}
-                        </Link>
+                  <div className="absolute left-0 top-full z-50 mt-1 w-[min(760px,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl">
+                    <div className="grid gap-5 sm:grid-cols-3">
+                      {CATEGORY_GROUPS.map((group) => (
+                        <div key={group.label}>
+                          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-400">
+                            {group.label}
+                          </p>
+                          <div className="space-y-0.5">
+                            {group.slugs.map((slug) => {
+                              const category = CATALOG_CATEGORIES.find((item) => item.slug === slug);
+                              if (!category) return null;
+                              return (
+                                <Link
+                                  key={category.id}
+                                  href={getCategoryHref(category.slug)}
+                                  onClick={() => setCategoriesOpen(false)}
+                                  className="block rounded-lg px-3 py-2 text-sm text-zinc-700 transition hover:bg-red-50 hover:text-red-700"
+                                >
+                                  {category.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                    <Link
-                      href="/products"
-                      onClick={() => setCategoriesOpen(false)}
-                      className="mt-3 block rounded-lg bg-zinc-50 px-3 py-2 text-center text-sm font-semibold text-red-700 transition hover:bg-red-50"
-                    >
-                      View all products →
-                    </Link>
+                    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4">
+                      <span className="mr-1 text-xs font-semibold text-zinc-500">Popular brands</span>
+                      {STORE_BRANDS.map((brand) => (
+                        <Link
+                          key={brand.slug}
+                          href={getBrandHref(brand.slug)}
+                          onClick={() => setCategoriesOpen(false)}
+                          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                        >
+                          {brand.name}
+                        </Link>
+                      ))}
+                      <Link
+                        href="/products"
+                        onClick={() => setCategoriesOpen(false)}
+                        className="ml-auto text-xs font-bold text-red-700 hover:text-red-800"
+                      >
+                        View all products →
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -346,7 +362,7 @@ export function Header() {
             </nav>
 
             <a
-              href={`https://wa.me/${WA_NUMBER}`}
+              href={SALES_CHAT_HREF}
               target="_blank"
               rel="noreferrer"
               className="flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
@@ -365,28 +381,9 @@ export function Header() {
           </div>
         </div>
 
-        {categoriesOpen && (
-          <div className="hidden border-t border-zinc-200 bg-white/95 backdrop-blur xl:block">
-            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-              <div className="grid grid-cols-5 gap-2">
-                {CATALOG_CATEGORIES.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={getCategoryHref(category.slug)}
-                    onClick={() => setCategoriesOpen(false)}
-                    className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm text-zinc-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
-                  >
-                    {category.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Mobile menu */}
         {menuOpen && (
-          <div id="mobile-navigation" className="border-t border-zinc-100 bg-white px-4 py-4 shadow-lg shadow-zinc-900/5 md:hidden">
+          <div id="mobile-navigation" className="relative z-50 border-t border-zinc-100 bg-white px-4 py-4 shadow-lg shadow-zinc-900/5 md:hidden">
             <form onSubmit={handleSearch} className="mb-3">
               <div className="relative">
                 <svg

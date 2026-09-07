@@ -17,7 +17,7 @@ export function ProductGallery({ name, images }: ProductGalleryProps) {
           alt={`${name} image ${active + 1}`}
           width={760}
           height={760}
-          className="h-full max-h-[330px] w-full object-contain mix-blend-multiply drop-shadow-[0_20px_28px_rgba(15,23,42,0.14)]"
+          className="h-full max-h-[330px] w-full object-contain drop-shadow-[0_20px_28px_rgba(15,23,42,0.14)]"
         />
         {sources.length > 1 ? (
           <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 shadow-sm">

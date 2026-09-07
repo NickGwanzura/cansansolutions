@@ -150,7 +150,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           className="pointer-events-none object-contain p-4 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
         />
 
-        {hasDiscount || product.dealLabel ? (
+        {hasDiscount || product.dealLabel || product.condition ? (
           <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
             {hasDiscount ? (
               <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
@@ -160,6 +160,11 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             {product.dealLabel ? (
               <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
                 {product.dealLabel}
+              </span>
+            ) : null}
+            {product.condition ? (
+              <span className="rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold tracking-wide text-zinc-700">
+                {product.condition === 'pre-owned' ? 'Pre-owned' : 'Brand new'}
               </span>
             ) : null}
           </div>
@@ -242,6 +247,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             </p>
           ) : null}
         </div>
+
+        {hasDiscount && product.originalPrice ? (
+          <p className="mt-1 text-xs font-semibold text-red-700">
+            Save {formatCurrency(product.originalPrice - product.price, product.currency)}
+          </p>
+        ) : null}
 
         <p
           className={`mt-1 line-clamp-2 text-sm ${saImport ? 'font-semibold text-red-600' : 'text-zinc-500'}`}

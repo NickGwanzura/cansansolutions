@@ -790,7 +790,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
         {specEntries.length > 0 ? (
           <section className="mt-16">
             <h2 className="text-2xl font-bold text-zinc-900">Technical Specifications</h2>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
               <table className="min-w-full divide-y divide-zinc-200 text-sm">
                 <tbody className="divide-y divide-zinc-100">
                   {specEntries.map(([key, value]) => (
@@ -811,7 +811,7 @@ export default async function ProductPage({ params }: { params: RouteParams }) {
           <h2 className="text-2xl font-bold text-zinc-900">
             Why This Product Beats Cheaper Alternatives
           </h2>
-          <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="mt-5 overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
             <table className="min-w-full divide-y divide-zinc-200 text-sm">
               <thead className="bg-zinc-50">
                 <tr>

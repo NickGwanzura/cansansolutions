@@ -533,6 +533,9 @@ export default async function HomePage() {
   const featuredInsights = getFeaturedInsights(3);
 
   const homepageProducts = getDailyHomepageProducts(products);
+  const preOwnedProducts = products
+    .filter((product) => product.condition === 'pre-owned' && product.inStock)
+    .slice(0, 4);
 
   const heroSlideProducts = (() => {
     const seen = new Set<string>();
@@ -669,7 +672,7 @@ export default async function HomePage() {
           </div>
 
           {homepageProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {homepageProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -681,6 +684,35 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {preOwnedProducts.length > 0 ? (
+        <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                  Value picks
+                </p>
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+                  Pre-owned, checked and ready
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-zinc-600">
+                  Get more performance for your budget with carefully selected pre-owned devices.
+                  Confirm condition, stock, and delivery with our team before you order.
+                </p>
+              </div>
+              <Link href="/products?condition=pre-owned" className="text-sm font-semibold text-red-700 hover:text-red-800">
+                Shop pre-owned deals →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {preOwnedProducts.map((product) => (
+                <ProductCard key={`preowned-${product.id}`} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="bg-zinc-50 px-4 py-14 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-7xl">

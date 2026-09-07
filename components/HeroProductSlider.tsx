@@ -37,24 +37,34 @@ function ProductImage({ product, sizes }: { product: Product; sizes: string }) {
       fallbackSrc={FALLBACK_BY_CATEGORY[product.category] || '/images/products/placeholder.svg'}
       alt={product.name}
       fill
+      priority
       sizes={sizes}
-      className="object-contain p-6 mix-blend-multiply drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
+      className="object-contain p-6 drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)] transition duration-500 sm:p-8"
     />
   );
 }
 
 export function HeroProductSlider({ products }: HeroProductSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const pausedRef = useRef(false);
   const slides = products.slice(0, 6);
 
   useEffect(() => {
-    if (slides.length <= 1) return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (slides.length <= 1 || reducedMotion) return;
     const interval = window.setInterval(() => {
       if (!pausedRef.current) setActiveIndex((current) => (current + 1) % slides.length);
     }, AUTO_ADVANCE_MS);
     return () => window.clearInterval(interval);
-  }, [slides.length]);
+  }, [slides.length, reducedMotion]);
 
   if (slides.length === 0) {
     return (
@@ -94,6 +104,14 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
       }}
       onMouseLeave={() => {
         pausedRef.current = false;
+      }}
+      onFocus={() => {
+        pausedRef.current = true;
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          pausedRef.current = false;
+        }
       }}
     >
       <div className="mx-auto max-w-7xl">
@@ -171,7 +189,7 @@ export function HeroProductSlider({ products }: HeroProductSliderProps) {
             ['Free local delivery', 'Harare orders'],
             ['Genuine stock', 'Verified products'],
             ['WhatsApp support', 'Fast replies'],
-            ['Secure checkout', 'Clear pricing'],
+            ['Clear pricing', 'Confirm before you pay'],
           ].map(([title, detail]) => (
             <div
               key={title}
