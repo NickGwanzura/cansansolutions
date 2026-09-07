@@ -150,31 +150,33 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           className="pointer-events-none object-contain p-4 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
         />
 
-        {hasDiscount || product.dealLabel || product.condition ? (
-          <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
-            {hasDiscount ? (
-              <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
-                -{discountPercent}%
-              </span>
-            ) : null}
-            {product.dealLabel ? (
-              <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
-                {product.dealLabel}
-              </span>
-            ) : null}
-            {product.condition ? (
-              <span className="rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold tracking-wide text-zinc-700">
-                {product.condition === 'pre-owned' ? 'Pre-owned' : 'Brand new'}
-              </span>
-            ) : null}
+        {hasDiscount || product.dealLabel || product.condition || stock.label ? (
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
+            <div className="flex min-w-0 max-w-[56%] flex-col items-start gap-1.5">
+              {hasDiscount ? (
+                <span className="max-w-full rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                  -{discountPercent}%
+                </span>
+              ) : null}
+              {product.dealLabel ? (
+                <span className="max-w-full truncate rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+                  {product.dealLabel}
+                </span>
+              ) : null}
+              {product.condition ? (
+                <span className="max-w-full truncate rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold tracking-wide text-zinc-700">
+                  {product.condition === 'pre-owned' ? 'Pre-owned' : 'Brand new'}
+                </span>
+              ) : null}
+            </div>
+
+            <span
+              className={`max-w-[44%] truncate rounded-full border px-3 py-1 text-right text-xs font-semibold ${stock.tone}`}
+            >
+              {stock.label}
+            </span>
           </div>
         ) : null}
-
-        <span
-          className={`pointer-events-none absolute right-3 top-3 z-10 rounded-full border px-3 py-1 text-xs font-semibold ${stock.tone}`}
-        >
-          {stock.label}
-        </span>
 
         <button
           type="button"
