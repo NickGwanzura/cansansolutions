@@ -324,7 +324,7 @@ export default function SettingsPage() {
             <form onSubmit={saveSettings} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 mb-1">
-                  Default Currency
+                  Default Document Currency
                 </label>
                 <select
                   value={currency}
@@ -332,9 +332,7 @@ export default function SettingsPage() {
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
                 >
                   <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="ZAR">ZAR - South African Rand</option>
+                  <option value="ZWL">ZWL - Zimbabwe Dollar</option>
                 </select>
               </div>
               <div>

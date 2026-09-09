@@ -2,7 +2,10 @@ import type { CustomerInfo, LineItem } from './types';
 
 export class ValidationError extends Error {}
 
-const CURRENCIES = new Set(['USD', 'ZAR', 'GBP', 'EUR', 'ZWG']);
+// Keep the storefront/admin currency vocabulary aligned. ZWL is retained for
+// Zimbabwe dollar listings; ZWG is accepted for legacy records during the
+// currency transition.
+const CURRENCIES = new Set(['USD', 'ZWL', 'ZWG', 'ZAR', 'GBP', 'EUR']);
 
 export function finiteNumber(
   value: unknown,

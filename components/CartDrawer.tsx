@@ -62,9 +62,15 @@ export function CartDrawer({ open, onClose }: Props) {
   const [note, setNote] = useState('');
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const totalItems = items.reduce((a, i) => a + i.qty, 0);
-  const currency = items[0]?.currency ?? 'USD';
+  const formattedTotals = Object.entries(
+    items.reduce<Record<string, number>>((result, item) => {
+      result[item.currency] = (result[item.currency] ?? 0) + item.price * item.qty;
+      return result;
+    }, {}),
+  )
+    .map(([code, amount]) => formatCurrency(amount, code))
+    .join(' + ');
 
   // Reset step when drawer closes
   useEffect(() => {
@@ -361,7 +367,7 @@ export function CartDrawer({ open, onClose }: Props) {
                           Subtotal ({totalItems} item{totalItems !== 1 ? 's' : ''})
                         </span>
                         <span className="font-semibold text-zinc-700">
-                          {formatCurrency(total, currency)}
+                          {formattedTotals}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm text-zinc-600">
@@ -371,7 +377,7 @@ export function CartDrawer({ open, onClose }: Props) {
                       <div className="border-t border-zinc-200 pt-1.5 flex justify-between">
                         <span className="text-sm font-bold text-zinc-900">Total</span>
                         <span className="font-heading text-base font-extrabold text-zinc-900">
-                          {formatCurrency(total, currency)}
+                          {formattedTotals}
                         </span>
                       </div>
                     </div>
@@ -432,7 +438,7 @@ export function CartDrawer({ open, onClose }: Props) {
                         {totalItems} item{totalItems !== 1 ? 's' : ''}
                       </span>
                       <span className="font-heading text-lg font-extrabold text-zinc-900">
-                        {formatCurrency(total, currency)}
+                        {formattedTotals}
                       </span>
                     </div>
                     <motion.button

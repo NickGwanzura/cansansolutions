@@ -645,7 +645,6 @@ function ProductForm({
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
                   >
                     <option value="USD">USD</option>
-                    <option value="ZWL">ZWL</option>
                     <option value="ZAR">ZAR</option>
                     <option value="KES">KES</option>
                   </select>
